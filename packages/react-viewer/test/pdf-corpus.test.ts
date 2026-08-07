@@ -20,7 +20,7 @@ describe("PDF corpus", () => {
       expect(content.items.some((item) => "str" in item && item.str.trim().length > 0)).toBe(true);
       page.cleanup();
     } finally {
-      await document.destroy();
+      await task.destroy();
     }
   });
 });

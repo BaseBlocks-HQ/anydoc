@@ -185,11 +185,11 @@ export default function PdfViewer({
       try {
         assertCountWithinLimit(nextDocument.numPages, maxPages, "PDF page", "pdf");
       } catch (cause) {
-        await nextDocument.destroy();
+        await task.destroy();
         throw cause;
       }
       if (controller.signal.aborted) {
-        await nextDocument.destroy();
+        await task.destroy();
         throw new DOMException("Cancelled", "AbortError");
       }
       setDocument(nextDocument);
