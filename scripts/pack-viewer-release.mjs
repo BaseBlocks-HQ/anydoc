@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { copyFile, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const directories = [
@@ -11,7 +11,7 @@ const directories = [
   "packages/react-viewer",
   "packages/anydoc",
 ];
-const outputDirectory = process.argv[2] ?? "release-artifacts";
+const outputDirectory = resolve(process.argv[2] ?? "release-artifacts");
 const expectedVersion = process.argv[3];
 
 function run(command, args) {
