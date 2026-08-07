@@ -1,10 +1,12 @@
-import { createIngestionRuntime, type IngestionArtifact } from "../src/ingestion.js";
-import { createMemoryContentSink, createMemoryJobStore } from "../src/memory.js";
-import { bytesSource, readSource, webSource } from "../src/sources.js";
-import { fileSource } from "../src/node-sources.js";
+import { getCapabilities } from "@baseblocks/anydoc";
+import { createIngestionRuntime, type IngestionArtifact } from "@baseblocks/anydoc/ingestion";
+import { createMemoryContentSink, createMemoryJobStore } from "@baseblocks/anydoc/memory";
+import { bytesSource, readSource, webSource } from "@baseblocks/anydoc/sources";
+import { fileSource } from "@baseblocks/anydoc/sources/node";
 
 const jobs = createMemoryJobStore();
 const contentSink = createMemoryContentSink();
+void getCapabilities("docx");
 const runtime = createIngestionRuntime<{ readonly storageKey: string }, { readonly tenant: string }>({
   jobs,
   contentSink,

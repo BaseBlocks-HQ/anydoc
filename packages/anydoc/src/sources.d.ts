@@ -38,7 +38,7 @@ export interface WebSourceOptions extends Omit<SourceMetadata, "size"> {
   readonly request?: Omit<RequestInit, "body" | "method" | "redirect" | "signal">;
   readonly allowUrl?: (url: string) => boolean | Promise<boolean>;
   readonly maxRedirects?: number;
-  /** Forward credentials and sensitive headers across origins. Unsafe by default. */
+  /** Forward credentials and all caller-supplied headers across origins. Unsafe by default. */
   readonly forwardCredentialsOnRedirect?: boolean;
 }
 export declare function webSource(url: string | URL, options?: WebSourceOptions): DocumentSource;

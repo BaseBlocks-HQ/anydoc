@@ -1,5 +1,5 @@
 import type { DocumentPlatformError } from "@baseblocks/anydoc-contracts";
-import type { DocumentSource, ReadSourceResult } from "./sources";
+import type { DocumentSource, ReadSourceResult } from "./sources.js";
 
 export type IngestionJobState = "queued" | "running" | "retry-scheduled" | "succeeded" | "failed";
 export type IngestionPhase = "queued" | "acquire-source" | "read-source" | "process" | "store-content" | "store-index" | "complete" | "retry-scheduled" | "failed";

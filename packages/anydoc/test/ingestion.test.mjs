@@ -145,3 +145,50 @@ test("non-durable sink results fail at the persistence boundary", async () => {
   assert.equal(result.status, "failed");
   assert.equal(result.error.code, "sink-failed");
 });
+
+test("non-durable artifacts fail before any sink side effect", async () => {
+  let writes = 0;
+  const runtime = createIngestionRuntime(runtimeOptions({
+    process: () => ({ content: { callback() {} } }),
+    contentSink: { async write() { writes += 1; return { ref: "unexpected" }; } },
+    retry: createRetryPolicy({ maxAttempts: 1 }),
+  }));
+  const { job } = await runtime.enqueue({ idempotencyKey: "artifact-durability", source: {}, format: "docx" });
+  const result = await runtime.run(job.id);
+  assert.equal(result.status, "failed");
+  assert.equal(result.error.code, "processing-failed");
+  assert.equal(writes, 0);
+});
+
+test("memory store rejects crossed id and idempotency uniqueness", async () => {
+  const jobs = createMemoryJobStore();
+  const first = {
+    id: "first", idempotencyKey: "key:first", state: "queued", phase: "queued", revision: 0,
+    attempt: 0, maxAttempts: 1, createdAt: 0, updatedAt: 0, input: { source: {}, format: "pdf" },
+  };
+  const second = { ...first, id: "second", idempotencyKey: "key:second" };
+  await jobs.create(first);
+  await jobs.create(second);
+  await assert.rejects(jobs.create({ ...first, id: "second" }), { code: "job-conflict" });
+});
+
+test("a stale worker emits lease loss instead of a false retry event", async () => {
+  let now = 0;
+  const events = [];
+  const jobs = createMemoryJobStore({ makeToken: (() => { let id = 0; return () => `token-${++id}`; })() });
+  const runtime = createIngestionRuntime(runtimeOptions({
+    jobs,
+    clock: () => now,
+    observer: (event) => events.push(event.type),
+    process: async ({ bytes, format }) => {
+      now = 10_001;
+      await jobs.claim("id-1", { workerId: "replacement", durationMs: 10_000, now });
+      throw new DocumentPlatformError("old worker failed", { code: "processing-failed", retryable: true });
+    },
+  }));
+  const { job } = await runtime.enqueue({ idempotencyKey: "stale-observer", source: {}, format: "pdf" });
+  const result = await runtime.run(job.id, { workerId: "old" });
+  assert.equal(result.status, "lease-lost");
+  assert.ok(events.includes("job.lease-lost"));
+  assert.ok(!events.includes("job.retry-scheduled"));
+});

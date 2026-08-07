@@ -14,6 +14,27 @@ function throwIfAborted(signal) {
   }
 }
 
+async function waitWithSignal(promise, signal) {
+  const task = Promise.resolve(promise);
+  try { throwIfAborted(signal); } catch (cause) {
+    void task.catch(() => undefined);
+    throw cause;
+  }
+  if (!signal) return task;
+  let onAbort;
+  const aborted = new Promise((_, reject) => {
+    onAbort = () => {
+      try { throwIfAborted(signal); } catch (cause) { reject(cause); }
+    };
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+  try {
+    return await Promise.race([task, aborted]);
+  } finally {
+    signal.removeEventListener("abort", onAbort);
+  }
+}
+
 function asChunk(value) {
   if (value instanceof Uint8Array) return value;
   if (value instanceof ArrayBuffer) return new Uint8Array(value);
@@ -25,23 +46,37 @@ function asChunk(value) {
 
 async function* iterateStream(stream, signal) {
   if (stream && typeof stream[Symbol.asyncIterator] === "function") {
-    for await (const value of stream) {
-      throwIfAborted(signal);
-      yield asChunk(value);
+    const iterator = stream[Symbol.asyncIterator]();
+    let completed = false;
+    try {
+      while (true) {
+        const step = await waitWithSignal(Promise.resolve().then(() => iterator.next()), signal);
+        if (step.done) { completed = true; return; }
+        yield asChunk(step.value);
+      }
+    } finally {
+      if (!completed && typeof iterator.return === "function") {
+        const cleanup = Promise.resolve().then(() => iterator.return());
+        void cleanup.catch(() => undefined);
+      }
     }
-    return;
   }
   if (stream && typeof stream.getReader === "function") {
     const reader = stream.getReader();
     try {
       while (true) {
-        throwIfAborted(signal);
-        const { done, value } = await reader.read();
+        const { done, value } = await waitWithSignal(reader.read(), signal);
         if (done) return;
         yield asChunk(value);
       }
     } finally {
-      reader.releaseLock();
+      if (signal?.aborted) {
+        void reader.cancel(signal.reason).catch(() => undefined).finally(() => {
+          try { reader.releaseLock(); } catch { /* cancellation still owns the pending read */ }
+        });
+      } else {
+        reader.releaseLock();
+      }
     }
   } else {
     throw sourceError("A document source must expose an async iterable or ReadableStream.", "invalid-source");
@@ -124,14 +159,15 @@ export function createSha256() {
   const digestHex = () => {
     if (finished) throw sourceError("A checksum can only be finalized once.", "invalid-source");
     finished = true;
-    const bitLength = bytesHashed * 8;
     block[blockLength++] = 0x80;
     if (blockLength > 56) { block.fill(0, blockLength); compress(); blockLength = 0; }
     block.fill(0, blockLength, 56);
-    const high = Math.floor(bitLength / 0x1_0000_0000);
-    const low = bitLength >>> 0;
+    // Encode the 64-bit bit length without first multiplying the complete
+    // safe-integer byte count beyond JavaScript's exact integer range.
+    const high = Math.floor(bytesHashed / 0x2000_0000);
+    const low = (bytesHashed * 8) >>> 0;
     for (let index = 0; index < 4; index += 1) {
-      block[55 - index] = (high >>> (index * 8)) & 0xff;
+      block[59 - index] = (high >>> (index * 8)) & 0xff;
       block[63 - index] = (low >>> (index * 8)) & 0xff;
     }
     compress();
@@ -162,16 +198,24 @@ export async function readSource(source, options = {}) {
   if (expectedSize !== undefined && (!Number.isSafeInteger(expectedSize) || expectedSize < 0)) {
     throw sourceError("expectedSize must be a non-negative safe integer.", "invalid-source");
   }
+  if (expectedSize !== undefined && expectedSize > maximum) {
+    throw sourceError(`Document exceeds the ${maximum.toLocaleString()} byte limit.`, "too-large");
+  }
   const expectedSha256 = normalizeSha256(options.expectedSha256);
   const deadline = options.deadline instanceof Date ? options.deadline.getTime() : options.deadline;
   if (deadline !== undefined && !Number.isFinite(deadline)) {
     throw sourceError("deadline must be a valid date or Unix epoch millisecond value.", "invalid-source");
   }
   const deadlineController = deadline === undefined ? undefined : new AbortController();
-  const timeout = deadline === undefined ? undefined : setTimeout(
-    () => deadlineController.abort(sourceError("The document read exceeded its deadline.", "deadline-exceeded", undefined, undefined, true)),
-    Math.max(0, deadline - Date.now()),
-  );
+  const deadlineFailure = () => sourceError("The document read exceeded its deadline.", "deadline-exceeded", undefined, undefined, true);
+  let timeout;
+  const armDeadline = () => {
+    if (!deadlineController || deadlineController.signal.aborted) return;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) deadlineController.abort(deadlineFailure());
+    else timeout = setTimeout(armDeadline, Math.min(remaining, 0x7fff_ffff));
+  };
+  armDeadline();
   const signal = deadlineController
     ? AbortSignal.any([...(options.signal ? [options.signal] : []), deadlineController.signal])
     : options.signal;
@@ -179,9 +223,15 @@ export async function readSource(source, options = {}) {
   try { throwIfAborted(signal); } catch (cause) { clearDeadline(); throw cause; }
 
   let opened;
+  const opening = Promise.resolve().then(() => source.open({ signal }));
   try {
-    opened = await source.open({ signal });
+    opened = await waitWithSignal(opening, signal);
   } catch (cause) {
+    if (signal?.aborted) {
+      // A non-cooperative source may finish opening after cancellation. Close
+      // that late resource without holding the caller past its deadline.
+      void opening.then((late) => late?.close?.()).catch(() => undefined);
+    }
     clearDeadline();
     if (deadlineController?.signal.aborted) throw deadlineController.signal.reason;
     if (cause instanceof DocumentPlatformError) throw cause;
@@ -189,14 +239,14 @@ export async function readSource(source, options = {}) {
   }
   if (!opened || !("stream" in opened)) {
     if (opened) {
-      try { await opened.close?.(); } catch { /* preserve the invalid-source error */ }
+      try { await waitWithSignal(Promise.resolve().then(() => opened.close?.()), signal); } catch { /* preserve the invalid-source error */ }
     }
     clearDeadline();
     throw sourceError("A document source returned no stream.", "invalid-source");
   }
 
   const rejectOpened = async (failure) => {
-    try { await opened.close?.(); } catch { /* preserve the validation failure */ }
+    try { await waitWithSignal(Promise.resolve().then(() => opened.close?.()), signal); } catch { /* preserve the validation failure */ }
     clearDeadline();
     throw failure;
   };
@@ -220,6 +270,7 @@ export async function readSource(source, options = {}) {
     : undefined;
   let byteLength = 0;
   let readFailure;
+  let result;
   try {
     for await (const chunk of iterateStream(opened.stream, signal)) {
       if (chunk.byteLength === 0) continue;
@@ -235,6 +286,44 @@ export async function readSource(source, options = {}) {
       byteLength += chunk.byteLength;
       try { options.onProgress?.({ bytesRead: byteLength, totalBytes: advertisedSize }); } catch { /* telemetry is best-effort */ }
     }
+
+    if (advertisedSize !== undefined && byteLength !== advertisedSize) {
+      throw sourceError("The document source ended at a different size than advertised.", "source-changed");
+    }
+    if (expectedSize !== undefined && byteLength !== expectedSize) {
+      throw sourceError("The document source size does not match the expected size.", "source-changed");
+    }
+
+    let resultBytes = bytes;
+    if (!resultBytes) {
+      resultBytes = new Uint8Array(byteLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        resultBytes.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+    }
+    let checksumValue;
+    try {
+      checksumValue = checksum
+        ? checksum.digestHex()
+        : options.sha256 && (expectedSha256 || options.calculateSha256)
+          ? await options.sha256(resultBytes)
+          : undefined;
+    } catch (cause) {
+      throw sourceError("The document checksum could not be calculated.", "integrity-failed", cause);
+    }
+    if (expectedSha256 && checksumValue?.toLowerCase() !== expectedSha256) {
+      throw sourceError("The document source failed SHA-256 verification.", "integrity-failed");
+    }
+    result = Object.freeze({
+      bytes: resultBytes,
+      byteLength,
+      sha256: checksumValue,
+      contentType: opened.contentType,
+      filename: opened.filename,
+      etag: opened.etag,
+    });
   } catch (cause) {
     readFailure = cause instanceof DocumentPlatformError
       ? cause
@@ -243,10 +332,9 @@ export async function readSource(source, options = {}) {
           ? deadlineController.signal.reason
           : sourceError("The document read was aborted.", "aborted", options.signal?.reason)
         : sourceError("The document source failed while streaming.", "fetch-failed", cause, undefined, true);
-    throw readFailure;
   } finally {
     try {
-      await opened.close?.();
+      await waitWithSignal(Promise.resolve().then(() => opened.close?.()), signal);
     } catch (cause) {
       if (!readFailure) {
         throw cause instanceof DocumentPlatformError
@@ -257,39 +345,8 @@ export async function readSource(source, options = {}) {
       clearDeadline();
     }
   }
-
-  if (advertisedSize !== undefined && byteLength !== advertisedSize) {
-    throw sourceError("The document source ended at a different size than advertised.", "source-changed");
-  }
-  if (expectedSize !== undefined && byteLength !== expectedSize) {
-    throw sourceError("The document source size does not match the expected size.", "source-changed");
-  }
-
-  let resultBytes = bytes;
-  if (!resultBytes) {
-    resultBytes = new Uint8Array(byteLength);
-    let offset = 0;
-    for (const chunk of chunks) {
-      resultBytes.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-  }
-  const checksumValue = checksum
-    ? checksum.digestHex()
-    : options.sha256 && (expectedSha256 || options.calculateSha256)
-      ? await options.sha256(resultBytes)
-      : undefined;
-  if (expectedSha256 && checksumValue?.toLowerCase() !== expectedSha256) {
-    throw sourceError("The document source failed SHA-256 verification.", "integrity-failed");
-  }
-  return Object.freeze({
-    bytes: resultBytes,
-    byteLength,
-    sha256: checksumValue,
-    contentType: opened.contentType,
-    filename: opened.filename,
-    etag: opened.etag,
-  });
+  if (readFailure) throw readFailure;
+  return result;
 }
 
 export function bytesSource(input, metadata = {}) {
@@ -353,6 +410,7 @@ export function webSource(url, options = {}) {
       let current = String(url);
       let request = { ...options.request };
       for (let redirect = 0; ; redirect += 1) {
+        if (!isFetchUrl(current)) throw sourceError("The document URL must be HTTP(S) and cannot contain embedded credentials.", "invalid-source");
         if (!(await allowUrl(current))) throw sourceError("The document URL is not allowed by source policy.", "invalid-source");
         let response;
         try {
@@ -374,9 +432,9 @@ export function webSource(url, options = {}) {
           await response.body?.cancel();
           const next = new URL(location, current).href;
           if (!options.forwardCredentialsOnRedirect && new URL(next).origin !== new URL(current).origin) {
-            const headers = new Headers(request.headers);
-            for (const name of ["authorization", "cookie", "proxy-authorization"]) headers.delete(name);
-            request = { ...request, credentials: "omit", headers };
+            // Caller-defined headers can carry credentials under arbitrary names
+            // (for example X-API-Key), so a cross-origin hop drops all of them.
+            request = { ...request, credentials: "omit", headers: new Headers(), referrer: undefined, referrerPolicy: "no-referrer" };
           }
           current = next;
           continue;

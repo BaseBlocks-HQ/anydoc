@@ -28,11 +28,11 @@ function assertPort(value, method, name) {
   }
 }
 
-function assertDurable(value, name) {
+function assertDurable(value, name, code = "sink-failed") {
   try {
     structuredClone(value);
   } catch (cause) {
-    throw error(`${name} must be durable structured-clone data.`, "sink-failed", cause);
+    throw error(`${name} must be durable structured-clone data.`, code, cause);
   }
 }
 
@@ -220,6 +220,7 @@ export function createIngestionRuntime(options) {
       if ("nativeRender" in artifact || "viewerModel" in artifact || "sourceBytes" in artifact) {
         throw error("Ingestion artifacts cannot contain native render models or source bytes.", "processing-failed");
       }
+      assertDurable(artifact, "The ingestion artifact", "processing-failed");
 
       await checkpoint("store-content");
       let content;
@@ -284,8 +285,12 @@ export function createIngestionRuntime(options) {
           nextAttemptAt: delay === null ? undefined : clock() + delay,
         },
       }).catch(() => null);
-      if (updated) job = updated;
-      emit(observer, { type: delay === null ? "job.failed" : "job.retry-scheduled", jobId, attempt: job.attempt, error: serializeError(failure), delayMs: delay ?? undefined, at: clock() });
+      if (updated) {
+        job = updated;
+        emit(observer, { type: delay === null ? "job.failed" : "job.retry-scheduled", jobId, attempt: job.attempt, error: serializeError(failure), delayMs: delay ?? undefined, at: clock() });
+      } else {
+        emit(observer, { type: "job.lease-lost", jobId, attempt: job.attempt, error: serializeError(failure), at: clock() });
+      }
       return { status: updated ? nextState : "lease-lost", job, error: failure };
     } finally {
       await stopHeartbeat();

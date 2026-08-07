@@ -49,7 +49,7 @@ The reference runtime heartbeats while host processors and sinks run. It checks 
 
 `readSource` validates an advertised size before allocating, enforces the ceiling on every chunk, rejects early EOF and overrun, and incrementally calculates SHA-256 while streaming. When the size is known, it allocates exactly one final byte buffer. Unknown-size streams retain bounded chunks until their one final materialization.
 
-HTTP adapters follow redirects manually. On an origin change they remove `Authorization`, `Cookie`, and `Proxy-Authorization`, and switch credentials to `omit`. Server runtimes must provide `allowUrl`; that policy should combine scheme/host allowlists with DNS and private-address controls appropriate to the deployment. Storage credentials and signed-URL creation belong in the application source resolver, never in durable job descriptors.
+HTTP adapters follow redirects manually. On an origin change they remove all caller-supplied headers, suppress the referrer, and switch credentials to `omit`; forwarding anything across origins requires the explicit unsafe opt-in. HTTP(S) URLs with embedded credentials are always rejected. Server runtimes must provide `allowUrl`; that policy should combine scheme/host allowlists with DNS and private-address controls appropriate to the deployment. Storage credentials and signed-URL creation belong in the application source resolver, never in durable job descriptors.
 
 `expectedSize` and `expectedSha256` bind ingestion to the version the application authorized. A mismatch produces a terminal `source-changed` or `integrity-failed` error instead of silently processing replacement bytes.
 

@@ -79,7 +79,7 @@ The default entry point contains only capability/security contracts and a lazy a
 
 Documents are untrusted. Adapters must enforce bounded bytes/pages/cells/slides, disable macros/scripts/formulas/external references, block external media by default, and expose structured errors. `isSafeExternalUrl`, `sanitizeFilename`, and `createAbortScope` are small shared primitives for hosts.
 
-Server-side `webSource` requires an explicit `allowUrl` callback. The host must resolve its own DNS/private-network policy; URL syntax checks alone do not prevent SSRF or DNS rebinding. Cross-origin redirects strip credentials and sensitive headers unless the caller makes an explicit unsafe opt-in.
+Server-side `webSource` requires an explicit `allowUrl` callback. The host must resolve its own DNS/private-network policy; URL syntax checks alone do not prevent SSRF or DNS rebinding. Cross-origin redirects strip all caller-supplied headers, credentials, and referrers unless the caller makes an explicit unsafe opt-in. Embedded URL credentials are always rejected.
 
 ## Capability matrix
 

@@ -21,7 +21,12 @@ export function createMemoryJobStore(options = {}) {
   return Object.freeze({
     async create(input) {
       const existingId = idempotency.get(input.idempotencyKey);
-      if (existingId) return { job: clone(records.get(existingId)), created: false };
+      if (existingId) {
+        if (records.has(input.id) && input.id !== existingId) {
+          throw new DocumentPlatformError("The ingestion job id and idempotency key identify different jobs.", { code: "job-conflict" });
+        }
+        return { job: clone(records.get(existingId)), created: false };
+      }
       if (records.has(input.id)) {
         throw new DocumentPlatformError("An ingestion job with this id already exists.", { code: "job-conflict" });
       }
