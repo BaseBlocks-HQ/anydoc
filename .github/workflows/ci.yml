@@ -33,6 +33,7 @@ jobs:
       - run: pnpm run typecheck:viewers
       - run: pnpm run test:viewers
       - run: pnpm run budget:viewers
+      - run: pnpm run budget:ingestion
       - run: pnpm run pack:check
 
   rust:

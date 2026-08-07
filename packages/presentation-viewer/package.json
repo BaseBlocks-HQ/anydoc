@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-presentation-viewer",
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.0-alpha.10",
   "description": "Safe, lazy React viewer for PowerPoint presentations",
   "type": "module",
   "license": "MIT",

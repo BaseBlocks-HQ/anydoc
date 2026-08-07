@@ -32,6 +32,7 @@ function PdfCanvasPage({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<ViewerError | null>(null);
   const [rendering, setRendering] = useState(true);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ function PdfCanvasPage({
     let cancelled = false;
     let renderTask: RenderTask | undefined;
     let textLayer: { cancel(): void; render(): Promise<unknown> } | undefined;
+    setError(null);
     setRendering(true);
     void document.getPage(pageNumber).then(async (page) => {
       if (cancelled) return;
@@ -77,7 +79,10 @@ function PdfCanvasPage({
       page.cleanup();
     }).catch((cause: unknown) => {
       if (cancelled || (cause instanceof Error && cause.name === "RenderingCancelledException")) return;
-      onError(toViewerError(cause, { code: "render-failed", format: "pdf", message: `Unable to render PDF page ${pageNumber}.` }));
+      const nextError = toViewerError(cause, { code: "render-failed", format: "pdf", message: `Unable to render PDF page ${pageNumber}.` });
+      setError(nextError);
+      setRendering(false);
+      onError(nextError);
     });
     return () => {
       cancelled = true;
@@ -103,13 +108,21 @@ function PdfCanvasPage({
         width,
       }}
     >
-      <canvas aria-hidden="true" ref={canvasRef} style={{ display: "block" }} />
-      <div
-        className="anydoc-pdf-text-layer"
-        ref={textLayerRef}
-        role="document"
-        style={{ height: "100%", inset: 0, lineHeight: 1, overflow: "hidden", position: "absolute", transformOrigin: "0 0", width: "100%" }}
-      />
+      {error ? (
+        <div role="alert" style={{ color: "#991b1b", maxWidth: "28rem", padding: "1rem", textAlign: "center" }}>
+          {error.message}
+        </div>
+      ) : (
+        <>
+          <canvas aria-hidden="true" ref={canvasRef} style={{ display: "block" }} />
+          <div
+            className="anydoc-pdf-text-layer"
+            ref={textLayerRef}
+            role="document"
+            style={{ height: "100%", inset: 0, lineHeight: 1, overflow: "hidden", position: "absolute", transformOrigin: "0 0", width: "100%" }}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -282,7 +295,6 @@ export default function PdfViewer({
   };
   const setBoundedZoom = (value: number) => setZoom(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, value)));
   const stablePageError = useCallback((nextError: ViewerError) => {
-    setError(nextError);
     onErrorRef.current?.(nextError);
   }, []);
   const viewerControls: ViewerControls = {

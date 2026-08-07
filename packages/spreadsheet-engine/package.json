@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-spreadsheet-engine",
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.0-alpha.10",
   "description": "Bounded OOXML spreadsheet model and read engine for AnyDoc",
   "type": "module",
   "license": "MIT",
