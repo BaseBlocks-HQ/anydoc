@@ -69,36 +69,6 @@ test("retryable sink interruption resumes without duplicating content", async ()
   assert.equal(indexAttempts, 2);
 });
 
-test("expired leases are recoverable and stale workers cannot checkpoint", async () => {
-  const jobs = createMemoryJobStore({ makeToken: (() => { let id = 0; return () => `token-${++id}`; })() });
-  const options = runtimeOptions({ jobs });
-  const runtime = createIngestionRuntime(options);
-  const { job } = await runtime.enqueue({ idempotencyKey: "lease", source: {}, format: "pdf" });
-  const first = await jobs.claim(job.id, { workerId: "old", durationMs: 10, now: 0 });
-  const second = await jobs.claim(job.id, { workerId: "new", durationMs: 10, now: 11 });
-  assert.equal(second.attempt, 2);
-  assert.equal(await jobs.update(job.id, { leaseToken: first.lease.token, now: 11, patch: { phase: "process" } }), null);
-  assert.equal((await jobs.update(job.id, { leaseToken: second.lease.token, now: 11, patch: { phase: "process" } })).phase, "process");
-  await assert.rejects(
-    jobs.update(job.id, { leaseToken: second.lease.token, now: 11, patch: { input: { source: "swapped" } } }),
-    { code: "job-conflict" },
-  );
-});
-
-test("an expired final lease becomes terminal instead of stranding a running job", async () => {
-  const jobs = createMemoryJobStore({ makeToken: () => "only-token" });
-  const job = {
-    id: "job", idempotencyKey: "final-lease", state: "queued", phase: "queued", revision: 0,
-    attempt: 0, maxAttempts: 1, createdAt: 0, updatedAt: 0, input: { source: {}, format: "pdf" },
-  };
-  await jobs.create(job);
-  await jobs.claim(job.id, { workerId: "worker", durationMs: 10, now: 0 });
-  assert.equal(await jobs.claim(job.id, { workerId: "replacement", durationMs: 10, now: 11 }), null);
-  const terminal = await jobs.get(job.id);
-  assert.equal(terminal.state, "failed");
-  assert.equal(terminal.error.code, "lease-lost");
-});
-
 test("native render models and source bytes cannot cross the ingestion boundary", async () => {
   const runtime = createIngestionRuntime(runtimeOptions({
     process: () => ({ content: {}, nativeRender: {} }),
@@ -160,18 +130,6 @@ test("non-durable artifacts fail before any sink side effect", async () => {
   assert.equal(writes, 0);
 });
 
-test("memory store rejects crossed id and idempotency uniqueness", async () => {
-  const jobs = createMemoryJobStore();
-  const first = {
-    id: "first", idempotencyKey: "key:first", state: "queued", phase: "queued", revision: 0,
-    attempt: 0, maxAttempts: 1, createdAt: 0, updatedAt: 0, input: { source: {}, format: "pdf" },
-  };
-  const second = { ...first, id: "second", idempotencyKey: "key:second" };
-  await jobs.create(first);
-  await jobs.create(second);
-  await assert.rejects(jobs.create({ ...first, id: "second" }), { code: "job-conflict" });
-});
-
 test("a stale worker emits lease loss instead of a false retry event", async () => {
   let now = 0;
   const events = [];
@@ -191,4 +149,76 @@ test("a stale worker emits lease loss instead of a false retry event", async () 
   assert.equal(result.status, "lease-lost");
   assert.ok(events.includes("job.lease-lost"));
   assert.ok(!events.includes("job.retry-scheduled"));
+});
+
+test("durable cancellation aborts active work and fences its worker", async () => {
+  let started;
+  const processing = new Promise((resolve) => { started = resolve; });
+  let sinkWrites = 0;
+  const runtime = createIngestionRuntime(runtimeOptions({
+    process: async ({ signal }) => {
+      started();
+      await new Promise((_, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
+    },
+    contentSink: { async write() { sinkWrites += 1; } },
+  }));
+  const { job } = await runtime.enqueue({ idempotencyKey: "cancel-active", source: {}, format: "docx" });
+  const running = runtime.run(job.id, { workerId: "active-worker" });
+  await processing;
+  const cancellation = await runtime.cancel(job.id, { reason: "authorization revoked" });
+  const result = await running;
+  assert.equal(cancellation.status, "cancelled");
+  assert.equal(result.status, "cancelled");
+  assert.equal(result.job.cancellation.reason, "authorization revoked");
+  assert.equal(sinkWrites, 0);
+  assert.equal((await runtime.run(job.id)).status, "not-runnable");
+});
+
+test("queued cancellation is idempotent and terminal jobs cannot be cancelled", async () => {
+  const runtime = createIngestionRuntime(runtimeOptions());
+  const { job } = await runtime.enqueue({ idempotencyKey: "cancel-queued", source: {}, format: "docx" });
+  const first = await runtime.cancel(job.id);
+  const repeated = await runtime.cancel(job.id);
+  assert.equal(first.status, "cancelled");
+  assert.equal(repeated.status, "cancelled");
+  assert.equal(repeated.job.revision, first.job.revision);
+
+  const completed = await runtime.enqueue({ idempotencyKey: "complete-first", source: {}, format: "docx" });
+  await runtime.run(completed.job.id);
+  assert.equal((await runtime.cancel(completed.job.id)).status, "not-cancellable");
+  assert.equal((await runtime.cancel("missing")).status, "not-found");
+});
+
+test("artifact text and binary budgets fail before sink side effects", async () => {
+  for (const [idempotencyKey, artifact, artifactLimits] of [
+    ["large-text", { content: {}, text: "é".repeat(6) }, { maxArtifactBytes: 100, maxTextBytes: 10, maxBinaryBytes: 100 }],
+    ["large-binary", { content: {}, assets: [new Uint8Array(11)] }, { maxArtifactBytes: 100, maxTextBytes: 100, maxBinaryBytes: 10 }],
+    ["sparse-graph", { content: new Array(11) }, { maxArtifactBytes: 100, maxTextBytes: 100, maxBinaryBytes: 100, maxEntries: 10 }],
+  ]) {
+    let writes = 0;
+    const runtime = createIngestionRuntime(runtimeOptions({
+      artifactLimits,
+      process: () => artifact,
+      contentSink: { async write() { writes += 1; return {}; } },
+      retry: createRetryPolicy({ maxAttempts: 1 }),
+    }));
+    const { job } = await runtime.enqueue({ idempotencyKey, source: {}, format: "docx" });
+    const result = await runtime.run(job.id);
+    assert.equal(result.status, "failed");
+    assert.equal(result.error.code, "output-too-large");
+    assert.equal(result.error.retryable, false);
+    assert.equal(writes, 0);
+  }
+});
+
+test("sink result budgets prevent oversized durable job output", async () => {
+  const runtime = createIngestionRuntime(runtimeOptions({
+    artifactLimits: { maxSinkResultBytes: 16 },
+    contentSink: { async write() { return { reference: "x".repeat(32) }; } },
+    retry: createRetryPolicy({ maxAttempts: 1 }),
+  }));
+  const { job } = await runtime.enqueue({ idempotencyKey: "large-result", source: {}, format: "docx" });
+  const result = await runtime.run(job.id);
+  assert.equal(result.status, "failed");
+  assert.equal(result.error.code, "output-too-large");
 });

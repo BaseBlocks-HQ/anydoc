@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 concurrency:
@@ -31,6 +31,7 @@ jobs:
       - run: pnpm run typecheck:viewers
       - run: pnpm run test:viewers
       - run: pnpm run budget:viewers
+      - run: pnpm run budget:ingestion
       - run: pnpm run pack:check
       - run: pnpm audit --prod --audit-level high
       - name: Verify tag and package versions
@@ -51,7 +52,24 @@ jobs:
               exit 1
             }
           done
-      - name: Publish packages
+      - name: Verify packages that already exist on npm
+        if: github.ref_type == 'tag'
+        run: |
+          for directory in \
+            packages/contracts \
+            packages/spreadsheet-engine \
+            packages/spreadsheet-viewer \
+            packages/presentation-viewer \
+            packages/react-viewer \
+            packages/anydoc
+          do
+            name=$(node -p "require('./$directory/package.json').name")
+            version=$(node -p "require('./$directory/package.json').version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              node scripts/verify-registry-package.mjs "$directory" "$name@$version"
+            fi
+          done
+      - name: Publish missing packages
         if: github.ref_type == 'tag'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -67,12 +85,27 @@ jobs:
           do
             name=$(node -p "require('./$directory/package.json').name")
             version=$(node -p "require('./$directory/package.json').version")
-            if npm view "$name@$version" version >/dev/null 2>&1; then
-              echo "$name@$version already exists; skipping"
-            else
+            if ! npm view "$name@$version" version >/dev/null 2>&1; then
               pnpm --dir "$directory" publish --access public --provenance --no-git-checks
             fi
           done
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#viewer-v}"
+          prerelease=""
+          case "$version" in *-*) prerelease="--prerelease" ;; esac
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "GitHub release $GITHUB_REF_NAME already exists."
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --verify-tag \
+              --title "AnyDoc viewer platform $version" \
+              --generate-notes \
+              $prerelease
+          fi
       - name: Package dry run
         if: github.ref_type != 'tag'
         run: pnpm run pack:check

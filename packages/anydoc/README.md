@@ -2,11 +2,16 @@
 
 This is the temporary `@baseblocks/anydoc` distribution for the AnyDoc platform alpha. It exposes the existing native Node ingestion API through `@baseblocks/anydoc/node`, a lazy browser WASM API through `@baseblocks/anydoc/browser`, and format-native React viewers through lazy subpackages. The normalized content model remains separate from native render models; viewers consume original source bytes and never render extracted Markdown as a fidelity substitute.
 
-For ingestion-only use, install the lightweight umbrella package:
+For ingestion without viewers, install the umbrella package:
 
 ```bash
 npm install @baseblocks/anydoc
 ```
+
+The ingestion subpaths are runtime-light and do not import React, viewer code,
+WASM, or the native parser until you select those entry points. The umbrella
+installation itself is not dependency-free: it includes `@firecrawl/anydoc`
+and the platform-applicable optional native parser package.
 
 For the complete native viewer surface, install the optional implementations once; application code still imports through `@baseblocks/anydoc` subpaths:
 
@@ -33,7 +38,8 @@ The ingestion runtime is a set of ports, not a queue, database, or storage SDK. 
 
 - `@baseblocks/anydoc/sources` — bounded Web/stream/bytes reads, incremental SHA-256, exact-size verification, deadlines, and redirect policy.
 - `@baseblocks/anydoc/sources/node` — regular-file sources without pulling Node built-ins into Web bundles.
-- `@baseblocks/anydoc/ingestion` — durable job, lease, retry, idempotency, progress, content-sink, and index-sink contracts.
+- `@baseblocks/anydoc/ingestion` — durable job, cancellation, lease, retry, idempotency, output-budget, progress, content-sink, and index-sink contracts.
+- `@baseblocks/anydoc/ingestion/conformance` — a test-runner-neutral contract suite for durable job-store adapters.
 - `@baseblocks/anydoc/memory` — reference job store and sinks for tests and local tools, not a durable production backend.
 
 ```ts
@@ -65,9 +71,19 @@ const { job } = await runtime.enqueue({
   expectedSha256,
 });
 await runtime.run(job.id, { workerId });
+
+// Deletion, authorization revocation, or an explicit user action can cancel
+// queued, retrying, or active work durably. Active workers are fenced.
+await runtime.cancel(job.id, { reason: "authorization revoked" });
 ```
 
 Source descriptors and job metadata must be durable structured-clone data; never put credentials in them. Sink writes receive stable, phase-specific idempotency keys. A retry after interruption may call a sink again, so a production sink must atomically return its prior result for the same key.
+
+Normalized artifacts are measured before `structuredClone` or sink writes.
+Default budgets independently cap total estimated artifact bytes, UTF-8 text,
+binary data, graph entries/depth, and persisted sink results. Override
+`artifactLimits` deliberately for a trusted workload; an exceeded budget fails
+terminally with `output-too-large`.
 
 The normalized `artifact.content` model is deliberately separate from native viewer state. The runtime rejects artifacts containing `nativeRender`, `viewerModel`, or `sourceBytes`; native viewers continue to consume original bounded source bytes through their lazy format packages.
 

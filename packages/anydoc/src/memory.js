@@ -89,6 +89,25 @@ export function createMemoryJobStore(options = {}) {
       records.set(id, next);
       return clone(next);
     },
+    async cancel(id, { now, reason }) {
+      const current = records.get(id);
+      if (!current) return null;
+      if (current.state === "cancelled") return clone(current);
+      if (current.state === "succeeded" || current.state === "failed") return null;
+      const next = validateJob({
+        ...current,
+        state: "cancelled",
+        phase: "cancelled",
+        revision: current.revision + 1,
+        updatedAt: now,
+        nextAttemptAt: undefined,
+        lease: undefined,
+        error: undefined,
+        cancellation: { at: now, ...(reason === undefined ? {} : { reason }) },
+      });
+      records.set(id, next);
+      return clone(next);
+    },
     async update(id, { leaseToken, now, patch }) {
       const current = records.get(id);
       if (!current || current.state !== "running" || current.lease?.token !== leaseToken || current.lease.expiresAt <= now) return null;

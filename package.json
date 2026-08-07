@@ -11,7 +11,8 @@
     "test:viewers": "pnpm --recursive --if-present test",
     "typecheck:viewers": "pnpm --recursive --if-present typecheck",
     "pack:check": "node scripts/pack-viewers.mjs --dry-run",
-    "budget:viewers": "node scripts/check-viewer-budgets.mjs"
+    "budget:viewers": "node scripts/check-viewer-budgets.mjs",
+    "budget:ingestion": "node scripts/benchmark-ingestion.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",

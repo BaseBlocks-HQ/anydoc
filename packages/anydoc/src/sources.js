@@ -296,11 +296,17 @@ export async function readSource(source, options = {}) {
 
     let resultBytes = bytes;
     if (!resultBytes) {
-      resultBytes = new Uint8Array(byteLength);
-      let offset = 0;
-      for (const chunk of chunks) {
-        resultBytes.set(chunk, offset);
-        offset += chunk.byteLength;
+      // The common unknown-length single-chunk case already owns an isolated
+      // copy, so returning it avoids a second full-document allocation.
+      if (chunks.length === 1) {
+        [resultBytes] = chunks;
+      } else {
+        resultBytes = new Uint8Array(byteLength);
+        let offset = 0;
+        for (const chunk of chunks) {
+          resultBytes.set(chunk, offset);
+          offset += chunk.byteLength;
+        }
       }
     }
     let checksumValue;

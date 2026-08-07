@@ -2,12 +2,99 @@ import { DocumentPlatformError, defaultDocumentLimits } from "@baseblocks/anydoc
 import { readSource } from "./sources.js";
 
 export const ingestionRuntimeCapabilities = Object.freeze({
+  durableCancellation: true,
   durableJobs: true,
   idempotentSinks: true,
   leaseRecovery: true,
   nativeRenderModels: false,
+  outputBudgets: true,
   verifiedStreamingReads: true,
 });
+
+const textEncoder = new TextEncoder();
+
+export function createArtifactLimits(options = {}) {
+  const limits = {
+    maxArtifactBytes: options.maxArtifactBytes ?? 128 * 1024 * 1024,
+    maxTextBytes: options.maxTextBytes ?? defaultDocumentLimits.maxTextBytes,
+    maxBinaryBytes: options.maxBinaryBytes ?? defaultDocumentLimits.maxBytes,
+    maxSinkResultBytes: options.maxSinkResultBytes ?? 1024 * 1024,
+    maxEntries: options.maxEntries ?? 500_000,
+    maxDepth: options.maxDepth ?? 128,
+  };
+  for (const [name, value] of Object.entries(limits)) {
+    if (!Number.isSafeInteger(value) || value < 0) {
+      throw error(`${name} must be a non-negative safe integer.`, "invalid-source");
+    }
+  }
+  return Object.freeze(limits);
+}
+
+function measureDurableValue(value, limits, name) {
+  const seen = new WeakSet();
+  let totalBytes = 0;
+  let textBytes = 0;
+  let binaryBytes = 0;
+  let entries = 0;
+
+  const exceed = (message) => {
+    throw error(`${name} ${message}`, "output-too-large");
+  };
+  const add = (kind, bytes) => {
+    totalBytes += bytes;
+    if (kind === "text") textBytes += bytes;
+    if (kind === "binary") binaryBytes += bytes;
+    if (totalBytes > limits.maxBytes) exceed(`exceeds the ${limits.maxBytes.toLocaleString()} byte budget.`);
+    if (textBytes > limits.maxTextBytes) exceed(`exceeds the ${limits.maxTextBytes.toLocaleString()} text-byte budget.`);
+    if (binaryBytes > limits.maxBinaryBytes) exceed(`exceeds the ${limits.maxBinaryBytes.toLocaleString()} binary-byte budget.`);
+  };
+  const visit = (current, depth) => {
+    if (depth > limits.maxDepth) exceed(`exceeds the maximum nesting depth of ${limits.maxDepth}.`);
+    entries += 1;
+    if (entries > limits.maxEntries) exceed(`exceeds the ${limits.maxEntries.toLocaleString()} entry budget.`);
+    if (current === null || current === undefined) { add("structure", 4); return; }
+    if (typeof current === "string") { add("text", textEncoder.encode(current).byteLength); return; }
+    if (typeof current === "number" || typeof current === "bigint") { add("structure", 8); return; }
+    if (typeof current === "boolean") { add("structure", 4); return; }
+    if (typeof current !== "object") return;
+    if (seen.has(current)) return;
+    seen.add(current);
+    if (current instanceof ArrayBuffer) { add("binary", current.byteLength); return; }
+    if (typeof SharedArrayBuffer !== "undefined" && current instanceof SharedArrayBuffer) { add("binary", current.byteLength); return; }
+    if (ArrayBuffer.isView(current)) { add("binary", current.byteLength); return; }
+    if (typeof Blob !== "undefined" && current instanceof Blob) { add("binary", current.size); return; }
+    if (current instanceof Date) { add("structure", 8); return; }
+    if (current instanceof Map) {
+      for (const [key, entry] of current) { visit(key, depth + 1); visit(entry, depth + 1); }
+      return;
+    }
+    if (current instanceof Set) {
+      for (const entry of current) visit(entry, depth + 1);
+      return;
+    }
+    if (Array.isArray(current)) {
+      if (current.length > limits.maxEntries - entries) exceed(`exceeds the ${limits.maxEntries.toLocaleString()} entry budget.`);
+      add("structure", current.length * 4);
+    }
+    for (const key of Object.keys(current)) {
+      add("text", textEncoder.encode(key).byteLength);
+      visit(current[key], depth + 1);
+    }
+  };
+  visit(value, 0);
+  return Object.freeze({ totalBytes, textBytes, binaryBytes, entries });
+}
+
+export function measureIngestionArtifact(artifact, options = {}) {
+  const limits = createArtifactLimits(options);
+  return measureDurableValue(artifact, {
+    maxBytes: limits.maxArtifactBytes,
+    maxTextBytes: limits.maxTextBytes,
+    maxBinaryBytes: limits.maxBinaryBytes,
+    maxEntries: limits.maxEntries,
+    maxDepth: limits.maxDepth,
+  }, "The ingestion artifact");
+}
 
 function error(message, code, cause, retryable = false) {
   return new DocumentPlatformError(message, { code, cause, retryable });
@@ -86,6 +173,7 @@ export function createIngestionRuntime(options) {
   assertPort(options.jobs, "claim", "jobs");
   assertPort(options.jobs, "update", "jobs");
   assertPort(options.jobs, "renew", "jobs");
+  assertPort(options.jobs, "cancel", "jobs");
   assertPort(options.jobs, "get", "jobs");
   assertPort(options, "resolveSource", "runtime options");
   assertPort(options, "process", "runtime options");
@@ -99,6 +187,8 @@ export function createIngestionRuntime(options) {
   const random = options.random ?? Math.random;
   const makeId = options.makeId ?? (() => globalThis.crypto.randomUUID());
   const observer = options.observer;
+  const artifactLimits = createArtifactLimits(options.artifactLimits);
+  const activeRuns = new Map();
 
   async function enqueue(input) {
     if (!input || typeof input.idempotencyKey !== "string" || input.idempotencyKey.length === 0 || input.idempotencyKey.length > 512) {
@@ -142,9 +232,13 @@ export function createIngestionRuntime(options) {
     }
     const leaseToken = job.lease.token;
     const leaseController = new AbortController();
+    const durableCancellationController = new AbortController();
+    const controllers = activeRuns.get(jobId) ?? new Set();
+    controllers.add(durableCancellationController);
+    activeRuns.set(jobId, controllers);
     const signal = runOptions.signal
-      ? AbortSignal.any([runOptions.signal, leaseController.signal])
-      : leaseController.signal;
+      ? AbortSignal.any([runOptions.signal, leaseController.signal, durableCancellationController.signal])
+      : AbortSignal.any([leaseController.signal, durableCancellationController.signal]);
     let heartbeatRunning = false;
     let heartbeatStopped = false;
     let heartbeatTask = Promise.resolve();
@@ -220,6 +314,7 @@ export function createIngestionRuntime(options) {
       if ("nativeRender" in artifact || "viewerModel" in artifact || "sourceBytes" in artifact) {
         throw error("Ingestion artifacts cannot contain native render models or source bytes.", "processing-failed");
       }
+      measureIngestionArtifact(artifact, artifactLimits);
       assertDurable(artifact, "The ingestion artifact", "processing-failed");
 
       await checkpoint("store-content");
@@ -235,6 +330,13 @@ export function createIngestionRuntime(options) {
         throw asError(cause, "sink-failed", "The content sink failed.", true);
       }
       throwIfAborted(signal);
+      measureDurableValue(content, {
+        maxBytes: artifactLimits.maxSinkResultBytes,
+        maxTextBytes: artifactLimits.maxSinkResultBytes,
+        maxBinaryBytes: artifactLimits.maxSinkResultBytes,
+        maxEntries: artifactLimits.maxEntries,
+        maxDepth: artifactLimits.maxDepth,
+      }, "The content sink result");
       assertDurable(content, "The content sink result");
 
       let index;
@@ -252,6 +354,13 @@ export function createIngestionRuntime(options) {
           throw asError(cause, "sink-failed", "The index sink failed.", true);
         }
         throwIfAborted(signal);
+        measureDurableValue(index, {
+          maxBytes: artifactLimits.maxSinkResultBytes,
+          maxTextBytes: artifactLimits.maxSinkResultBytes,
+          maxBinaryBytes: artifactLimits.maxSinkResultBytes,
+          maxEntries: artifactLimits.maxEntries,
+          maxDepth: artifactLimits.maxDepth,
+        }, "The index sink result");
         assertDurable(index, "The index sink result");
       }
 
@@ -266,6 +375,12 @@ export function createIngestionRuntime(options) {
       return { status: "succeeded", job };
     } catch (cause) {
       await stopHeartbeat();
+      const current = await jobs.get(jobId).catch(() => null);
+      if (current?.state === "cancelled") {
+        const cancellation = error(current.cancellation?.reason ?? "The ingestion job was cancelled.", "aborted");
+        emit(observer, { type: "job.worker-cancelled", jobId, attempt: job.attempt, at: clock() });
+        return { status: "cancelled", job: current, error: cancellation };
+      }
       let failure = signal.aborted
         ? asError(signal.reason ?? cause, "aborted", "The ingestion run was aborted.", true)
         : asError(cause, "processing-failed", "The ingestion run failed.");
@@ -294,8 +409,27 @@ export function createIngestionRuntime(options) {
       return { status: updated ? nextState : "lease-lost", job, error: failure };
     } finally {
       await stopHeartbeat();
+      controllers.delete(durableCancellationController);
+      if (controllers.size === 0) activeRuns.delete(jobId);
     }
   }
 
-  return Object.freeze({ enqueue, get: (jobId) => jobs.get(jobId), run });
+  async function cancel(jobId, cancelOptions = {}) {
+    const reason = cancelOptions.reason;
+    if (reason !== undefined && (typeof reason !== "string" || reason.length === 0 || reason.length > 1_024)) {
+      throw error("A cancellation reason must be a non-empty string of at most 1,024 characters.", "invalid-source");
+    }
+    const now = clock();
+    const cancelled = await jobs.cancel(jobId, { now, reason });
+    if (!cancelled) {
+      const current = await jobs.get(jobId);
+      return current ? { status: "not-cancellable", job: current } : { status: "not-found" };
+    }
+    const cancellation = error(reason ?? "The ingestion job was cancelled.", "aborted");
+    for (const controller of activeRuns.get(jobId) ?? []) controller.abort(cancellation);
+    emit(observer, { type: "job.cancelled", jobId, attempt: cancelled.attempt, at: now });
+    return { status: "cancelled", job: cancelled };
+  }
+
+  return Object.freeze({ cancel, enqueue, get: (jobId) => jobs.get(jobId), run });
 }
