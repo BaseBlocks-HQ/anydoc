@@ -1,0 +1,8 @@
+AnyDoc is derived from the upstream anydoc project by Firecrawl / Sideguide Technologies Inc.
+
+This fork preserves the upstream MIT license, copyright notices, commit history, and
+the upstream remote. Additional viewer-platform code in this repository is released
+under the same MIT license by BaseBlocks-HQ.
+
+Dependency licenses are published by each dependency and must be audited before a
+binary or bundled viewer release.

@@ -1,0 +1,19 @@
+{
+  "name": "@baseblocks/anydoc-viewer",
+  "version": "0.1.0-alpha.1",
+  "description": "Safe, lazy, format-native viewer contracts and adapters for AnyDoc",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/BaseBlocks-HQ/anydoc.git", "directory": "viewer" },
+  "exports": {
+    ".": { "types": "./index.d.ts", "import": "./index.js" },
+    "./capabilities": { "types": "./src/capabilities.d.ts", "import": "./src/capabilities.js" },
+    "./security": { "types": "./src/security.d.ts", "import": "./src/security.js" },
+    "./adapters": { "types": "./src/adapters.d.ts", "import": "./src/adapters.js" }
+  },
+  "files": ["index.js", "index.d.ts", "src", "README.md"],
+  "sideEffects": false,
+  "engines": { "node": ">=20" },
+  "peerDependencies": { "react": ">=18" },
+  "peerDependenciesMeta": { "react": { "optional": true } }
+}

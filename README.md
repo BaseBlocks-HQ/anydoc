@@ -197,6 +197,27 @@ Format::from_extension("pptm"); // Some(Format::Pptx)
 Format::from_path(Path::new("report.odt")); // Some(Format::Odt)
 ```
 
+## Optional native viewer platform
+
+The `viewer/` package is an optional, modular visual surface for consumers that need
+to inspect original source bytes. It is deliberately separate from the Rust/WASM
+ingestion model: extracted Markdown is for content workflows, while viewers use
+format-native renderers.
+
+```js
+import { getCapabilities, loadViewerAdapter } from '@baseblocks/anydoc-viewer';
+
+getCapabilities('xlsx');
+const spreadsheet = await loadViewerAdapter('xlsx'); // lazy format boundary
+```
+
+The alpha capability matrix covers text/Markdown, PDF, DOCX, XLSX/CSV, and PPTX.
+Viewers must enforce bounded resources and treat files as untrusted: macros,
+scripts, formulas, external workbook references, external media, and active HTML are
+not executed or fetched automatically. DOC/DOCM, XLS/XLSM/XLSB, PPT/PPS/POT/PPTM/
+PPSX/PPSM, ODT/ODS/ODP, RTF, EPUB, and scanned/image-only PDF remain ingestion-only
+until a format-native viewer is implemented and verified.
+
 The same three functions exist in Node (`formatFromBytes`, ...) and Python (`anydoc.format_from_bytes`, ...).
 
 ## Errors
