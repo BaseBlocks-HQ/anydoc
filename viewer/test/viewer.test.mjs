@@ -10,13 +10,14 @@ import {
 } from '../index.js';
 
 test('capabilities distinguish v1 viewers from ingestion-only formats', () => {
-  assert.equal(getCapabilities('xlsx').view, true);
+  assert.equal(getCapabilities('xlsx').view, false);
   assert.equal(getCapabilities('docm').view, false);
-  assert.equal(isMacroEnabled('xlsm'), true);
+  assert.equal(isMacroEnabled('XLSM'), true);
 });
 
 test('unsafe URLs and filenames are inert', () => {
   assert.equal(isSafeExternalUrl('javascript:alert(1)'), false);
+  assert.equal(isSafeExternalUrl('/relative.png'), false);
   assert.equal(isSafeExternalUrl('https://example.test/file'), true);
   assert.equal(sanitizeFilename('a\n../../b'), 'a_.._.._b');
 });

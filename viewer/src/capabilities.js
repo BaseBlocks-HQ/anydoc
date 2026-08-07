@@ -3,11 +3,11 @@ const formats = ["text", "markdown", "pdf", "docx", "xlsx", "csv", "pptx", "unsu
 export const capabilityMatrix = Object.freeze({
   text: { view: true, native: true, search: true, note: "Bounded plain-text rendering; HTML is never interpreted." },
   markdown: { view: true, native: true, search: true, note: "Sanitized Markdown only; raw HTML and remote images are blocked." },
-  pdf: { view: true, native: true, search: true, note: "PDF.js worker rendering; scripts, forms, launches, and attachments are blocked." },
-  docx: { view: true, native: true, search: true, note: "DOCX renderer adapter; macros, OLE, and external relationships are blocked." },
-  xlsx: { view: true, native: true, search: true, note: "Virtualized spreadsheet surface; formulas are inert and external references are blocked." },
-  csv: { view: true, native: true, search: true, note: "Virtualized inert spreadsheet surface; formula-like values remain text." },
-  pptx: { view: true, native: true, search: true, note: "Lazy static slide renderer; external media, scripts, and embedded objects are blocked." },
+  pdf: { view: false, native: false, search: true, note: "Contract only in this alpha; host must provide the hardened PDF.js renderer." },
+  docx: { view: false, native: false, search: true, note: "Contract only in this alpha; host must provide the safe DOCX renderer." },
+  xlsx: { view: false, native: false, search: true, note: "Contract only in this alpha; host must provide the worker-backed spreadsheet viewer." },
+  csv: { view: false, native: false, search: true, note: "Contract only in this alpha; host must provide the inert spreadsheet surface." },
+  pptx: { view: false, native: false, search: true, note: "Contract only in this alpha; host must provide the lazy static slide renderer." },
   unsupported: { view: false, native: false, search: true, note: "Semantic ingestion may still be available; native viewing is not claimed." },
 });
 

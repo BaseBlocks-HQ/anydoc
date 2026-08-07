@@ -13,9 +13,9 @@ Documents are untrusted. Adapters must enforce bounded bytes/pages/cells/slides,
 | Format | Native viewer | Alpha policy |
 |---|---:|---|
 | text / Markdown | Yes | Bounded, inert text; Markdown must be AST-sanitized and remote images blocked |
-| PDF | Yes | PDF.js worker, lazy pages, scripts/XFA/forms/launches disabled |
-| DOCX | Yes | Safe renderer; no macros, OLE, or external relationships |
-| XLSX / CSV | Yes | Virtualized grid; formulas and external references inert |
-| PPTX | Yes | Lazy static slides; external media and playback blocked |
+| PDF | Contract only | Host-provided PDF.js worker; scripts/XFA/forms/launches disabled |
+| DOCX | Contract only | Host-provided safe renderer; no macros, OLE, or external relationships |
+| XLSX / CSV | Contract only | Host-provided virtualized grid; formulas and external references inert |
+| PPTX | Contract only | Host-provided lazy static slides; external media and playback blocked |
 
 DOC/DOCM, XLS/XLSM/XLSB, PPT/PPS/POT/PPTM/PPSX/PPSM, ODT/ODS/ODP, RTF, EPUB, and scanned/image-only PDF are ingestion-supported but not claimed as native viewers in v1.

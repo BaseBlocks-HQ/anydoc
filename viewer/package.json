@@ -11,7 +11,7 @@
     "./security": { "types": "./src/security.d.ts", "import": "./src/security.js" },
     "./adapters": { "types": "./src/adapters.d.ts", "import": "./src/adapters.js" }
   },
-  "files": ["index.js", "index.d.ts", "src", "README.md"],
+  "files": ["index.js", "index.d.ts", "src", "README.md", "LICENSE", "NOTICE"],
   "sideEffects": false,
   "engines": { "node": ">=20" },
   "peerDependencies": { "react": ">=18" },
