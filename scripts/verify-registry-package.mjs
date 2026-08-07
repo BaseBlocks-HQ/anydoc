@@ -35,7 +35,19 @@ async function files(root, current = root, result = []) {
 async function manifest(root) {
   const result = new Map();
   for (const file of await files(root)) {
-    const bytes = await readFile(join(root, file));
+    let bytes = await readFile(join(root, file));
+    if (file === "package.json") {
+      const sortObjectKeys = (value) => {
+        if (Array.isArray(value)) return value.map(sortObjectKeys);
+        if (value === null || typeof value !== "object") return value;
+        return Object.fromEntries(
+          Object.entries(value)
+            .sort(([left], [right]) => left.localeCompare(right))
+            .map(([key, entry]) => [key, sortObjectKeys(entry)]),
+        );
+      };
+      bytes = Buffer.from(JSON.stringify(sortObjectKeys(JSON.parse(bytes.toString("utf8")))));
+    }
     result.set(file, createHash("sha256").update(bytes).digest("hex"));
   }
   return result;
