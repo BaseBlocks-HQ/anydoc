@@ -27,9 +27,11 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Build workspace packages first so umbrella subpath declarations resolve
+      # exactly as they will for registry consumers.
+      - run: pnpm run build:viewers
       - run: pnpm run typecheck:viewers
       - run: pnpm run test:viewers
-      - run: pnpm run build:viewers
       - run: pnpm run budget:viewers
       - run: pnpm run pack:check
 
