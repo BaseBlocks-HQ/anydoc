@@ -209,12 +209,10 @@ to inspect original source bytes. It is deliberately separate from the Rust/WASM
 ingestion model: extracted Markdown is for content workflows, while viewers use
 format-native renderers.
 
-```js
-import { getCapabilities } from '@baseblocks/anydoc';
-import { loadViewerAdapter } from '@baseblocks/anydoc/adapters';
+```tsx
+import { AnyDocumentViewer } from '@baseblocks/anydoc/react';
 
-getCapabilities('xlsx');
-const spreadsheet = await loadViewerAdapter('xlsx'); // lazy format boundary
+<AnyDocumentViewer source={fileOrBytes} filename="report.xlsx" />
 ```
 
 The alpha capability matrix covers text/Markdown, PDF, DOCX, XLSX/CSV, and PPTX.

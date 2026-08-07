@@ -1,6 +1,6 @@
 import type { ReadSourceOptions, DocumentSource } from "./sources.js";
 
-export interface SimpleIngestionOptions extends Pick<ReadSourceOptions, "deadline" | "expectedSha256" | "expectedSize" | "maxBytes" | "onProgress" | "signal"> {
+export interface IngestOptions extends Pick<ReadSourceOptions, "deadline" | "expectedSha256" | "expectedSize" | "maxBytes" | "onProgress" | "signal"> {
   readonly calculateSha256?: boolean;
   readonly contentType?: string;
   readonly filename?: string;
@@ -42,6 +42,6 @@ export interface SimpleIngestionParser<Document = unknown> {
 
 export declare function ingestDocumentSource<Document = unknown>(
   source: DocumentSource,
-  options: SimpleIngestionOptions,
+  options: IngestOptions,
   parser: SimpleIngestionParser<Document>,
 ): Promise<IngestedDocument<Document>>;

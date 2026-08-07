@@ -119,7 +119,16 @@ export class ConvexIngestionQueue<
       retry: this.#retry,
       ...(this.#onComplete ? { onComplete: this.#onComplete, context: this.#completionContext?.(job) } : {}),
     });
-    const workId = await this.#binding.bind(ctx, job, candidate);
+    let workId: WorkId;
+    try {
+      workId = await this.#binding.bind(ctx, job, candidate);
+    } catch (cause) {
+      // Enqueue happens before the application can atomically bind its workId.
+      // Best-effort cancellation prevents an unbound candidate from becoming
+      // an invisible orphan; the binding error remains authoritative.
+      await this.#pool.cancel(ctx, candidate).catch(() => undefined);
+      throw cause;
+    }
     if (workId !== candidate) await this.#pool.cancel(ctx, candidate);
     return { entityId: job.entityId, generation: job.generation, idempotencyKey: job.idempotencyKey, sourceVersion: job.sourceVersion, workId };
   }

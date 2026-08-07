@@ -7,8 +7,6 @@ export {
   limitForFormat,
   sanitizeFilename,
 } from "@baseblocks/anydoc-contracts";
-export { defaultDocumentLimits as defaultViewerLimits } from "@baseblocks/anydoc-contracts";
-
 export function isMacroEnabled(format) {
   return new Set(["docm", "xlsm", "pptm", "ppsm"]).has(String(format).toLowerCase().replace(/^\./, ""));
 }

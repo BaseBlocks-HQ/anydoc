@@ -17,7 +17,7 @@ describe("durable binding conformance", () => {
         },
         async status() { return active?.workId ?? null; },
       };
-      return { binding, ctx: {} as any };
+      return { binding, mutationCtx: {} as any, queryCtx: {} as any };
     });
   });
 });

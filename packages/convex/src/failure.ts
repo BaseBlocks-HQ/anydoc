@@ -1,6 +1,8 @@
 import type { OnCompleteArgs } from "@convex-dev/workpool";
 
 const FAILURE_MARKER = "ANYDOC_FAILURE_V1:";
+const MAX_FAILURE_MESSAGE_CHARACTERS = 2_048;
+const MAX_FAILURE_FIELD_CHARACTERS = 128;
 const LIMIT_KEYS = new Set([
   "actualBytes",
   "actualSize",
@@ -32,6 +34,10 @@ function field(cause: unknown, name: string): unknown {
     : undefined;
 }
 
+function boundedString(value: string, maximum: number): string {
+  return Array.from(value).slice(0, maximum).join("");
+}
+
 function collectLimits(cause: unknown): Record<string, number | string> | undefined {
   const limits: Record<string, number | string> = {};
   let current = cause;
@@ -39,7 +45,9 @@ function collectLimits(cause: unknown): Record<string, number | string> | undefi
     for (const key of LIMIT_KEYS) {
       const value = field(current, key);
       if ((typeof value === "number" && Number.isFinite(value)) || typeof value === "string") {
-        limits[key] ??= value;
+        limits[key] ??= typeof value === "string"
+          ? boundedString(value, MAX_FAILURE_FIELD_CHARACTERS)
+          : value;
       }
     }
     current = field(current, "cause");
@@ -57,10 +65,10 @@ export function encodeConvexIngestionFailure(cause: unknown): string {
   const failure: ConvexIngestionFailure = {
     version: 1,
     kind: "anydoc-ingestion-failure",
-    code: typeof code === "string" ? code : "processing-failed",
-    message: cause instanceof Error ? cause.message : "AnyDoc ingestion failed.",
+    code: typeof code === "string" ? boundedString(code, MAX_FAILURE_FIELD_CHARACTERS) : "processing-failed",
+    message: boundedString(cause instanceof Error ? cause.message : "AnyDoc ingestion failed.", MAX_FAILURE_MESSAGE_CHARACTERS),
     retryable: retryable === true,
-    ...(typeof format === "string" ? { format } : {}),
+    ...(typeof format === "string" ? { format: boundedString(format, MAX_FAILURE_FIELD_CHARACTERS) } : {}),
     ...(typeof status === "number" && Number.isFinite(status) ? { status } : {}),
     ...(limits ? { limits } : {}),
   };
@@ -81,7 +89,27 @@ export function decodeConvexIngestionFailure(value: OnCompleteArgs["result"] | s
   if (!encoded) return undefined;
   try {
     const parsed = JSON.parse(decodeURIComponent(encoded)) as Partial<ConvexIngestionFailure>;
-    if (parsed.version !== 1 || parsed.kind !== "anydoc-ingestion-failure" || typeof parsed.code !== "string" || typeof parsed.message !== "string" || typeof parsed.retryable !== "boolean") return undefined;
+    if (
+      parsed.version !== 1
+      || parsed.kind !== "anydoc-ingestion-failure"
+      || typeof parsed.code !== "string"
+      || Array.from(parsed.code).length > MAX_FAILURE_FIELD_CHARACTERS
+      || typeof parsed.message !== "string"
+      || Array.from(parsed.message).length > MAX_FAILURE_MESSAGE_CHARACTERS
+      || typeof parsed.retryable !== "boolean"
+      || (parsed.format !== undefined && (typeof parsed.format !== "string" || Array.from(parsed.format).length > MAX_FAILURE_FIELD_CHARACTERS))
+      || (parsed.status !== undefined && (typeof parsed.status !== "number" || !Number.isFinite(parsed.status)))
+      || (parsed.limits !== undefined && (
+        !parsed.limits
+        || typeof parsed.limits !== "object"
+        || Array.isArray(parsed.limits)
+        || Object.keys(parsed.limits).length > LIMIT_KEYS.size
+        || Object.entries(parsed.limits).some(([key, item]) => !LIMIT_KEYS.has(key) || !(
+          (typeof item === "number" && Number.isFinite(item))
+          || (typeof item === "string" && Array.from(item).length <= MAX_FAILURE_FIELD_CHARACTERS)
+        ))
+      ))
+    ) return undefined;
     return parsed as ConvexIngestionFailure;
   } catch {
     return undefined;

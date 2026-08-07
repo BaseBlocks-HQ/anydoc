@@ -1,14 +1,14 @@
 {
   "name": "@baseblocks/anydoc-ingestion",
-  "version": "0.1.0-alpha.12",
-  "description": "Runtime-light AnyDoc ingestion for Node, browsers, queues, and server actions",
+  "version": "0.1.0-alpha.13",
+  "description": "Runtime-light AnyDoc ingestion for Node, queues, workers, and server actions",
   "type": "module",
   "license": "MIT",
   "repository": { "type": "git", "url": "https://github.com/BaseBlocks-HQ/anydoc.git", "directory": "packages/ingestion" },
   "exports": {
     ".": { "types": "./index.d.ts", "import": "./index.js" },
     "./node": { "types": "./node.d.ts", "import": "./node.js" },
-    "./simple": { "types": "./src/simple-ingestion.d.ts", "import": "./src/simple-ingestion.js" },
+    "./pipeline": { "types": "./src/simple-ingestion.d.ts", "import": "./src/simple-ingestion.js" },
     "./capabilities": { "types": "./src/capabilities.d.ts", "import": "./src/capabilities.js" },
     "./security": { "types": "./src/security.d.ts", "import": "./src/security.js" },
     "./ingestion": { "types": "./src/ingestion.d.ts", "import": "./src/ingestion.js" },
@@ -22,7 +22,7 @@
   "sideEffects": false,
   "engines": { "node": ">=20" },
   "dependencies": {
-    "@baseblocks/anydoc-contracts": "workspace:*",
+    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.13",
     "@firecrawl/anydoc": "0.1.7"
   },
   "devDependencies": { "@types/node": "^24.10.1" },
