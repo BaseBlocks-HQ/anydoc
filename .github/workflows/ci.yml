@@ -14,6 +14,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  viewers:
+    name: Viewer packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck:viewers
+      - run: pnpm run test:viewers
+      - run: pnpm run build:viewers
+      - run: pnpm run budget:viewers
+      - run: pnpm run pack:check
+
   rust:
     name: Rust
     runs-on: blacksmith-8vcpu-ubuntu-2404

@@ -1,0 +1,89 @@
+export { OoxmlArchive, type SpreadsheetOpenLimits } from "./archive.ts";
+export {
+  assertCoordinate,
+  cellAddress,
+  cellKey,
+  columnName,
+  parseCellAddress,
+  parseRangeAddress,
+  rangeAddress,
+  XLSX_MAX_COLUMNS,
+  XLSX_MAX_ROWS,
+} from "./coordinates.ts";
+export { SpreadsheetEngine, verifySpreadsheetBytes } from "./engine.ts";
+export {
+  chartAnchorXml,
+  chartXml,
+  parseChart,
+  renderChartModel,
+  type SpreadsheetRenderedChart,
+} from "./charts.ts";
+export { formatSpreadsheetValue, spreadsheetCellDisplayValue } from "./display.ts";
+export { translateSpreadsheetFormula } from "./formula-fill.ts";
+export {
+  BuiltInFormulaEngine,
+  type FormulaEngine,
+  type FormulaEngineCell,
+  type FormulaEngineInput,
+  type FormulaEngineResult,
+  type FormulaEngineSheet,
+  type FormulaEngineUpdate,
+  type FormulaRecalculationResult,
+} from "./formula.ts";
+export type {
+  SpreadsheetAnchorPoint,
+  SpreadsheetAxis,
+  SpreadsheetCell,
+  SpreadsheetCellInput,
+  SpreadsheetCellStyle,
+  SpreadsheetChart,
+  SpreadsheetChartSeries,
+  SpreadsheetChartType,
+  SpreadsheetConditionalFormat,
+  SpreadsheetDataValidation,
+  SpreadsheetDiagnostic,
+  SpreadsheetDateSystem,
+  SpreadsheetFeature,
+  SpreadsheetFeatureId,
+  SpreadsheetHyperlink,
+  SpreadsheetInspection,
+  SpreadsheetMerge,
+  SpreadsheetObject,
+  SpreadsheetObjectAnchor,
+  SpreadsheetOperation,
+  SpreadsheetPivotTable,
+  SpreadsheetPivotValue,
+  SpreadsheetProjectedValue,
+  SpreadsheetRange,
+  SpreadsheetScalar,
+  SpreadsheetSheet,
+  SpreadsheetTable,
+  SpreadsheetVerification,
+  SpreadsheetWorkbookModel,
+  SpreadsheetTableAggregateMetric,
+  SpreadsheetTableAggregateQuery,
+  SpreadsheetTableAggregateResult,
+  SpreadsheetTableColumnProfile,
+  SpreadsheetTablePartitionFilter,
+  SpreadsheetTablePredicate,
+  SpreadsheetTableProfile,
+  SpreadsheetTableQuery,
+  SpreadsheetTableQueryResult,
+} from "./model.ts";
+export { renderSpreadsheetRange } from "./render.ts";
+export {
+  aggregateSpreadsheetTable,
+  profileSpreadsheetTable,
+  querySpreadsheetTable,
+  tableRangeAddress,
+} from "./table-query.ts";
+export {
+  SpreadsheetReadSession,
+  type SpreadsheetCopyResult,
+  type SpreadsheetRangeRead,
+  type SpreadsheetSearchMatch,
+  type SpreadsheetSearchResult,
+  type SpreadsheetSelectionStatistics,
+  type SpreadsheetSheetMetadata,
+  type SpreadsheetWorkbookMetadata,
+} from "./read-session.ts";

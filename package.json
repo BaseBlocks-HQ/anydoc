@@ -1,0 +1,20 @@
+{
+  "name": "anydoc-platform-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:viewers": "pnpm --recursive --if-present build",
+    "test:viewers": "pnpm --recursive --if-present test",
+    "typecheck:viewers": "pnpm --recursive --if-present typecheck",
+    "pack:check": "node scripts/pack-viewers.mjs --dry-run",
+    "budget:viewers": "node scripts/check-viewer-budgets.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "3.2.6"
+  }
+}

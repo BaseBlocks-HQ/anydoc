@@ -199,13 +199,14 @@ Format::from_path(Path::new("report.odt")); // Some(Format::Odt)
 
 ## Optional native viewer platform
 
-The `viewer/` package is an optional, modular visual surface for consumers that need
+The `packages/` workspace adds an optional, modular visual surface for consumers that need
 to inspect original source bytes. It is deliberately separate from the Rust/WASM
 ingestion model: extracted Markdown is for content workflows, while viewers use
 format-native renderers.
 
 ```js
-import { getCapabilities, loadViewerAdapter } from '@baseblocks/anydoc-viewer';
+import { getCapabilities } from '@baseblocks/anydoc';
+import { loadViewerAdapter } from '@baseblocks/anydoc/adapters';
 
 getCapabilities('xlsx');
 const spreadsheet = await loadViewerAdapter('xlsx'); // lazy format boundary
@@ -215,8 +216,9 @@ The alpha capability matrix covers text/Markdown, PDF, DOCX, XLSX/CSV, and PPTX.
 Viewers must enforce bounded resources and treat files as untrusted: macros,
 scripts, formulas, external workbook references, external media, and active HTML are
 not executed or fetched automatically. DOC/DOCM, XLS/XLSM/XLSB, PPT/PPS/POT/PPTM/
-PPSX/PPSM, ODT/ODS/ODP, RTF, EPUB, and scanned/image-only PDF remain ingestion-only
-until a format-native viewer is implemented and verified.
+PPSX/PPSM, ODT/ODS/ODP, RTF, and EPUB remain semantic-ingestion-only until a
+format-native viewer is implemented and verified. Scanned/image-only PDFs are
+visually viewable with PDF.js, but semantic ingestion requires a future OCR pipeline.
 
 The same three functions exist in Node (`formatFromBytes`, ...) and Python (`anydoc.format_from_bytes`, ...).
 
