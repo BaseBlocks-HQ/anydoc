@@ -10,6 +10,7 @@ const budgets = [
   ["packages/spreadsheet-engine/dist/index.js", 100_000],
   ["packages/spreadsheet-viewer/dist/index.js", 75_000],
   ["packages/convex/dist/index.js", 8_000],
+  ["packages/convex/dist/node.js", 8_000],
   ["packages/react-viewer/dist/pdf.worker.min.mjs", 1_300_000],
   ["examples/react-viewer/dist/assets/presentation-", 1_150_000],
   ["examples/react-viewer/dist/assets/spreadsheet-", 350_000],

@@ -1,6 +1,6 @@
 import { performance } from "node:perf_hooks";
 
-import { iterableSource, readSource } from "../packages/anydoc/src/sources.js";
+import { iterableSource, readSource } from "../packages/ingestion/src/sources.js";
 
 const mebibyte = 1024 * 1024;
 const byteLength = Number(process.env.ANYDOC_BENCH_BYTES ?? 24 * mebibyte);

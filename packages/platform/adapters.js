@@ -7,11 +7,8 @@ const loaders = {
   csv: () => import("@baseblocks/anydoc-spreadsheet-viewer"),
   pptx: () => import("@baseblocks/anydoc-presentation-viewer"),
 };
-
 export function loadViewerAdapter(format) {
-  const loader = loaders[format];
-  if (!loader) return Promise.resolve(null);
-  return loader();
+  const load = loaders[format];
+  if (!load) throw new TypeError(`No native viewer adapter is registered for ${format}.`);
+  return load();
 }
-
-export function viewerAdapterFormats() { return Object.keys(loaders); }

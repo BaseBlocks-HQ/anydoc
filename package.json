@@ -13,7 +13,9 @@
     "pack:check": "node scripts/pack-viewers.mjs --dry-run",
     "pack:release": "node scripts/pack-viewer-release.mjs",
     "budget:viewers": "node scripts/check-viewer-budgets.mjs",
-    "budget:ingestion": "node scripts/benchmark-ingestion.mjs"
+    "budget:ingestion": "node scripts/benchmark-ingestion.mjs",
+    "closure:server": "node scripts/verify-server-closure.mjs",
+    "closure:platform": "node scripts/verify-packed-platform.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",

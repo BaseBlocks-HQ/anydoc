@@ -21,6 +21,10 @@ import { ConvexIngestionQueue } from "@baseblocks/anydoc-convex";
 import { createConvexIngestionHandler } from "@baseblocks/anydoc-convex/node";
 ```
 
+The Node entry also exports `iterableSource`, so storage-backed actions can
+stream S3/R2/Convex data without adding a direct ingestion dependency or
+importing parser internals.
+
 Bindings are generic over the application's complete mutation and query
 contexts, so their atomic CAS methods can use `ctx.db` directly. Jobs specify
 `attemptTimeoutMs`, a duration converted into a fresh deadline inside every

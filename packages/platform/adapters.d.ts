@@ -1,4 +1,4 @@
-export interface ViewerAdapterModules {
+export interface ViewerAdapters {
   text: typeof import("@baseblocks/anydoc-react-viewer");
   markdown: typeof import("@baseblocks/anydoc-react-viewer");
   pdf: typeof import("@baseblocks/anydoc-react-viewer");
@@ -7,7 +7,4 @@ export interface ViewerAdapterModules {
   csv: typeof import("@baseblocks/anydoc-spreadsheet-viewer");
   pptx: typeof import("@baseblocks/anydoc-presentation-viewer");
 }
-export type ViewerAdapterFormat = keyof ViewerAdapterModules;
-export declare function loadViewerAdapter<Format extends ViewerAdapterFormat>(format: Format): Promise<ViewerAdapterModules[Format]>;
-export declare function loadViewerAdapter(format: string): Promise<ViewerAdapterModules[ViewerAdapterFormat] | null>;
-export declare function viewerAdapterFormats(): ViewerAdapterFormat[];
+export function loadViewerAdapter<Format extends keyof ViewerAdapters>(format: Format): Promise<ViewerAdapters[Format]>;

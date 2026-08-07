@@ -1,7 +1,15 @@
 import { NonRetryableError } from "@convex-dev/workpool";
-import { ingest, type IngestedDocument, type NodeIngestionInput, type SimpleIngestionOptions } from "@baseblocks/anydoc/node";
+import { ingest, type IngestedDocument, type NodeIngestionInput, type SimpleIngestionOptions } from "@baseblocks/anydoc-ingestion/node";
 import type { ConvexIngestionJob } from "./index.js";
 import { encodeConvexIngestionFailure } from "./failure.js";
+
+export { iterableSource } from "@baseblocks/anydoc-ingestion/sources";
+export type {
+  DocumentSource,
+  OpenDocumentSource,
+  SourceMetadata,
+  SourceOpenContext,
+} from "@baseblocks/anydoc-ingestion/sources";
 
 const TERMINAL_ERROR_CODES = new Set([
   "encrypted", "integrity-failed", "invalid-source", "invalid-text", "malformed",

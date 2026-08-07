@@ -35,6 +35,8 @@ jobs:
       - run: pnpm run budget:viewers
       - run: pnpm run budget:ingestion
       - run: pnpm run pack:check
+      - run: pnpm run closure:server
+      - run: pnpm run closure:platform
 
   rust:
     name: Rust
