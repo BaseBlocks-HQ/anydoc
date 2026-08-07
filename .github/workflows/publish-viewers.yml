@@ -27,9 +27,9 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:viewers
       - run: pnpm run typecheck:viewers
       - run: pnpm run test:viewers
-      - run: pnpm run build:viewers
       - run: pnpm run budget:viewers
       - run: pnpm run pack:check
       - run: pnpm audit --prod --audit-level high
