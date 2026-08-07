@@ -1,0 +1,51 @@
+{
+  "name": "@baseblocks/anydoc",
+  "version": "0.1.0-alpha.5",
+  "description": "AnyDoc ingestion and lazy format-native document viewers",
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/BaseBlocks-HQ/anydoc.git", "directory": "packages/anydoc" },
+  "exports": {
+    ".": { "types": "./index.d.ts", "import": "./index.js" },
+    "./node": { "types": "./node.d.ts", "import": "./node.js" },
+    "./browser": { "types": "./browser.d.ts", "import": "./browser.js" },
+    "./react": { "types": "./react.d.ts", "import": "./react.js" },
+    "./spreadsheet": { "types": "./spreadsheet.d.ts", "import": "./spreadsheet.js" },
+    "./presentation": { "types": "./presentation.d.ts", "import": "./presentation.js" },
+    "./capabilities": { "types": "./src/capabilities.d.ts", "import": "./src/capabilities.js" },
+    "./security": { "types": "./src/security.d.ts", "import": "./src/security.js" },
+    "./adapters": { "types": "./src/adapters.d.ts", "import": "./src/adapters.js" }
+  },
+  "files": ["index.js", "index.d.ts", "node.js", "node.d.ts", "browser.js", "browser.d.ts", "react.js", "react.d.ts", "spreadsheet.js", "spreadsheet.d.ts", "presentation.js", "presentation.d.ts", "src", "README.md", "LICENSE", "NOTICE"],
+  "sideEffects": false,
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@baseblocks/anydoc-contracts": "workspace:*",
+    "@firecrawl/anydoc": "0.1.7"
+  },
+  "optionalDependencies": {
+    "@firecrawl/anydoc-darwin-arm64": "0.1.7",
+    "@firecrawl/anydoc-darwin-x64": "0.1.7",
+    "@firecrawl/anydoc-linux-arm64-gnu": "0.1.7",
+    "@firecrawl/anydoc-linux-arm64-musl": "0.1.7",
+    "@firecrawl/anydoc-linux-x64-gnu": "0.1.7",
+    "@firecrawl/anydoc-linux-x64-musl": "0.1.7",
+    "@firecrawl/anydoc-win32-x64-msvc": "0.1.7",
+    "@firecrawl/anydoc-wasm": "0.1.7"
+  },
+  "peerDependencies": {
+    "@baseblocks/anydoc-presentation-viewer": "workspace:*",
+    "@baseblocks/anydoc-react-viewer": "workspace:*",
+    "@baseblocks/anydoc-spreadsheet-engine": "workspace:*",
+    "@baseblocks/anydoc-spreadsheet-viewer": "workspace:*",
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "@baseblocks/anydoc-presentation-viewer": { "optional": true },
+    "@baseblocks/anydoc-react-viewer": { "optional": true },
+    "@baseblocks/anydoc-spreadsheet-engine": { "optional": true },
+    "@baseblocks/anydoc-spreadsheet-viewer": { "optional": true },
+    "react": { "optional": true }
+  },
+  "scripts": { "test": "node --test test/*.test.mjs" }
+}

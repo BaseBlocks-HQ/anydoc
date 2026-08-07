@@ -14,9 +14,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  viewers:
+    name: Viewer packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Build workspace packages first so umbrella subpath declarations resolve
+      # exactly as they will for registry consumers.
+      - run: pnpm run build:viewers
+      - run: pnpm run typecheck:viewers
+      - run: pnpm run test:viewers
+      - run: pnpm run budget:viewers
+      - run: pnpm run pack:check
+
   rust:
     name: Rust
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -32,7 +53,7 @@ jobs:
 
   node:
     name: Node bindings
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -59,7 +80,7 @@ jobs:
 
   wasm:
     name: Wasm bindings
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -82,7 +103,7 @@ jobs:
 
   python:
     name: Python bindings
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable

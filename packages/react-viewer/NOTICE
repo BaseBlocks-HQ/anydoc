@@ -1,0 +1,3 @@
+This package contains viewer code ported and generalized from BaseBlocks' internal Glass-Legacy implementation.
+It is distributed as part of the AnyDoc fork maintained by BaseBlocks-HQ. Upstream AnyDoc remains copyright Sideguide Technologies Inc. under MIT.
+The distributed PDF worker is from Mozilla PDF.js under Apache-2.0; see THIRD_PARTY_NOTICES.md and LICENSES/Apache-2.0.txt.

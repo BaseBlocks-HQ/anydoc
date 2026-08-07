@@ -1,0 +1,78 @@
+name: Publish viewer platform
+
+on:
+  push:
+    tags: ["viewer-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: viewer-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck:viewers
+      - run: pnpm run test:viewers
+      - run: pnpm run build:viewers
+      - run: pnpm run budget:viewers
+      - run: pnpm run pack:check
+      - run: pnpm audit --prod --audit-level high
+      - name: Verify tag and package versions
+        if: github.ref_type == 'tag'
+        run: |
+          expected="${GITHUB_REF_NAME#viewer-v}"
+          for directory in \
+            packages/contracts \
+            packages/spreadsheet-engine \
+            packages/spreadsheet-viewer \
+            packages/presentation-viewer \
+            packages/react-viewer \
+            packages/anydoc
+          do
+            actual=$(node -p "require('./$directory/package.json').version")
+            test "$actual" = "$expected" || {
+              echo "::error::$directory is $actual; expected $expected"
+              exit 1
+            }
+          done
+      - name: Publish packages
+        if: github.ref_type == 'tag'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+        run: |
+          for directory in \
+            packages/contracts \
+            packages/spreadsheet-engine \
+            packages/spreadsheet-viewer \
+            packages/presentation-viewer \
+            packages/react-viewer \
+            packages/anydoc
+          do
+            name=$(node -p "require('./$directory/package.json').name")
+            version=$(node -p "require('./$directory/package.json').version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version already exists; skipping"
+            else
+              pnpm --dir "$directory" publish --access public --provenance --no-git-checks
+            fi
+          done
+      - name: Package dry run
+        if: github.ref_type != 'tag'
+        run: pnpm run pack:check

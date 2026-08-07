@@ -1,0 +1,22 @@
+{
+  "name": "@baseblocks/anydoc-contracts",
+  "version": "0.1.0-alpha.5",
+  "description": "Framework-neutral capability, error, and security contracts for AnyDoc",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BaseBlocks-HQ/anydoc.git",
+    "directory": "packages/contracts"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "files": ["index.js", "index.d.ts", "LICENSE", "NOTICE", "README.md"],
+  "sideEffects": false,
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/*.test.mjs" }
+}

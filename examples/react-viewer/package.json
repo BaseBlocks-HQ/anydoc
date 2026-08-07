@@ -1,0 +1,24 @@
+{
+  "name": "@baseblocks/anydoc-example-react",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite --host 127.0.0.1",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@baseblocks/anydoc": "workspace:*",
+    "@baseblocks/anydoc-presentation-viewer": "workspace:*",
+    "@baseblocks/anydoc-react-viewer": "workspace:*",
+    "@baseblocks/anydoc-spreadsheet-viewer": "workspace:*",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "latest",
+    "typescript": "^5.9.0",
+    "vite": "latest"
+  }
+}
