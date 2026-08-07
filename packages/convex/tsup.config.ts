@@ -9,5 +9,5 @@ export default defineConfig({
   sourcemap: true,
   target: "es2022",
   treeshake: true,
-  external: ["convex", "@convex-dev/workpool", "@baseblocks/anydoc/node"],
+  external: ["convex", "@convex-dev/workpool", "@baseblocks/anydoc-ingestion/node"],
 });

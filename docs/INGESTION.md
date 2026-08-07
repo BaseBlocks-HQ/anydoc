@@ -4,7 +4,7 @@ AnyDoc ingestion is a framework-neutral execution core. It does not own a queue,
 
 ## Package boundaries
 
-The runtime lives in tree-shakeable subpaths of `@baseblocks/anydoc` rather than another alpha package:
+The runtime lives in the server-safe `@baseblocks/anydoc-ingestion` package:
 
 | Subpath | Environment | Responsibility |
 |---|---|---|
@@ -49,7 +49,7 @@ A production `IngestionJobStore` must provide these atomic invariants:
 The in-memory store demonstrates these rules but provides no process durability and is not a production adapter.
 
 Run `runIngestionJobStoreConformance(() => createYourStore())` from
-`@baseblocks/anydoc/ingestion/conformance` in the adapter's own database test
+`@baseblocks/anydoc-ingestion/ingestion/conformance` in the adapter's own database test
 environment. Its cases cover uniqueness/idempotency, atomic claims, retry
 eligibility, renewal, immutable fields, lease expiry, stale-worker fencing,
 cancellation, final-attempt expiry, portable values, and genuine concurrent

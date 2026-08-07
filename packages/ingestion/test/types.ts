@@ -1,10 +1,10 @@
-import { getCapabilities } from "@baseblocks/anydoc";
-import { createArtifactLimits, createIngestionRuntime, executeIngestion, measureIngestionArtifact, type IngestionArtifact } from "@baseblocks/anydoc/ingestion";
-import { runIngestionJobStoreConformance } from "@baseblocks/anydoc/ingestion/conformance";
-import { createMemoryContentSink, createMemoryJobStore } from "@baseblocks/anydoc/memory";
-import { bytesSource, readSource, webSource } from "@baseblocks/anydoc/sources";
-import { fileSource } from "@baseblocks/anydoc/sources/node";
-import { decodePersistenceValue, encodePersistenceValue } from "@baseblocks/anydoc/persistence";
+import { getCapabilities } from "@baseblocks/anydoc-ingestion";
+import { createArtifactLimits, createIngestionRuntime, executeIngestion, measureIngestionArtifact, type IngestionArtifact } from "@baseblocks/anydoc-ingestion/ingestion";
+import { runIngestionJobStoreConformance } from "@baseblocks/anydoc-ingestion/ingestion/conformance";
+import { createMemoryContentSink, createMemoryJobStore } from "@baseblocks/anydoc-ingestion/memory";
+import { bytesSource, readSource, webSource } from "@baseblocks/anydoc-ingestion/sources";
+import { fileSource } from "@baseblocks/anydoc-ingestion/sources/node";
+import { decodePersistenceValue, encodePersistenceValue } from "@baseblocks/anydoc-ingestion/persistence";
 
 const jobs = createMemoryJobStore();
 const contentSink = createMemoryContentSink();

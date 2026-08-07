@@ -19,7 +19,7 @@ importers:
     dependencies:
       '@baseblocks/anydoc':
         specifier: workspace:*
-        version: link:../../packages/anydoc
+        version: link:../../packages/platform
       '@baseblocks/anydoc-presentation-viewer':
         specifier: workspace:*
         version: link:../../packages/presentation-viewer
@@ -46,66 +46,13 @@ importers:
         specifier: latest
         version: 8.2.1(@types/node@24.10.1)(esbuild@0.28.1)
 
-  packages/anydoc:
-    dependencies:
-      '@baseblocks/anydoc-contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@firecrawl/anydoc':
-        specifier: 0.1.7
-        version: 0.1.7
-      react:
-        specifier: '>=18'
-        version: 19.2.3
-    devDependencies:
-      '@types/node':
-        specifier: ^24.10.1
-        version: 24.10.1
-    optionalDependencies:
-      '@baseblocks/anydoc-presentation-viewer':
-        specifier: workspace:*
-        version: link:../presentation-viewer
-      '@baseblocks/anydoc-react-viewer':
-        specifier: workspace:*
-        version: link:../react-viewer
-      '@baseblocks/anydoc-spreadsheet-engine':
-        specifier: workspace:*
-        version: link:../spreadsheet-engine
-      '@baseblocks/anydoc-spreadsheet-viewer':
-        specifier: workspace:*
-        version: link:../spreadsheet-viewer
-      '@firecrawl/anydoc-darwin-arm64':
-        specifier: 0.1.7
-        version: 0.1.7
-      '@firecrawl/anydoc-darwin-x64':
-        specifier: 0.1.7
-        version: 0.1.7
-      '@firecrawl/anydoc-linux-arm64-gnu':
-        specifier: 0.1.7
-        version: 0.1.7
-      '@firecrawl/anydoc-linux-arm64-musl':
-        specifier: 0.1.7
-        version: 0.1.7
-      '@firecrawl/anydoc-linux-x64-gnu':
-        specifier: 0.1.7
-        version: 0.1.7
-      '@firecrawl/anydoc-linux-x64-musl':
-        specifier: 0.1.7
-        version: 0.1.7
-      '@firecrawl/anydoc-wasm':
-        specifier: 0.1.7
-        version: 0.1.7
-      '@firecrawl/anydoc-win32-x64-msvc':
-        specifier: 0.1.7
-        version: 0.1.7
-
   packages/contracts: {}
 
   packages/convex:
     dependencies:
-      '@baseblocks/anydoc':
+      '@baseblocks/anydoc-ingestion':
         specifier: workspace:*
-        version: link:../anydoc
+        version: link:../ingestion
       '@convex-dev/workpool':
         specifier: ^0.4.9
         version: 0.4.9(convex-helpers@0.1.122(convex@1.43.0(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(convex@1.43.0(react@19.2.3))(react@19.2.3)
@@ -122,6 +69,44 @@ importers:
       vitest:
         specifier: ^3.2.6
         version: 3.2.6(@types/debug@4.1.13)(@types/node@24.10.1)(jsdom@26.1.0)(lightningcss@1.33.0)
+
+  packages/ingestion:
+    dependencies:
+      '@baseblocks/anydoc-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@firecrawl/anydoc':
+        specifier: 0.1.7
+        version: 0.1.7
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.1
+
+  packages/platform:
+    dependencies:
+      '@baseblocks/anydoc-ingestion':
+        specifier: workspace:*
+        version: link:../ingestion
+      react:
+        specifier: '>=18'
+        version: 19.2.3
+    optionalDependencies:
+      '@baseblocks/anydoc-presentation-viewer':
+        specifier: workspace:*
+        version: link:../presentation-viewer
+      '@baseblocks/anydoc-react-viewer':
+        specifier: workspace:*
+        version: link:../react-viewer
+      '@baseblocks/anydoc-spreadsheet-engine':
+        specifier: workspace:*
+        version: link:../spreadsheet-engine
+      '@baseblocks/anydoc-spreadsheet-viewer':
+        specifier: workspace:*
+        version: link:../spreadsheet-viewer
+      '@firecrawl/anydoc-wasm':
+        specifier: 0.1.7
+        version: 0.1.7
 
   packages/presentation-viewer:
     dependencies:

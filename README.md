@@ -10,7 +10,8 @@ Fast Rust library that converts documents (Word, PowerPoint, Excel, OpenDocument
 
 The BaseBlocks application façade adds `ingest(...)`, a universal React viewer,
 and durable Convex ingestion. See
-[`packages/anydoc/README.md`](packages/anydoc/README.md).
+[`packages/platform/README.md`](packages/platform/README.md) and the
+runtime-light [`packages/ingestion/README.md`](packages/ingestion/README.md).
 
 Built by [Firecrawl](https://firecrawl.dev) to turn any office document into LLM-ready Markdown in single-digit milliseconds, with one consistent output no matter which format goes in. It powers [Firecrawl Parse](https://firecrawl.dev/parse), so if you'd rather not run it yourself, the hosted API gives you the same conversion plus our OCR models for the scanned pages anydoc can't read on its own.
 
