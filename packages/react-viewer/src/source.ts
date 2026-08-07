@@ -10,7 +10,7 @@ function isBytesSource(source: DocumentSource): source is { readonly data: Array
   return typeof source === "object" && source !== null && "data" in source;
 }
 
-function assertAllowedUrl(value: string | URL, format: ViewerFormat): URL {
+function assertAllowedUrl(value: string | URL, format?: ViewerFormat): URL {
   let url: URL;
   try {
     url = value instanceof URL ? value : new URL(value, globalThis.location?.href);
@@ -18,23 +18,23 @@ function assertAllowedUrl(value: string | URL, format: ViewerFormat): URL {
     throw new ViewerError("The document URL is invalid or is relative outside a browser.", {
       cause,
       code: "invalid-source",
-      format,
+      ...(format ? { format } : {}),
     });
   }
   if (!new Set(["http:", "https:", "blob:"]).has(url.protocol)) {
     throw new ViewerError(`The ${url.protocol} URL scheme is not allowed.`, {
       code: "invalid-source",
-      format,
+      ...(format ? { format } : {}),
     });
   }
   return url;
 }
 
-function checkSize(size: number, maxBytes: number, format: ViewerFormat) {
+function checkSize(size: number, maxBytes: number, format?: ViewerFormat) {
   if (size > maxBytes) {
     throw new ViewerError(`Document exceeds the ${maxBytes.toLocaleString()} byte limit.`, {
       code: "too-large",
-      format,
+      ...(format ? { format } : {}),
     });
   }
 }
@@ -42,15 +42,15 @@ function checkSize(size: number, maxBytes: number, format: ViewerFormat) {
 export async function loadDocumentBytes(
   source: DocumentSource,
   options: {
-    readonly format: ViewerFormat;
+    readonly format?: ViewerFormat;
     readonly maxBytes?: number;
     readonly signal?: AbortSignal;
   },
 ): Promise<Uint8Array> {
   options.signal?.throwIfAborted();
-  const maxBytes = options.maxBytes ?? limitForFormat(options.format, defaultDocumentLimits);
+  const maxBytes = options.maxBytes ?? (options.format ? limitForFormat(options.format, defaultDocumentLimits) : defaultDocumentLimits.maxBytes);
   if (!Number.isFinite(maxBytes) || maxBytes < 0) {
-    throw new ViewerError("The document byte limit is invalid.", { code: "invalid-source", format: options.format });
+    throw new ViewerError("The document byte limit is invalid.", { code: "invalid-source", ...(options.format ? { format: options.format } : {}) });
   }
   const raw = isBytesSource(source) ? source.data : source;
 
@@ -80,7 +80,7 @@ export async function loadDocumentBytes(
     if (!response.ok) {
       throw new ViewerError(`Document request failed with status ${response.status}.`, {
         code: "fetch-failed",
-        format: options.format,
+        ...(options.format ? { format: options.format } : {}),
         status: response.status,
       });
     }
@@ -119,7 +119,7 @@ export async function loadDocumentBytes(
   } catch (cause) {
     throw toViewerError(cause, {
       code: "fetch-failed",
-      format: options.format,
+      ...(options.format ? { format: options.format } : {}),
       message: "Unable to load the document source.",
     });
   }

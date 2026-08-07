@@ -7,6 +7,7 @@ const packages = [
   "packages/presentation-viewer",
   "packages/react-viewer",
   "packages/anydoc",
+  "packages/convex",
 ];
 const dryRun = process.argv.includes("--dry-run");
 

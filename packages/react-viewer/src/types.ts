@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
-export type ViewerFormat = "pdf" | "docx" | "text" | "markdown";
+export type ViewerFormat = "pdf" | "docx" | "text" | "markdown" | "xlsx" | "csv" | "pptx";
+export type DocumentViewerFormat = Extract<ViewerFormat, "pdf" | "docx" | "text" | "markdown">;
 
 export interface UrlDocumentSource {
   readonly url: string | URL;
@@ -67,6 +68,8 @@ export interface ViewerControls {
   readonly status: "loading" | "ready" | "error";
   readonly title?: string;
   readonly zoom?: ViewerZoomControls;
+  /** Format-specific state that does not fit the universal navigation model. */
+  readonly details?: Readonly<Record<string, unknown>>;
 }
 
 export interface BaseViewerProps {
