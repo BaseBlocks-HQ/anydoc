@@ -1,5 +1,5 @@
 {
-  "name": "@baseblocks/anydoc-viewer",
+  "name": "@baseblocks/anydoc",
   "version": "0.1.0-alpha.1",
   "description": "Safe, lazy, format-native viewer contracts and adapters for AnyDoc",
   "type": "module",

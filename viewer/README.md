@@ -1,6 +1,6 @@
-# AnyDoc viewer platform (alpha)
+# AnyDoc platform (alpha)
 
-This package is the optional visual surface for AnyDoc. Ingestion remains in the Rust/WASM/Node core and its normalized document model; viewers consume original source bytes and never render extracted Markdown as a fidelity substitute.
+This is the temporary `@baseblocks/anydoc` distribution for the AnyDoc platform alpha. Ingestion remains in the Rust/WASM/Node core and its normalized document model; viewers consume original source bytes and never render extracted Markdown as a fidelity substitute.
 
 The default entry point contains only capability/security contracts and a lazy adapter registry. PDF, DOCX, spreadsheet, and PPTX dependencies are loaded through explicit format adapters so ingestion-only consumers do not pay their cost. Hosts provide the concrete React/headless renderer and worker URLs appropriate to their bundler.
 
