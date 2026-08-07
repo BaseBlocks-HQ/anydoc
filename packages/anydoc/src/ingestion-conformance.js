@@ -31,6 +31,12 @@ function job(id, key, overrides = {}) {
   };
 }
 
+function raceGate() {
+  let release;
+  const ready = new Promise((resolve) => { release = resolve; });
+  return { ready, release };
+}
+
 const cases = [
   {
     name: "uniqueness and idempotency",
@@ -131,6 +137,100 @@ const cases = [
       assert(failed?.state === "failed" && failed.lease === undefined, "an expired final attempt must become failed");
       assert(failed.error?.code === "lease-lost", "final lease expiry must retain a stable error code");
       assert(await store.cancel("final", { now: 12 }) === null, "failed jobs must not be rewritten as cancelled");
+    },
+  },
+  {
+    name: "concurrent idempotent create",
+    async run(createStore) {
+      const store = await createStore();
+      const gate = raceGate();
+      const creates = Array.from({ length: 8 }, (_, index) => gate.ready.then(() => store.create(job(`create-${index}`, "shared-create"))));
+      gate.release();
+      const results = await Promise.all(creates);
+      assert(results.filter((result) => result.created).length === 1, "exactly one concurrent create must win");
+      assert(new Set(results.map((result) => result.job.id)).size === 1, "all concurrent idempotency replays must return the winning job");
+    },
+  },
+  {
+    name: "concurrent atomic claim",
+    async run(createStore) {
+      const store = await createStore();
+      await store.create(job("concurrent-claim", "concurrent-claim"));
+      const gate = raceGate();
+      const claims = Array.from({ length: 8 }, (_, index) => gate.ready.then(() => store.claim("concurrent-claim", { workerId: `worker-${index}`, durationMs: 1_000, now: 10 })));
+      gate.release();
+      const results = await Promise.all(claims);
+      assert(results.filter(Boolean).length === 1, "exactly one concurrent claim must acquire the lease");
+      assert((await store.get("concurrent-claim"))?.attempt === 1, "claim races must increment attempt exactly once");
+    },
+  },
+  {
+    name: "cancel races with update and renewal",
+    async run(createStore) {
+      for (const operation of ["update", "renew"]) {
+        const store = await createStore();
+        const id = `cancel-${operation}`;
+        await store.create(job(id, id));
+        const claimed = await store.claim(id, { workerId: "worker", durationMs: 1_000, now: 10 });
+        const gate = raceGate();
+        const workerMutation = operation === "update"
+          ? gate.ready.then(() => store.update(id, { leaseToken: claimed.lease.token, now: 11, patch: { phase: "process" } }))
+          : gate.ready.then(() => store.renew(id, { leaseToken: claimed.lease.token, durationMs: 1_000, now: 11 }));
+        const cancellation = gate.ready.then(() => store.cancel(id, { now: 11, reason: "race" }));
+        gate.release();
+        await Promise.all([workerMutation, cancellation]);
+        const final = await store.get(id);
+        assert(final?.state === "cancelled" && final.lease === undefined, `cancellation must be terminal when racing with ${operation}`);
+        assert(await store.update(id, { leaseToken: claimed.lease.token, now: 12, patch: { state: "succeeded" } }) === null, `the ${operation} worker must be fenced after cancellation`);
+      }
+    },
+  },
+  {
+    name: "expired worker races with replacement",
+    async run(createStore) {
+      const store = await createStore();
+      await store.create(job("replacement-race", "replacement-race"));
+      const expired = await store.claim("replacement-race", { workerId: "expired", durationMs: 10, now: 0 });
+      const gate = raceGate();
+      const staleUpdate = gate.ready.then(() => store.update("replacement-race", { leaseToken: expired.lease.token, now: 11, patch: { state: "succeeded", phase: "complete" } }));
+      const replacementClaim = gate.ready.then(() => store.claim("replacement-race", { workerId: "replacement", durationMs: 10, now: 11 }));
+      gate.release();
+      const [stale, replacement] = await Promise.all([staleUpdate, replacementClaim]);
+      assert(stale === null, "an expired worker must lose even when racing a replacement");
+      assert(replacement?.attempt === 2 && replacement.lease.owner === "replacement", "the replacement must acquire the next fenced attempt");
+    },
+  },
+  {
+    name: "concurrent cancellation is idempotent",
+    async run(createStore) {
+      const store = await createStore();
+      await store.create(job("cancel-race", "cancel-race"));
+      const claimed = await store.claim("cancel-race", { workerId: "worker", durationMs: 1_000, now: 10 });
+      const gate = raceGate();
+      const cancellations = Array.from({ length: 8 }, () => gate.ready.then(() => store.cancel("cancel-race", { now: 11, reason: "concurrent" })));
+      gate.release();
+      const results = await Promise.all(cancellations);
+      assert(results.every((result) => result?.state === "cancelled"), "every concurrent cancellation must observe the cancelled job");
+      assert(new Set(results.map((result) => result.revision)).size === 1, "concurrent cancellation must increment revision once");
+      assert(results[0].revision === claimed.revision + 1, "cancellation races must have exactly one state transition");
+    },
+  },
+  {
+    name: "portable persistence grammar",
+    async run(createStore) {
+      const store = await createStore();
+      await store.create(job("portable", "portable", { input: { source: { bytes: { $anydoc: "binary/base64", data: "AQID" } }, format: "docx" } }));
+      const cycle = {};
+      cycle.self = cycle;
+      for (const [index, invalid] of [new Date(), new Map(), new Set(), 1n, Number.NaN, cycle].entries()) {
+        let rejected = false;
+        try {
+          await store.create(job(`invalid-${index}`, `invalid-${index}`, { input: { source: invalid, format: "docx" } }));
+        } catch (cause) {
+          rejected = cause?.code === "invalid-persistence" || cause?.code === "invalid-source";
+        }
+        assert(rejected, `non-portable persistence value ${index} must be rejected`);
+      }
     },
   },
 ];

@@ -16,9 +16,10 @@ function unknownLengthSource(size) {
   });
 }
 
-await readSource(unknownLengthSource(mebibyte), { maxBytes: mebibyte, calculateSha256: true });
+for (let warmup = 0; warmup < 2; warmup += 1) {
+  await readSource(unknownLengthSource(2 * mebibyte), { maxBytes: 2 * mebibyte, calculateSha256: true });
+}
 globalThis.gc?.();
-const baselineRss = process.memoryUsage().rss;
 const baselineMaxRss = process.resourceUsage().maxRSS * 1024;
 const baselineArrayBuffers = process.memoryUsage().arrayBuffers;
 let peakArrayBuffers = baselineArrayBuffers;
@@ -38,7 +39,6 @@ process.stdout.write(JSON.stringify({
   elapsedMs,
   throughputMibPerSecond: (byteLength / mebibyte) / (elapsedMs / 1_000),
   arrayBufferDelta: Math.max(0, peakArrayBuffers - baselineArrayBuffers),
-  rssDelta: Math.max(0, process.memoryUsage().rss - baselineRss),
   peakRssDelta: Math.max(0, process.resourceUsage().maxRSS * 1024 - baselineMaxRss),
   sha256: result.sha256,
 }));

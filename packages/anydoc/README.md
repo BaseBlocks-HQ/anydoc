@@ -77,15 +77,21 @@ await runtime.run(job.id, { workerId });
 await runtime.cancel(job.id, { reason: "authorization revoked" });
 ```
 
-Source descriptors and job metadata must be durable structured-clone data; never put credentials in them. Sink writes receive stable, phase-specific idempotency keys. A retry after interruption may call a sink again, so a production sink must atomically return its prior result for the same key.
+Source descriptors and job metadata must use AnyDoc's finite portable persistence grammar; never put credentials in them. Import `encodePersistenceValue`, `decodePersistenceValue`, and allocation-bounded measurement from `@baseblocks/anydoc/persistence`. Binary is persisted as a documented base64 envelope, while cycles, platform/class objects, bigint, non-finite numbers, and executable values are rejected. Sink writes receive stable, phase-specific idempotency keys. A retry after interruption may call a sink again, so a production sink must atomically return its prior result for the same key.
 
-Normalized artifacts are measured before `structuredClone` or sink writes.
+Normalized artifacts are measured and canonicalized before sink writes.
 Default budgets independently cap total estimated artifact bytes, UTF-8 text,
 binary data, graph entries/depth, and persisted sink results. Override
 `artifactLimits` deliberately for a trusted workload; an exceeded budget fails
 terminally with `output-too-large`.
 
 The normalized `artifact.content` model is deliberately separate from native viewer state. The runtime rejects artifacts containing `nativeRender`, `viewerModel`, or `sourceBytes`; native viewers continue to consume original bounded source bytes through their lazy format packages.
+
+For hosts that already own durable scheduling and transactions, call
+`executeIngestion()` from `@baseblocks/anydoc/ingestion`. It executes one
+verified, bounded attempt with content/index sinks and cancellation, but adds no
+queue, lease, retry, or persistence abstraction. The complete durable runtime
+uses this same executor internally.
 
 See [the ingestion architecture](../../docs/INGESTION.md) for store invariants, state transitions, source security, and adapter guidance.
 

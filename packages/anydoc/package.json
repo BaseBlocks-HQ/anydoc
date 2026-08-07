@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc",
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.0-alpha.7",
   "description": "AnyDoc ingestion and lazy format-native document viewers",
   "type": "module",
   "license": "MIT",
@@ -17,6 +17,7 @@
     "./adapters": { "types": "./src/adapters.d.ts", "import": "./src/adapters.js" },
     "./ingestion": { "types": "./src/ingestion.d.ts", "import": "./src/ingestion.js" },
     "./ingestion/conformance": { "types": "./src/ingestion-conformance.d.ts", "import": "./src/ingestion-conformance.js" },
+    "./persistence": { "types": "./src/persistence.d.ts", "import": "./src/persistence.js" },
     "./sources": { "types": "./src/sources.d.ts", "import": "./src/sources.js" },
     "./sources/node": { "types": "./src/node-sources.d.ts", "import": "./src/node-sources.js" },
     "./memory": { "types": "./src/memory.d.ts", "import": "./src/memory.js" }

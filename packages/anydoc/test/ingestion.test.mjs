@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { DocumentPlatformError } from "@baseblocks/anydoc-contracts";
-import { createIngestionRuntime, createLeasePolicy, createRetryPolicy } from "../src/ingestion.js";
+import { createIngestionRuntime, createLeasePolicy, createRetryPolicy, executeIngestion } from "../src/ingestion.js";
 import { createMemoryContentSink, createMemoryIndexSink, createMemoryJobStore } from "../src/memory.js";
 import { bytesSource } from "../src/sources.js";
 
@@ -39,6 +39,46 @@ test("runtime executes durable phases and deduplicates enqueue and sinks", async
   assert.equal(options.contentSink.size(), 1);
   assert.equal(options.indexSink.size(), 1);
   assert.equal((await runtime.run(first.job.id)).status, "not-runnable");
+});
+
+test("one-shot execution composes bounded source, processor, and sinks without a job store", async () => {
+  const phases = [];
+  const sinkInputs = [];
+  const result = await executeIngestion({
+    source: { key: "direct" },
+    format: ".TXT",
+    expectedSize: 5,
+    idempotencyKey: "tenant:direct:v1",
+    resolveSource: () => bytesSource(encoder.encode("hello")),
+    process: ({ bytes, format }) => ({ content: { text: new TextDecoder().decode(bytes) }, text: "hello", format }),
+    contentSink: { async write(input) { sinkInputs.push(input); return { ref: "content:direct" }; } },
+    indexSink: { async write(input) { sinkInputs.push(input); return { ref: "index:direct" }; } },
+    onPhase: (phase) => phases.push(phase),
+  });
+  assert.deepEqual(phases, ["acquire-source", "read-source", "process", "store-content", "store-index"]);
+  assert.equal(result.source.byteLength, 5);
+  assert.equal(result.output.byteLength, 5);
+  assert.deepEqual(result.output.content, { ref: "content:direct" });
+  assert.deepEqual(result.output.index, { ref: "index:direct" });
+  assert.equal(sinkInputs[0].idempotencyKey, "tenant:direct:v1:content");
+  assert.equal(sinkInputs[1].idempotencyKey, "tenant:direct:v1:index");
+  assert.ok(!("job" in sinkInputs[0]));
+});
+
+test("one-shot execution honors an already-aborted signal before source or sink work", async () => {
+  const controller = new AbortController();
+  controller.abort(new DocumentPlatformError("stopped", { code: "aborted" }));
+  let calls = 0;
+  await assert.rejects(executeIngestion({
+    source: {},
+    format: "pdf",
+    idempotencyKey: "cancelled-direct",
+    signal: controller.signal,
+    resolveSource() { calls += 1; return bytesSource(new Uint8Array()); },
+    process: () => ({ content: {} }),
+    contentSink: { async write() { calls += 1; return {}; } },
+  }), { code: "aborted" });
+  assert.equal(calls, 0);
 });
 
 test("retryable sink interruption resumes without duplicating content", async () => {
@@ -128,6 +168,56 @@ test("non-durable artifacts fail before any sink side effect", async () => {
   assert.equal(result.status, "failed");
   assert.equal(result.error.code, "processing-failed");
   assert.equal(writes, 0);
+});
+
+test("portable artifacts encode binary before either sink observes them", async () => {
+  const observed = [];
+  const runtime = createIngestionRuntime(runtimeOptions({
+    process: () => ({ content: { asset: Uint8Array.of(1, 2, 3) }, metadata: { trusted: false } }),
+    contentSink: { async write(input) { observed.push(input.artifact); return { ref: "content" }; } },
+    indexSink: { async write(input) { observed.push(input.artifact); return { ref: "index" }; } },
+  }));
+  const { job } = await runtime.enqueue({ idempotencyKey: "portable-binary", source: {}, format: "docx" });
+  const result = await runtime.run(job.id);
+  assert.equal(result.status, "succeeded");
+  const expected = { content: { asset: { $anydoc: "binary/base64", data: "AQID" } }, metadata: { trusted: false } };
+  assert.deepEqual(observed, [expected, expected]);
+});
+
+test("non-portable artifact types are rejected before sink side effects", async () => {
+  const cycle = {};
+  cycle.self = cycle;
+  const invalidValues = [new Date(), new Map(), new Set(), 1n, Number.NaN, cycle];
+  for (const [index, invalid] of invalidValues.entries()) {
+    let writes = 0;
+    const runtime = createIngestionRuntime(runtimeOptions({
+      process: () => ({ content: { invalid } }),
+      contentSink: { async write() { writes += 1; return {}; } },
+      retry: createRetryPolicy({ maxAttempts: 1 }),
+    }));
+    const { job } = await runtime.enqueue({ idempotencyKey: `invalid-artifact-${index}`, source: {}, format: "docx" });
+    const result = await runtime.run(job.id);
+    assert.equal(result.status, "failed");
+    assert.equal(result.error.code, "processing-failed");
+    assert.equal(writes, 0);
+  }
+});
+
+test("non-portable job descriptors and sink results fail at their persistence boundaries", async () => {
+  const runtime = createIngestionRuntime(runtimeOptions());
+  await assert.rejects(
+    runtime.enqueue({ idempotencyKey: "invalid-descriptor", source: { createdAt: new Date() }, format: "docx" }),
+    (cause) => cause?.code === "invalid-source",
+  );
+
+  const invalidSinkRuntime = createIngestionRuntime(runtimeOptions({
+    contentSink: { async write() { return { createdAt: new Date() }; } },
+    retry: createRetryPolicy({ maxAttempts: 1 }),
+  }));
+  const { job } = await invalidSinkRuntime.enqueue({ idempotencyKey: "invalid-sink-result", source: {}, format: "docx" });
+  const result = await invalidSinkRuntime.run(job.id);
+  assert.equal(result.status, "failed");
+  assert.equal(result.error.code, "sink-failed");
 });
 
 test("a stale worker emits lease loss instead of a false retry event", async () => {

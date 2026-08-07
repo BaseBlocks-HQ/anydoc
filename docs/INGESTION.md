@@ -10,6 +10,7 @@ The runtime lives in tree-shakeable subpaths of `@baseblocks/anydoc` rather than
 |---|---|---|
 | `/ingestion` | Web and Node | job lifecycle, leases, retries, processor and sink ports, events |
 | `/ingestion/conformance` | Web and Node | reusable durable job-store contract tests |
+| `/persistence` | Web and Node | canonical durable-value codec, validation, decoding, and allocation-bounded measurement |
 | `/sources` | Web and Node | bytes, async iterable, ReadableStream, and policy-controlled HTTP sources |
 | `/sources/node` | Node only | regular-file source |
 | `/memory` | Web and Node | non-durable reference implementations |
@@ -39,7 +40,7 @@ A production `IngestionJobStore` must provide these atomic invariants:
 2. `claim` admits queued jobs, eligible retry jobs, or running jobs with an expired lease. It atomically installs a new unpredictable lease token and increments `attempt` and monotonic `revision`. An expired final attempt is atomically made terminal instead of remaining stranded.
 3. `renew` and `update` compare the lease token and its expiry in the same transaction. A stale or expired worker receives `null` and cannot checkpoint or complete.
 4. `id`, `idempotencyKey`, `input`, `attempt`, and `createdAt` are immutable after creation. Every accepted mutation increments `revision` and sets `updatedAt` from the supplied clock.
-5. Job, error, and sink-result values are durable structured-clone data. Do not persist source bytes, parser instances, signals, functions, credentials, or native render models.
+5. Job, error, artifact, and sink-result values use AnyDoc's portable persistence grammar: `null`, booleans, finite numbers, strings, dense arrays, and plain objects with enumerable string keys. Binary is represented only as `{ "$anydoc": "binary/base64", "data": "..." }`. `undefined`, non-finite numbers, bigint, functions, symbols, cycles, accessors, symbol keys, sparse arrays, and class/platform objects such as `Date`, `Map`, `Set`, and `Blob` are rejected. Do not persist credentials, parser instances, signals, or native render models.
 6. `cancel` atomically transitions queued, retrying, or running work to the
    terminal `cancelled` state, clears its lease, records an optional durable
    reason, and fences the prior worker. Repeating cancellation is idempotent;
@@ -51,8 +52,21 @@ Run `runIngestionJobStoreConformance(() => createYourStore())` from
 `@baseblocks/anydoc/ingestion/conformance` in the adapter's own database test
 environment. Its cases cover uniqueness/idempotency, atomic claims, retry
 eligibility, renewal, immutable fields, lease expiry, stale-worker fencing,
-cancellation, and final-attempt expiry. The exported named cases can instead be
-registered individually with a host test runner.
+cancellation, final-attempt expiry, portable values, and genuine concurrent
+create/claim/cancel/update/renewal races. The exported named cases can instead
+be registered individually with a host test runner.
+
+## One-shot execution for durable frameworks
+
+`executeIngestion()` runs exactly one attempt: resolve and verify the source,
+process it, enforce artifact and persistence budgets, then invoke idempotent
+content and optional index sinks. It accepts an `AbortSignal` and phase/progress
+hooks, but owns no queue, lease, retry, or database state. Frameworks such as
+Convex that already provide durable scheduling and transactions should compose
+this primitive with their native state model instead of implementing an
+`IngestionJobStore` adapter. Ordinary Node/server hosts can use the complete
+runtime. `createIngestionRuntime().run()` delegates its attempt body to the same
+executor, so source, processor, budget, sink, and error semantics cannot drift.
 
 ## Retry and lease behavior
 
@@ -69,15 +83,18 @@ roll back an external side effect.
 ## Output security and resource bounds
 
 Input bounds are not output bounds: a small compressed document can expand into
-a large normalized graph. Before cloning an artifact or invoking either sink,
-the runtime walks the graph and enforces independent limits for estimated total
-bytes, UTF-8 string bytes, binary bytes, entries, and nesting depth. Sink return
-values have a separate small persistence budget. Limit failures use the typed,
-terminal `output-too-large` error.
+a large normalized graph. Before canonicalizing an artifact or invoking either
+sink, the executor walks the graph and enforces independent limits for estimated
+total bytes, UTF-8 string bytes, binary bytes, entries, and nesting depth. It
+then encodes raw binary with the documented envelope. Sink return values have a
+separate small persistence budget. Limit failures use the typed, terminal
+`output-too-large` error.
 
-The measurement is deliberately generic and conservative; it counts object
-keys and string values as UTF-8, typed-array/ArrayBuffer/Blob payloads as binary,
-and structural primitives at fixed widths. Format processors should still
+Measurement iterates keys and UTF-16 code units without constructing a complete
+key list or calling `TextEncoder`; a cheap lower bound rejects impossible
+strings before the exact UTF-8 scan. It counts object keys and string values as
+UTF-8, ArrayBuffer and typed-array payloads as binary, and structural primitives
+at fixed widths. Format processors should still
 enforce semantic limits such as pages, cells, slides, archive entries, and
 individual assets before constructing the complete model.
 
@@ -95,8 +112,9 @@ Observers receive enqueue/deduplication, claim, phase, byte progress, processor 
 
 ## Performance gate
 
-`pnpm run budget:ingestion` consumes a 24 MiB unknown-length stream in 64 KiB
-chunks with incremental SHA-256. CI enforces materialization/integrity,
-throughput, ArrayBuffer growth, and resident-memory growth budgets. This tests
+`pnpm run budget:ingestion` warms the path, then runs five isolated 24 MiB
+unknown-length streams in 64 KiB chunks with incremental SHA-256. Every child
+has a 30-second deadline. CI enforces exact materialization/integrity, median
+throughput, and worst-sample ArrayBuffer and peak resident-memory growth. This tests
 the runtime boundary rather than parser speed; the existing Rust benchmark and
 corpus suite remain the parser performance authority.

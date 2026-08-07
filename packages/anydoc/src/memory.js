@@ -1,16 +1,18 @@
 import { DocumentPlatformError } from "@baseblocks/anydoc-contracts";
+import { clonePersistenceValue } from "./persistence.js";
 
-const clone = (value) => value === undefined ? undefined : structuredClone(value);
+const clone = (value) => value === undefined ? undefined : clonePersistenceValue(value, { name: "The stored value" });
+
+function compact(value) {
+  const result = { ...value };
+  for (const key in result) {
+    if (Object.hasOwn(result, key) && result[key] === undefined) delete result[key];
+  }
+  return result;
+}
 
 function validateJob(job) {
-  try {
-    return clone(job);
-  } catch (cause) {
-    throw new DocumentPlatformError("Ingestion jobs must contain durable structured-clone data.", {
-      cause,
-      code: "invalid-source",
-    });
-  }
+  return clone(compact(job));
 }
 
 export function createMemoryJobStore(options = {}) {
@@ -46,24 +48,25 @@ export function createMemoryJobStore(options = {}) {
       if (current.state !== "queued" && !retryReady && !abandoned) return null;
       if (current.attempt >= current.maxAttempts) {
         if (abandoned) {
-          records.set(id, {
+          records.set(id, validateJob({
             ...current,
             state: "failed",
             phase: "failed",
             revision: current.revision + 1,
             updatedAt: now,
             lease: undefined,
+            nextAttemptAt: undefined,
             error: {
               name: "DocumentPlatformError",
               code: "lease-lost",
               message: "The final ingestion attempt expired before completion.",
               retryable: false,
             },
-          });
+          }));
         }
         return null;
       }
-      const next = {
+      const next = validateJob(compact({
         ...current,
         state: "running",
         phase: "acquire-source",
@@ -73,19 +76,19 @@ export function createMemoryJobStore(options = {}) {
         nextAttemptAt: undefined,
         error: undefined,
         lease: { owner: workerId, token: makeToken(), expiresAt: now + durationMs },
-      };
+      }));
       records.set(id, next);
       return clone(next);
     },
     async renew(id, { leaseToken, durationMs, now }) {
       const current = records.get(id);
       if (!current || current.state !== "running" || current.lease?.token !== leaseToken || current.lease.expiresAt <= now) return null;
-      const next = {
+      const next = validateJob({
         ...current,
         revision: current.revision + 1,
         updatedAt: now,
         lease: { ...current.lease, expiresAt: now + durationMs },
-      };
+      });
       records.set(id, next);
       return clone(next);
     },
@@ -94,7 +97,7 @@ export function createMemoryJobStore(options = {}) {
       if (!current) return null;
       if (current.state === "cancelled") return clone(current);
       if (current.state === "succeeded" || current.state === "failed") return null;
-      const next = validateJob({
+      const next = validateJob(compact({
         ...current,
         state: "cancelled",
         phase: "cancelled",
@@ -104,7 +107,7 @@ export function createMemoryJobStore(options = {}) {
         lease: undefined,
         error: undefined,
         cancellation: { at: now, ...(reason === undefined ? {} : { reason }) },
-      });
+      }));
       records.set(id, next);
       return clone(next);
     },
@@ -114,7 +117,7 @@ export function createMemoryJobStore(options = {}) {
       if (["id", "idempotencyKey", "input", "attempt", "maxAttempts", "createdAt", "revision", "updatedAt"].some((key) => Object.hasOwn(patch, key))) {
         throw new DocumentPlatformError("Immutable ingestion job fields cannot be changed.", { code: "job-conflict" });
       }
-      const next = validateJob({ ...current, ...patch, id, revision: current.revision + 1, updatedAt: now });
+      const next = validateJob(compact({ ...current, ...patch, id, revision: current.revision + 1, updatedAt: now }));
       records.set(id, next);
       return clone(next);
     },
@@ -131,7 +134,13 @@ function createMemorySink(kind) {
     async write(input) {
       if (values.has(input.idempotencyKey)) return clone(values.get(input.idempotencyKey).result);
       const result = { ref: `${kind}:${input.idempotencyKey}` };
-      values.set(input.idempotencyKey, { input: clone({ ...input, signal: undefined }), result });
+      const durableInput = {
+        artifact: input.artifact,
+        idempotencyKey: input.idempotencyKey,
+        ...(input.job === undefined ? {} : { job: input.job }),
+        ...(input.content === undefined ? {} : { content: input.content }),
+      };
+      values.set(input.idempotencyKey, { input: clone(durableInput), result });
       return clone(result);
     },
     get(idempotencyKey) {

@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { extname, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
-const [directory, registrySpec] = process.argv.slice(2);
-if (!directory || !registrySpec) {
-  console.error("usage: node scripts/verify-registry-package.mjs <package-directory> <name@version>");
+const [localInput, registrySpec] = process.argv.slice(2);
+if (!localInput || !registrySpec) {
+  console.error("usage: node scripts/verify-registry-package.mjs <package-directory-or-tarball> <name@version>");
   process.exit(2);
 }
 
@@ -48,7 +48,15 @@ try {
   const localExtracted = join(temporary, "local-extracted");
   const registryExtracted = join(temporary, "registry-extracted");
   await Promise.all([local, registry, localExtracted, registryExtracted].map((path) => mkdir(path)));
-  run("pnpm", ["--dir", directory, "pack", "--pack-destination", local]);
+  let localTarballPath;
+  if (extname(localInput) === ".tgz") {
+    localTarballPath = resolve(localInput);
+  } else {
+    run("pnpm", ["--dir", localInput, "pack", "--pack-destination", local]);
+    const [localTarball] = (await readdir(local)).filter((name) => name.endsWith(".tgz"));
+    if (!localTarball) throw new Error("Package packing did not produce a tarball.");
+    localTarballPath = join(local, localTarball);
+  }
   const metadataResponse = await fetch(`https://registry.npmjs.org/${encodeURIComponent(packageName)}/${packageVersion}`);
   if (!metadataResponse.ok) throw new Error(`npm metadata request for ${registrySpec} failed with ${metadataResponse.status}.`);
   const metadata = await metadataResponse.json();
@@ -59,10 +67,9 @@ try {
   const actualDigest = createHash(algorithm).update(registryBytes).digest("base64");
   if (actualDigest !== expectedDigest) throw new Error(`npm integrity verification failed for ${registrySpec}.`);
   await writeFile(join(registry, "registry.tgz"), registryBytes);
-  const [localTarball] = (await readdir(local)).filter((name) => name.endsWith(".tgz"));
   const [registryTarball] = (await readdir(registry)).filter((name) => name.endsWith(".tgz"));
-  if (!localTarball || !registryTarball) throw new Error("Package packing did not produce both tarballs.");
-  run("tar", ["-xzf", join(local, localTarball), "-C", localExtracted]);
+  if (!registryTarball) throw new Error("Registry download did not produce a tarball.");
+  run("tar", ["-xzf", localTarballPath, "-C", localExtracted]);
   run("tar", ["-xzf", join(registry, registryTarball), "-C", registryExtracted]);
   const localManifest = await manifest(join(localExtracted, "package"));
   const registryManifest = await manifest(join(registryExtracted, "package"));
