@@ -29,6 +29,9 @@ Bindings are generic over the application's complete mutation and query
 contexts, so their atomic CAS methods can use `ctx.db` directly. Jobs specify
 `attemptTimeoutMs`, a duration converted into a fresh deadline inside every
 Workpool attempt. Never persist an absolute deadline across retries.
+The handler passes `{ signal, deadline }` to `resolveSource` and `writeResult`;
+storage and persistence adapters should observe the signal so timed-out work
+releases resources promptly.
 
 Workpool exposes completion errors as strings. The handler carries AnyDoc's
 stable error code, retryability, format/status, and known resource limits in

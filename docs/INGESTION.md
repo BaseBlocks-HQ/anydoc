@@ -15,7 +15,10 @@ The runtime lives in the server-safe `@baseblocks/anydoc-ingestion` package:
 | `/sources/node` | Node only | regular-file source |
 | `/memory` | Web and Node | non-durable reference implementations |
 
-None of these subpaths imports React, viewer packages, WASM, the native parser, storage SDKs, or queue clients. Parser selection stays in the consumer and can therefore be lazy.
+None of these low-level subpaths imports React, viewer packages, WASM, the
+native parser, storage SDKs, or queue clients. The separate `/node` entrypoint
+provides the high-level native parser API while preserving that lower-level
+boundary.
 
 ## Durable job state
 
@@ -61,12 +64,14 @@ be registered individually with a host test runner.
 `executeIngestion()` runs exactly one attempt: resolve and verify the source,
 process it, enforce artifact and persistence budgets, then invoke idempotent
 content and optional index sinks. It accepts an `AbortSignal` and phase/progress
-hooks, but owns no queue, lease, retry, or database state. Frameworks such as
-Convex that already provide durable scheduling and transactions should compose
-this primitive with their native state model instead of implementing an
-`IngestionJobStore` adapter. Ordinary Node/server hosts can use the complete
-runtime. `createIngestionRuntime().run()` delegates its attempt body to the same
-executor, so source, processor, budget, sink, and error semantics cannot drift.
+hooks, but owns no queue, lease, retry, or database state. Frameworks that
+already provide durable scheduling and transactions can compose this primitive
+with their native state model instead of implementing an `IngestionJobStore`
+adapter. Convex applications can use the maintained
+`@baseblocks/anydoc-convex` Workpool adapter for that composition. Ordinary
+Node/server hosts can use the complete runtime. `createIngestionRuntime().run()`
+delegates its attempt body to the same executor, so source, processor, budget,
+sink, and error semantics cannot drift.
 
 ## Retry and lease behavior
 

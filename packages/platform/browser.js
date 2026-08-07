@@ -1,5 +1,5 @@
 import { bytesSource, webSource } from "@baseblocks/anydoc-ingestion/sources";
-import { ingestDocumentSource } from "@baseblocks/anydoc-ingestion/simple";
+import { ingestDocumentSource } from "@baseblocks/anydoc-ingestion/pipeline";
 
 let runtimePromise;
 export async function loadAnyDocWasm(input) {

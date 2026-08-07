@@ -93,4 +93,26 @@ describe("createConvexIngestionHandler", () => {
       });
     });
   });
+
+  it("bounds a non-cooperative source resolver with the per-attempt timeout", async () => {
+    const handler = createConvexIngestionHandler<{}, Job>({
+      resolveSource: () => new Promise(() => undefined),
+      writeResult: () => ({ status: "applied" }),
+    });
+    const failure = handler({}, {
+      attemptTimeoutMs: 5,
+      entityId: "document:blocked",
+      generation: 1,
+      idempotencyKey: "document:blocked:v1",
+      source: { bytes: new Uint8Array() },
+      sourceVersion: "v1",
+    });
+    await failure.catch((error) => {
+      expect(error).not.toBeInstanceOf(NonRetryableError);
+      expect(decodeConvexIngestionFailure(error.message)).toMatchObject({
+        code: "deadline-exceeded",
+        retryable: true,
+      });
+    });
+  });
 });
