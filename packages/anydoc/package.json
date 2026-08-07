@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc",
-  "version": "0.1.0-alpha.10",
+  "version": "0.1.0-alpha.11",
   "description": "AnyDoc ingestion and lazy format-native document viewers",
   "type": "module",
   "license": "MIT",
@@ -30,6 +30,10 @@
     "@firecrawl/anydoc": "0.1.7"
   },
   "optionalDependencies": {
+    "@baseblocks/anydoc-presentation-viewer": "workspace:*",
+    "@baseblocks/anydoc-react-viewer": "workspace:*",
+    "@baseblocks/anydoc-spreadsheet-engine": "workspace:*",
+    "@baseblocks/anydoc-spreadsheet-viewer": "workspace:*",
     "@firecrawl/anydoc-darwin-arm64": "0.1.7",
     "@firecrawl/anydoc-darwin-x64": "0.1.7",
     "@firecrawl/anydoc-linux-arm64-gnu": "0.1.7",
@@ -40,17 +44,9 @@
     "@firecrawl/anydoc-wasm": "0.1.7"
   },
   "peerDependencies": {
-    "@baseblocks/anydoc-presentation-viewer": "workspace:*",
-    "@baseblocks/anydoc-react-viewer": "workspace:*",
-    "@baseblocks/anydoc-spreadsheet-engine": "workspace:*",
-    "@baseblocks/anydoc-spreadsheet-viewer": "workspace:*",
     "react": ">=18"
   },
   "peerDependenciesMeta": {
-    "@baseblocks/anydoc-presentation-viewer": { "optional": true },
-    "@baseblocks/anydoc-react-viewer": { "optional": true },
-    "@baseblocks/anydoc-spreadsheet-engine": { "optional": true },
-    "@baseblocks/anydoc-spreadsheet-viewer": { "optional": true },
     "react": { "optional": true }
   },
   "devDependencies": { "@types/node": "^24.10.1" },

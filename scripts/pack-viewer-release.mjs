@@ -10,6 +10,7 @@ const directories = [
   "packages/presentation-viewer",
   "packages/react-viewer",
   "packages/anydoc",
+  "packages/convex",
 ];
 const outputDirectory = resolve(process.argv[2] ?? "release-artifacts");
 const expectedVersion = process.argv[3];

@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-contracts",
-  "version": "0.1.0-alpha.10",
+  "version": "0.1.0-alpha.11",
   "description": "Framework-neutral capability, error, and security contracts for AnyDoc",
   "type": "module",
   "license": "MIT",

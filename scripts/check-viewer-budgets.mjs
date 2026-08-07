@@ -1,7 +1,7 @@
 import { readdir, stat } from "node:fs/promises";
 
 const budgets = [
-  ["packages/react-viewer/dist/index.js", 8_000],
+  ["packages/react-viewer/dist/index.js", 20_000],
   ["packages/react-viewer/dist/pdf-viewer-", 25_000],
   ["packages/react-viewer/dist/docx-viewer-", 15_000],
   ["packages/react-viewer/dist/markdown-viewer-", 15_000],
@@ -9,6 +9,7 @@ const budgets = [
   ["packages/presentation-viewer/dist/index.js", 30_000],
   ["packages/spreadsheet-engine/dist/index.js", 100_000],
   ["packages/spreadsheet-viewer/dist/index.js", 75_000],
+  ["packages/convex/dist/index.js", 8_000],
   ["packages/react-viewer/dist/pdf.worker.min.mjs", 1_300_000],
   ["examples/react-viewer/dist/assets/presentation-", 1_150_000],
   ["examples/react-viewer/dist/assets/spreadsheet-", 350_000],

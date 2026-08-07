@@ -45,5 +45,7 @@ export { DefaultViewerControls, useViewerControls } from "./controls";
 export { ViewerError, toViewerError } from "./errors";
 export { decodeUtf8, loadDocumentBytes } from "./source";
 export { sanitizeDocxArchive } from "./docx-archive";
+export { AnyDocumentViewer, detectViewerFormat } from "./universal-viewer";
+export type { AnyDocumentViewerProps, UniversalViewerControlOptions } from "./universal-viewer";
 export type * from "./errors";
 export type * from "./types";

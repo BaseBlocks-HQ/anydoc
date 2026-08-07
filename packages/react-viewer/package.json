@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-react-viewer",
-  "version": "0.1.0-alpha.10",
+  "version": "0.1.0-alpha.11",
   "description": "Safe, lazy React viewers for PDF, DOCX, text, and Markdown documents",
   "type": "module",
   "license": "MIT",
@@ -24,8 +24,14 @@
   },
   "engines": { "node": ">=22.13.0" },
   "peerDependencies": {
+    "@baseblocks/anydoc-presentation-viewer": "workspace:*",
+    "@baseblocks/anydoc-spreadsheet-viewer": "workspace:*",
     "react": ">=18.2",
     "react-dom": ">=18.2"
+  },
+  "peerDependenciesMeta": {
+    "@baseblocks/anydoc-presentation-viewer": { "optional": true },
+    "@baseblocks/anydoc-spreadsheet-viewer": { "optional": true }
   },
   "dependencies": {
     "@baseblocks/anydoc-contracts": "workspace:*",

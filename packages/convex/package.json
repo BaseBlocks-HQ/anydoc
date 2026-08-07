@@ -1,0 +1,33 @@
+{
+  "name": "@baseblocks/anydoc-convex",
+  "version": "0.1.0-alpha.11",
+  "description": "Durable Convex ingestion adapter for AnyDoc",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "files": ["dist", "README.md", "LICENSE", "NOTICE"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./node": { "types": "./dist/node.d.ts", "import": "./dist/node.js" }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@baseblocks/anydoc": "workspace:*",
+    "@convex-dev/workpool": "^0.4.9"
+  },
+  "peerDependencies": {
+    "convex": ">=1.36.1"
+  },
+  "devDependencies": {
+    "convex": "^1.42.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.6"
+  }
+}
