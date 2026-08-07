@@ -72,6 +72,60 @@ function throwIfAborted(signal) {
   if (signal.aborted) throw signal.reason ?? error("The ingestion run was aborted.", "aborted", undefined, true);
 }
 
+async function awaitBounded(operation, signal) {
+  throwIfAborted(signal);
+  let onAbort;
+  const aborted = new Promise((_, reject) => {
+    onAbort = () => reject(signal.reason ?? error("The ingestion run was aborted.", "aborted", undefined, true));
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+  try {
+    return await Promise.race([Promise.resolve().then(operation), aborted]);
+  } catch (cause) {
+    // Cancellation/deadline is authoritative even when a cooperative callback
+    // rejects with its own cleanup error in response to the same signal.
+    throwIfAborted(signal);
+    throw cause;
+  } finally {
+    signal.removeEventListener("abort", onAbort);
+  }
+}
+
+function createExecutionScope(externalSignal, deadlineValue) {
+  const deadline = deadlineValue instanceof Date ? deadlineValue.getTime() : deadlineValue;
+  if (deadline !== undefined && !Number.isFinite(deadline)) {
+    throw error("deadline must be a valid date or Unix epoch millisecond value.", "invalid-source");
+  }
+  if (deadline === undefined) {
+    return { deadline, dispose() {}, signal: externalSignal ?? new AbortController().signal };
+  }
+
+  const deadlineController = new AbortController();
+  const deadlineFailure = () => error(
+    "The ingestion run exceeded its deadline.",
+    "deadline-exceeded",
+    undefined,
+    true,
+  );
+  let timer;
+  const schedule = () => {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      deadlineController.abort(deadlineFailure());
+      return;
+    }
+    timer = setTimeout(schedule, Math.min(remaining, 2_147_483_647));
+  };
+  schedule();
+  return {
+    deadline,
+    dispose() { if (timer !== undefined) clearTimeout(timer); },
+    signal: externalSignal
+      ? AbortSignal.any([externalSignal, deadlineController.signal])
+      : deadlineController.signal,
+  };
+}
+
 function emit(observer, event) {
   try {
     if (typeof observer === "function") observer(Object.freeze(event));
@@ -102,20 +156,26 @@ export async function executeIngestion(options) {
     throw error("Ingestion requires a non-empty idempotencyKey of at most 512 characters.", "invalid-source");
   }
 
+  const scope = createExecutionScope(options.signal, options.deadline);
+  try {
+    return await executeIngestionAttempt(options, scope.signal, scope.deadline);
+  } finally {
+    scope.dispose();
+  }
+}
+
+async function executeIngestionAttempt(options, signal, deadline) {
   const format = normalizeFormat(options.format);
-  const signal = options.signal ?? new AbortController().signal;
-  const deadline = options.deadline;
   const artifactLimits = createArtifactLimits(options.artifactLimits);
   const phase = async (name, checkpoint = {}) => {
-    throwIfAborted(signal);
-    await options.onPhase?.(name, checkpoint);
-    throwIfAborted(signal);
+    if (options.onPhase) await awaitBounded(() => options.onPhase(name, checkpoint), signal);
+    else throwIfAborted(signal);
   };
 
   await phase("acquire-source");
   let source;
   try {
-    source = await options.resolveSource(options.source, { signal });
+    source = await awaitBounded(() => options.resolveSource(options.source, { signal }), signal);
   } catch (cause) {
     throwIfAborted(signal);
     throw asError(cause, "fetch-failed", "The document source could not be resolved.");
@@ -136,7 +196,7 @@ export async function executeIngestion(options) {
   await phase("process");
   let artifact;
   try {
-    artifact = await options.process({
+    artifact = await awaitBounded(() => options.process({
       bytes: read.bytes,
       format,
       metadata: options.metadata,
@@ -149,7 +209,7 @@ export async function executeIngestion(options) {
       },
       signal,
       reportProgress(progress) { options.onProcessorProgress?.(progress); },
-    });
+    }), signal);
   } catch (cause) {
     throwIfAborted(signal);
     throw asError(cause, "processing-failed", "The document processor failed.");
@@ -172,11 +232,11 @@ export async function executeIngestion(options) {
   await phase("store-content");
   let content;
   try {
-    content = await options.contentSink.write({
+    content = await awaitBounded(() => options.contentSink.write({
       artifact: persistentArtifact,
       idempotencyKey: `${options.idempotencyKey}:content`,
       signal,
-    });
+    }), signal);
   } catch (cause) {
     throwIfAborted(signal);
     throw asError(cause, "sink-failed", "The content sink failed.", true);
@@ -196,12 +256,12 @@ export async function executeIngestion(options) {
   if (options.indexSink) {
     await phase("store-index", { content });
     try {
-      index = await options.indexSink.write({
+      index = await awaitBounded(() => options.indexSink.write({
         artifact: persistentArtifact,
         content,
         idempotencyKey: `${options.idempotencyKey}:index`,
         signal,
-      });
+      }), signal);
     } catch (cause) {
       throwIfAborted(signal);
       throw asError(cause, "sink-failed", "The index sink failed.", true);

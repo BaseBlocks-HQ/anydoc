@@ -82,7 +82,7 @@ test("one-shot execution honors an already-aborted signal before source or sink 
 });
 
 test("one-shot execution preserves the abort reason across asynchronous host phases", async () => {
-  for (const phase of ["resolve", "process", "content", "index"]) {
+  for (const phase of ["onPhase", "resolve", "process", "content", "index"]) {
     const controller = new AbortController();
     const reason = new DocumentPlatformError(`cancelled during ${phase}`, { code: "aborted", retryable: true });
     let notifyStarted;
@@ -102,10 +102,27 @@ test("one-shot execution preserves the abort reason across asynchronous host pha
         write: phase === "content" ? ({ signal }) => interrupted(signal) : async () => ({ ref: "content" }),
       },
       ...(phase === "index" ? { indexSink: { write: ({ signal }) => interrupted(signal) } } : {}),
+      ...(phase === "onPhase" ? { onPhase: () => interrupted(controller.signal) } : {}),
     });
     await started;
     controller.abort(reason);
     await assert.rejects(execution, (cause) => cause === reason);
+  }
+});
+
+test("one-shot deadline bounds non-cooperative processor and sink callbacks", async () => {
+  for (const phase of ["process", "content"]) {
+    const never = () => new Promise(() => {});
+    const execution = executeIngestion({
+      source: {},
+      format: "txt",
+      deadline: Date.now() + 30,
+      idempotencyKey: `deadline-${phase}`,
+      resolveSource: () => bytesSource(encoder.encode("hello")),
+      process: phase === "process" ? never : () => ({ content: { text: "hello" } }),
+      contentSink: { write: phase === "content" ? never : async () => ({ ref: "content" }) },
+    });
+    await assert.rejects(execution, { code: "deadline-exceeded", retryable: true });
   }
 });
 
