@@ -69,6 +69,10 @@ importers:
       react:
         specifier: '>=18'
         version: 19.2.3
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.1
     optionalDependencies:
       '@firecrawl/anydoc-darwin-arm64':
         specifier: 0.1.7
@@ -109,12 +113,18 @@ importers:
       '@types/react':
         specifier: ^19.1.9
         version: 19.2.15
+      '@types/react-dom':
+        specifier: ^19.1.7
+        version: 19.2.3(@types/react@19.2.15)
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
       react:
         specifier: ^19.1.1
         version: 19.2.3
+      react-dom:
+        specifier: ^19.1.1
+        version: 19.2.3(react@19.2.3)
       tsup:
         specifier: ^8.5.0
         version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)

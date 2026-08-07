@@ -27,11 +27,59 @@ const plainText = decodeTextContent(textBytes, "text");
 const viewer = await loadViewerAdapter("docx");
 ```
 
+## Headless ingestion runtime
+
+The ingestion runtime is a set of ports, not a queue, database, or storage SDK. Applications retain authorization, scheduling, credentials, publication state, and vendor choices. AnyDoc owns the reusable safety and execution semantics:
+
+- `@baseblocks/anydoc/sources` — bounded Web/stream/bytes reads, incremental SHA-256, exact-size verification, deadlines, and redirect policy.
+- `@baseblocks/anydoc/sources/node` — regular-file sources without pulling Node built-ins into Web bundles.
+- `@baseblocks/anydoc/ingestion` — durable job, lease, retry, idempotency, progress, content-sink, and index-sink contracts.
+- `@baseblocks/anydoc/memory` — reference job store and sinks for tests and local tools, not a durable production backend.
+
+```ts
+import { toDocument } from "@baseblocks/anydoc/node";
+import { createIngestionRuntime } from "@baseblocks/anydoc/ingestion";
+import { bytesSource } from "@baseblocks/anydoc/sources";
+
+const runtime = createIngestionRuntime({
+  jobs, // your durable IngestionJobStore
+  resolveSource: async ({ storageKey }) => {
+    // Fetch credentials and authorization stay in the application adapter.
+    const bytes = await storage.read(storageKey);
+    return bytesSource(bytes);
+  },
+  process: async ({ bytes, format }) => ({
+    content: await toDocument(bytes, format),
+    format,
+  }),
+  contentSink,
+  indexSink,
+  observer: (event) => telemetry.emit(event),
+});
+
+const { job } = await runtime.enqueue({
+  idempotencyKey: `${tenantId}:${documentId}:${sourceVersion}`,
+  source: { storageKey },
+  format: "docx",
+  expectedSize,
+  expectedSha256,
+});
+await runtime.run(job.id, { workerId });
+```
+
+Source descriptors and job metadata must be durable structured-clone data; never put credentials in them. Sink writes receive stable, phase-specific idempotency keys. A retry after interruption may call a sink again, so a production sink must atomically return its prior result for the same key.
+
+The normalized `artifact.content` model is deliberately separate from native viewer state. The runtime rejects artifacts containing `nativeRender`, `viewerModel`, or `sourceBytes`; native viewers continue to consume original bounded source bytes through their lazy format packages.
+
+See [the ingestion architecture](../../docs/INGESTION.md) for store invariants, state transitions, source security, and adapter guidance.
+
 The default entry point contains only capability/security contracts and a lazy adapter registry. PDF, DOCX, spreadsheet, and PPTX dependencies are loaded through explicit format adapters so ingestion-only consumers do not pay their cost. Hosts provide the concrete React/headless renderer and worker URLs appropriate to their bundler.
 
 ## Security contract
 
 Documents are untrusted. Adapters must enforce bounded bytes/pages/cells/slides, disable macros/scripts/formulas/external references, block external media by default, and expose structured errors. `isSafeExternalUrl`, `sanitizeFilename`, and `createAbortScope` are small shared primitives for hosts.
+
+Server-side `webSource` requires an explicit `allowUrl` callback. The host must resolve its own DNS/private-network policy; URL syntax checks alone do not prevent SSRF or DNS rebinding. Cross-origin redirects strip credentials and sensitive headers unless the caller makes an explicit unsafe opt-in.
 
 ## Capability matrix
 

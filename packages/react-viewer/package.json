@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-react-viewer",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "description": "Safe, lazy React viewers for PDF, DOCX, text, and Markdown documents",
   "type": "module",
   "license": "MIT",
