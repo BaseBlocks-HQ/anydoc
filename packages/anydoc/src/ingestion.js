@@ -104,6 +104,7 @@ export async function executeIngestion(options) {
 
   const format = normalizeFormat(options.format);
   const signal = options.signal ?? new AbortController().signal;
+  const deadline = options.deadline;
   const artifactLimits = createArtifactLimits(options.artifactLimits);
   const phase = async (name, checkpoint = {}) => {
     throwIfAborted(signal);
@@ -116,6 +117,7 @@ export async function executeIngestion(options) {
   try {
     source = await options.resolveSource(options.source, { signal });
   } catch (cause) {
+    throwIfAborted(signal);
     throw asError(cause, "fetch-failed", "The document source could not be resolved.");
   }
   throwIfAborted(signal);
@@ -126,6 +128,7 @@ export async function executeIngestion(options) {
     expectedSize: options.expectedSize,
     expectedSha256: options.expectedSha256,
     calculateSha256: true,
+    deadline,
     signal,
     onProgress: options.onSourceProgress,
   });
@@ -148,14 +151,12 @@ export async function executeIngestion(options) {
       reportProgress(progress) { options.onProcessorProgress?.(progress); },
     });
   } catch (cause) {
+    throwIfAborted(signal);
     throw asError(cause, "processing-failed", "The document processor failed.");
   }
   throwIfAborted(signal);
   if (!artifact || typeof artifact !== "object" || !("content" in artifact)) {
     throw error("The processor returned no normalized content model.", "processing-failed");
-  }
-  if ("nativeRender" in artifact || "viewerModel" in artifact || "sourceBytes" in artifact) {
-    throw error("Ingestion artifacts cannot contain native render models or source bytes.", "processing-failed");
   }
   const persistentArtifact = encodePersistenceValue(artifact, {
     name: "The ingestion artifact",
@@ -165,6 +166,7 @@ export async function executeIngestion(options) {
     maxBinaryBytes: artifactLimits.maxBinaryBytes,
     maxEntries: artifactLimits.maxEntries,
     maxDepth: artifactLimits.maxDepth,
+    forbiddenKeys: new Set(["nativeRender", "viewerModel", "sourceBytes"]),
   }).value;
 
   await phase("store-content");
@@ -176,6 +178,7 @@ export async function executeIngestion(options) {
       signal,
     });
   } catch (cause) {
+    throwIfAborted(signal);
     throw asError(cause, "sink-failed", "The content sink failed.", true);
   }
   throwIfAborted(signal);
@@ -200,6 +203,7 @@ export async function executeIngestion(options) {
         signal,
       });
     } catch (cause) {
+      throwIfAborted(signal);
       throw asError(cause, "sink-failed", "The index sink failed.", true);
     }
     throwIfAborted(signal);
@@ -371,7 +375,12 @@ export function createIngestionRuntime(options) {
     emit(observer, { type: "job.claimed", jobId, attempt: job.attempt, workerId, at: clock() });
 
     const checkpoint = async (phase, patch = {}) => {
-      const updated = await jobs.update(jobId, { leaseToken, now: clock(), patch: { ...patch, phase } });
+      let updated;
+      try {
+        updated = await jobs.update(jobId, { leaseToken, now: clock(), patch: { ...patch, phase } });
+      } catch (cause) {
+        throw error("The ingestion checkpoint could not be persisted.", "lease-lost", cause, true);
+      }
       if (!updated) throw error("The ingestion lease was lost.", "lease-lost", undefined, true);
       job = updated;
       emit(observer, { type: "job.phase", jobId, phase, attempt: job.attempt, at: clock() });

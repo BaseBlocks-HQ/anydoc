@@ -22,6 +22,7 @@ void executeIngestion({
   source: { storageKey: "/tmp/doc" },
   format: "docx",
   idempotencyKey: "tenant:direct:v1",
+  deadline: new Date(),
   resolveSource: ({ storageKey }) => fileSource(storageKey),
   process: ({ bytes, format }) => ({ content: { byteLength: bytes.byteLength }, format }),
   contentSink: { async write({ idempotencyKey }) { return { idempotencyKey }; } },

@@ -85,11 +85,12 @@ binary data, graph entries/depth, and persisted sink results. Override
 `artifactLimits` deliberately for a trusted workload; an exceeded budget fails
 terminally with `output-too-large`.
 
-The normalized `artifact.content` model is deliberately separate from native viewer state. The runtime rejects artifacts containing `nativeRender`, `viewerModel`, or `sourceBytes`; native viewers continue to consume original bounded source bytes through their lazy format packages.
+The normalized `artifact.content` model is deliberately separate from native viewer state. The runtime recursively rejects artifacts containing `nativeRender`, `viewerModel`, or `sourceBytes` at any depth; native viewers continue to consume original bounded source bytes through their lazy format packages.
 
 For hosts that already own durable scheduling and transactions, call
 `executeIngestion()` from `@baseblocks/anydoc/ingestion`. It executes one
-verified, bounded attempt with content/index sinks and cancellation, but adds no
+verified, bounded attempt with content/index sinks, cancellation, and an optional
+absolute source-read `deadline`, but adds no
 queue, lease, retry, or persistence abstraction. The complete durable runtime
 uses this same executor internally.
 

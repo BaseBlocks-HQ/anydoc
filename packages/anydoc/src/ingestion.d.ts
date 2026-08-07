@@ -36,7 +36,7 @@ export interface IngestionSink<Result = unknown> { write(input: { readonly artif
 export interface OneShotIngestionSink<Result = unknown> { write(input: { readonly artifact: PersistentIngestionArtifact; readonly content?: PersistenceValue; readonly idempotencyKey: string; readonly signal: AbortSignal }): Promise<Result> }
 export interface IngestionProcessorInput<Metadata = unknown> { readonly bytes: Uint8Array; readonly format: string; readonly metadata?: Metadata; readonly source: Omit<ReadSourceResult, "bytes">; readonly signal: AbortSignal; readonly reportProgress: (progress: unknown) => void }
 export interface ExecuteIngestionOptions<SourceDescriptor = unknown, Metadata = unknown, Artifact extends IngestionArtifact = IngestionArtifact> {
-  readonly source: SourceDescriptor; readonly format: string; readonly expectedSize?: number; readonly expectedSha256?: string; readonly maxBytes?: number; readonly metadata?: Metadata;
+  readonly source: SourceDescriptor; readonly format: string; readonly expectedSize?: number; readonly expectedSha256?: string; readonly maxBytes?: number; readonly deadline?: number | Date; readonly metadata?: Metadata;
   readonly idempotencyKey: string; readonly signal?: AbortSignal; readonly artifactLimits?: Partial<ArtifactLimits>;
   readonly resolveSource: (descriptor: SourceDescriptor, context: { readonly signal: AbortSignal }) => DocumentSource | Promise<DocumentSource>;
   readonly process: (input: IngestionProcessorInput<Metadata>) => Artifact | Promise<Artifact>;

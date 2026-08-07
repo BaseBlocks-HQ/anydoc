@@ -81,6 +81,48 @@ test("one-shot execution honors an already-aborted signal before source or sink 
   assert.equal(calls, 0);
 });
 
+test("one-shot execution preserves the abort reason across asynchronous host phases", async () => {
+  for (const phase of ["resolve", "process", "content", "index"]) {
+    const controller = new AbortController();
+    const reason = new DocumentPlatformError(`cancelled during ${phase}`, { code: "aborted", retryable: true });
+    let notifyStarted;
+    const started = new Promise((resolve) => { notifyStarted = resolve; });
+    const interrupted = async (signal) => {
+      notifyStarted();
+      await new Promise((_, reject) => signal.addEventListener("abort", () => reject(new Error("host callback masked cancellation")), { once: true }));
+    };
+    const execution = executeIngestion({
+      source: {},
+      format: "txt",
+      idempotencyKey: `abort-${phase}`,
+      signal: controller.signal,
+      resolveSource: phase === "resolve" ? (_, { signal }) => interrupted(signal) : () => bytesSource(encoder.encode("hello")),
+      process: phase === "process" ? ({ signal }) => interrupted(signal) : () => ({ content: { text: "hello" } }),
+      contentSink: {
+        write: phase === "content" ? ({ signal }) => interrupted(signal) : async () => ({ ref: "content" }),
+      },
+      ...(phase === "index" ? { indexSink: { write: ({ signal }) => interrupted(signal) } } : {}),
+    });
+    await started;
+    controller.abort(reason);
+    await assert.rejects(execution, (cause) => cause === reason);
+  }
+});
+
+test("one-shot execution forwards its absolute deadline to bounded source reads", async () => {
+  let processed = false;
+  await assert.rejects(executeIngestion({
+    source: {},
+    format: "txt",
+    deadline: Date.now() - 1,
+    idempotencyKey: "expired-deadline",
+    resolveSource: () => bytesSource(encoder.encode("hello")),
+    process: () => { processed = true; return { content: {} }; },
+    contentSink: { async write() { return {}; } },
+  }), { code: "deadline-exceeded", retryable: true });
+  assert.equal(processed, false);
+});
+
 test("retryable sink interruption resumes without duplicating content", async () => {
   let now = 1_000;
   let indexAttempts = 0;
@@ -109,15 +151,50 @@ test("retryable sink interruption resumes without duplicating content", async ()
   assert.equal(indexAttempts, 2);
 });
 
-test("native render models and source bytes cannot cross the ingestion boundary", async () => {
-  const runtime = createIngestionRuntime(runtimeOptions({
-    process: () => ({ content: {}, nativeRender: {} }),
-    retry: createRetryPolicy({ maxAttempts: 1 }),
-  }));
-  const { job } = await runtime.enqueue({ idempotencyKey: "separation", source: {}, format: "pptx" });
+test("native render models and source bytes cannot cross any nested ingestion boundary", async () => {
+  for (const [index, content] of [
+    { viewerModel: {} },
+    { nested: { nativeRender: {} } },
+    { pages: [{ metadata: { sourceBytes: "not-source-data" } }] },
+  ].entries()) {
+    let writes = 0;
+    const runtime = createIngestionRuntime(runtimeOptions({
+      process: () => ({ content }),
+      contentSink: { async write() { writes += 1; return {}; } },
+      retry: createRetryPolicy({ maxAttempts: 1 }),
+    }));
+    const { job } = await runtime.enqueue({ idempotencyKey: `separation-${index}`, source: {}, format: "pptx" });
+    const result = await runtime.run(job.id);
+    assert.equal(result.status, "failed");
+    assert.equal(result.error.code, "processing-failed");
+    assert.equal(writes, 0);
+  }
+});
+
+test("checkpoint storage failures remain retryable infrastructure failures", async () => {
+  const stored = createMemoryJobStore();
+  let failed = false;
+  const jobs = {
+    create: (...args) => stored.create(...args),
+    get: (...args) => stored.get(...args),
+    claim: (...args) => stored.claim(...args),
+    renew: (...args) => stored.renew(...args),
+    cancel: (...args) => stored.cancel(...args),
+    async update(...args) {
+      if (!failed) {
+        failed = true;
+        throw new Error("transient database outage");
+      }
+      return stored.update(...args);
+    },
+  };
+  const runtime = createIngestionRuntime(runtimeOptions({ jobs }));
+  const { job } = await runtime.enqueue({ idempotencyKey: "checkpoint-outage", source: {}, format: "pdf" });
   const result = await runtime.run(job.id);
-  assert.equal(result.status, "failed");
-  assert.equal(result.error.code, "processing-failed");
+  assert.equal(result.status, "retry-scheduled");
+  assert.equal(result.error.code, "lease-lost");
+  assert.equal(result.error.retryable, true);
+  assert.equal(result.job.error.code, "lease-lost");
 });
 
 test("terminal failure honors max attempts and observer failures are isolated", async () => {

@@ -96,6 +96,7 @@ function walkPersistenceValue(root, options, mode) {
   let entries = 0;
 
   const invalid = (message, cause) => { throw persistenceError(`${name} ${message}`, options, cause); };
+  const forbiddenKeys = options.forbiddenKeys;
   const exceed = (message) => {
     throw new DocumentPlatformError(`${name} ${message}`, { code: "output-too-large" });
   };
@@ -151,7 +152,6 @@ function walkPersistenceValue(root, options, mode) {
     }
     if (ancestors.has(value)) invalid("contains a cycle.");
     if (Array.isArray(value)) {
-      if (Object.getOwnPropertySymbols(value).length > 0) invalid("contains symbol-keyed array data.");
       if (value.length > limits.maxEntries - entries) exceed(`exceeds the ${limits.maxEntries.toLocaleString()} entry budget.`);
       addStructure(value.length * 2 + 2);
       ancestors.add(value);
@@ -170,7 +170,6 @@ function walkPersistenceValue(root, options, mode) {
       return output;
     }
     if (!isPlainObject(value)) invalid(`contains unsupported ${value.constructor?.name ?? "object"} data.`);
-    if (Object.getOwnPropertySymbols(value).length > 0) invalid("contains symbol-keyed data.");
 
     let markerPresent = false;
     let propertyCount = 0;
@@ -197,6 +196,7 @@ function walkPersistenceValue(root, options, mode) {
     const output = mode === "measure" ? undefined : {};
     for (const key in value) {
       if (!Object.hasOwn(value, key)) continue;
+      if (forbiddenKeys?.has(key)) invalid(`contains forbidden ${key} data.`);
       const descriptor = Object.getOwnPropertyDescriptor(value, key);
       if (!descriptor || !("value" in descriptor)) invalid("contains an accessor property.");
       addText(key);

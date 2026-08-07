@@ -35,13 +35,23 @@ test("non-portable values are rejected before persistence", () => {
   sparse[1] = "value";
   const accessor = {};
   Object.defineProperty(accessor, "value", { enumerable: true, get() { return "value"; } });
-  const symbol = { value: "ok" };
-  symbol[Symbol("hidden")] = true;
-  for (const value of [undefined, () => {}, 1n, Number.NaN, Infinity, new Date(), new Map(), new Set(), new Blob(["x"]), cycle, sparse, accessor, symbol]) {
+  for (const value of [undefined, () => {}, 1n, Number.NaN, Infinity, new Date(), new Map(), new Set(), new Blob(["x"]), cycle, sparse, accessor]) {
     assert.throws(() => encodePersistenceValue(value), { code: "invalid-persistence" });
   }
   assert.throws(() => encodePersistenceValue({ $anydoc: "binary/base64", data: "AQ==" }), { code: "invalid-persistence" });
   assert.throws(() => clonePersistenceValue({ $anydoc: "binary/base64", data: "not-base64" }), { code: "invalid-persistence" });
   assert.throws(() => clonePersistenceValue({ $anydoc: "binary/base64", data: "AB==" }), { code: "invalid-persistence" });
   assert.throws(() => clonePersistenceValue({ $anydoc: "binary/base64", data: "AAF=" }), { code: "invalid-persistence" });
+});
+
+test("symbol metadata is outside the persistence grammar without unbounded reflection", () => {
+  const value = { visible: "persisted" };
+  value[Symbol("host-metadata")] = { ignored: true };
+  const original = Object.getOwnPropertySymbols;
+  Object.getOwnPropertySymbols = () => { throw new Error("unbounded symbol enumeration"); };
+  try {
+    assert.deepEqual(encodePersistenceValue(value).value, { visible: "persisted" });
+  } finally {
+    Object.getOwnPropertySymbols = original;
+  }
 });
