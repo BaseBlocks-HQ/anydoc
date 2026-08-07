@@ -80,7 +80,9 @@ jobs:
             if npm view "$name@$version" version >/dev/null 2>&1; then
               node verify-registry-package.mjs "$tarball" "$name@$version"
             else
-              npm publish "$tarball" --access public --provenance
+              dist_tag="latest"
+              case "$version" in *-*) dist_tag="next" ;; esac
+              npm publish "$tarball" --access public --provenance --tag "$dist_tag"
             fi
           done < <(node -e 'const {packages}=require("./packages.json"); for (const item of packages) console.log([item.name,item.version,item.tarball].join("\t"))')
       - name: Create GitHub release metadata
