@@ -230,7 +230,13 @@ function PresentationThumbnailRail({
     <nav
       aria-label="Presentation slides"
       className="presentation-viewer-thumbnails"
-      onScroll={(event) => setViewport((value) => ({ ...value, scrollTop: event.currentTarget.scrollTop }))}
+      onScroll={(event) => {
+        // React clears currentTarget after the handler returns. Snapshot the DOM
+        // value before scheduling an update so a deferred updater never retains
+        // the SyntheticEvent or reads from a rail that has since unmounted.
+        const scrollTop = event.currentTarget.scrollTop;
+        setViewport((value) => ({ ...value, scrollTop }));
+      }}
       ref={railRef}
       style={{ borderRight: "1px solid var(--presentation-viewer-border, #d4d4d8)", overflowY: "auto", padding: 8 }}
     >

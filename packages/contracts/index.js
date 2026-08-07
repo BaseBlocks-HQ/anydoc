@@ -18,6 +18,7 @@ export class DocumentPlatformError extends Error {
     super(message, { cause: details.cause });
     this.name = "DocumentPlatformError";
     this.code = details.code;
+    this.retryable = details.retryable ?? false;
     if (details.format !== undefined) this.format = details.format;
     if (details.status !== undefined) this.status = details.status;
   }
@@ -29,6 +30,7 @@ export class DocumentPlatformError extends Error {
       message: this.message,
       format: this.format,
       status: this.status,
+      retryable: this.retryable,
     };
   }
 }

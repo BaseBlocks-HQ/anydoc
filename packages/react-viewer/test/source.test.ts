@@ -53,6 +53,7 @@ describe("document sources", () => {
       format: "pdf",
       message: "Nope",
       name: "ViewerError",
+      retryable: false,
       status: 500,
     });
   });
