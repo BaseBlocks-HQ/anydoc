@@ -23,7 +23,7 @@
   "engines": { "node": ">=20" },
   "dependencies": {
     "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.13",
-    "@firecrawl/anydoc": "0.1.7"
+    "@firecrawl/anydoc": "0.1.8"
   },
   "devDependencies": { "@types/node": "^24.10.1" },
   "scripts": { "test": "node --test test/*.test.mjs", "typecheck": "tsc --noEmit -p tsconfig.json" }
