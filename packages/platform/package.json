@@ -30,7 +30,7 @@
     "@baseblocks/anydoc-react-viewer": "workspace:0.1.0-alpha.13",
     "@baseblocks/anydoc-spreadsheet-engine": "workspace:0.1.0-alpha.13",
     "@baseblocks/anydoc-spreadsheet-viewer": "workspace:0.1.0-alpha.13",
-    "@firecrawl/anydoc-wasm": "0.1.7"
+    "@firecrawl/anydoc-wasm": "0.1.8"
   },
   "peerDependencies": { "react": ">=18" },
   "peerDependenciesMeta": { "react": { "optional": true } },

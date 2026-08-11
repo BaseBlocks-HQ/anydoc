@@ -76,8 +76,8 @@ importers:
         specifier: workspace:0.1.0-alpha.13
         version: link:../contracts
       '@firecrawl/anydoc':
-        specifier: 0.1.7
-        version: 0.1.7
+        specifier: 0.1.8
+        version: 0.1.8
     devDependencies:
       '@types/node':
         specifier: ^24.10.1
@@ -105,8 +105,8 @@ importers:
         specifier: workspace:0.1.0-alpha.13
         version: link:../spreadsheet-viewer
       '@firecrawl/anydoc-wasm':
-        specifier: 0.1.7
-        version: 0.1.7
+        specifier: 0.1.8
+        version: 0.1.8
 
   packages/presentation-viewer:
     dependencies:
@@ -888,57 +888,57 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@firecrawl/anydoc-darwin-arm64@0.1.7':
-    resolution: {integrity: sha512-1qi2pg6ija1EulitX/WkA9lkA9oa0CIFluUycFir5oP7M+Zpv1J12aEgleD/aHXr0EwiWVsRgTkGy3vBxy3rBA==}
+  '@firecrawl/anydoc-darwin-arm64@0.1.8':
+    resolution: {integrity: sha512-B+30kDFGW8RUt1S6nOwdRT3ZTf8pDztid1ws8XL95UuAkz2d49ktg00hfEIW0xCgM1HByUTfQkQtcJsfF2O35g==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [darwin]
 
-  '@firecrawl/anydoc-darwin-x64@0.1.7':
-    resolution: {integrity: sha512-BkmkrnkcbxCQi/+YIWbtPIoM6kM5ULDLw8tjAC7EsNb+H3tyCUdUg1fkBDzhRGCBo0urocTuGkG0uVR+udH0YA==}
+  '@firecrawl/anydoc-darwin-x64@0.1.8':
+    resolution: {integrity: sha512-PqUQFRv7I86ou2sZ0qE6bQFASi2Ja5yfpsU1vhngnqTsC31q2iSLDE5MWWGGRMoNZrWDh5ICTN7yQBoepkSokw==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [darwin]
 
-  '@firecrawl/anydoc-linux-arm64-gnu@0.1.7':
-    resolution: {integrity: sha512-T+2QkmGnnOCwaGX4nuq4rri3wQRp7Q9U52kI/vEGvq9699hLUkFjMP6aYxug8WBkgavQ6wU8Hd3u9wGkU9FnJQ==}
+  '@firecrawl/anydoc-linux-arm64-gnu@0.1.8':
+    resolution: {integrity: sha512-lFuS2GdkKexYCCfBGb47si3vE4jA8Y+w9F377JJPeQc1/HQilqi+RjOhQrEgHiGlNygeOJwL6bKOQr+R+CWL9Q==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@firecrawl/anydoc-linux-arm64-musl@0.1.7':
-    resolution: {integrity: sha512-fiFUrHas8Gi8/G99CkuOkIN5HydSxvIsqN/fZI5jlhzkVm4ODRd47P0NRN0G0zPTKyzVvju9NypWfvZh5ptH8A==}
+  '@firecrawl/anydoc-linux-arm64-musl@0.1.8':
+    resolution: {integrity: sha512-MT+24XbTQ5Jh+SDmbQz5F46sbz/gE2SeWf/5RyFriuOJHtiYSb0rym1AOa7HZH12AJvnfPcU6xTqyj1gKxRF0g==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@firecrawl/anydoc-linux-x64-gnu@0.1.7':
-    resolution: {integrity: sha512-ezIvZ8IAfIHEXc7GW0Urt3cO2dcaS8Ko2YqZubCEGO3+4VjQz7x9ZZEBDFFr4xUSdlORyoOx7+a3OVbHaWdm2Q==}
+  '@firecrawl/anydoc-linux-x64-gnu@0.1.8':
+    resolution: {integrity: sha512-Row1/D9/3Zf5fFKaIyZqlMbz/Bxzl9FULFH7Zxlx/h4HTZT3S4Yl5d5A5Gl6T1Rps3qwrsJerXfL+9nLrj4s3Q==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@firecrawl/anydoc-linux-x64-musl@0.1.7':
-    resolution: {integrity: sha512-5/YlfHT+u1dZ4gWgVp4QBWDQRExNDGiE5b0CvL9ZD7lOPK5N3Q+wkCl6Q5UV9/V/Ku6GgVxrI8p21TqG0ZZJlA==}
+  '@firecrawl/anydoc-linux-x64-musl@0.1.8':
+    resolution: {integrity: sha512-PovgyJR229FbxYsPGFhHFio1B+zBn2WKgNMmon/aPZanSG5a+xGkv+ywdrYJnZtBF1+LHgfbiQPljv5BqdbUMg==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@firecrawl/anydoc-wasm@0.1.7':
-    resolution: {integrity: sha512-FkuHl7K8Cl/kyt1ZS9DbX/0GubvW7dHPgiDWrmMoFDFI3GGAtyWsyvAnoqncbFA6yW/ZCjSiZ8jjhH0zeeBxfQ==}
+  '@firecrawl/anydoc-wasm@0.1.8':
+    resolution: {integrity: sha512-RKqM9/Oh6NTRPeJgOSq50Kn+vNdBxeF/lFL7ceUJlfuxnFjbVwQ03AZfj3LBSyKZ0WO9WyE+H4/qTZ3M8uc/zQ==}
 
-  '@firecrawl/anydoc-win32-x64-msvc@0.1.7':
-    resolution: {integrity: sha512-mo2jdUAxd87z9CATfN9dPiwJENaF0ZmS1Ll0Z0lWxWLN2ufqicrVZBMKU4c0+B/wX4OfzACh2Kh6J2x5918CtQ==}
+  '@firecrawl/anydoc-win32-x64-msvc@0.1.8':
+    resolution: {integrity: sha512-WwCy76FKeNLMFpfQkegaGZh6Oh05XMTQkGCVizh5IDZXTtYfn2j+KqOQbx8XT1y+dewBYQIvq/8OJFpeHuckKA==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [win32]
 
-  '@firecrawl/anydoc@0.1.7':
-    resolution: {integrity: sha512-UbJ6I49uaeUopcxozvX3TT7bvt9Gnx2tk2wf8ykaLtrThxvY9ZIZlbY47odT+x01ce3rXH9Pkpj40A796jN7Og==}
+  '@firecrawl/anydoc@0.1.8':
+    resolution: {integrity: sha512-DJXcCdEL1CcIyRRO/2C6SAcvn/SgM0nnpeGLOyZxJwCZJlx9s0HBUnsNtvQd5UHFUY/vZOURMOUf/h4I3HLjvQ==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -3009,39 +3009,39 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
-  '@firecrawl/anydoc-darwin-arm64@0.1.7':
+  '@firecrawl/anydoc-darwin-arm64@0.1.8':
     optional: true
 
-  '@firecrawl/anydoc-darwin-x64@0.1.7':
+  '@firecrawl/anydoc-darwin-x64@0.1.8':
     optional: true
 
-  '@firecrawl/anydoc-linux-arm64-gnu@0.1.7':
+  '@firecrawl/anydoc-linux-arm64-gnu@0.1.8':
     optional: true
 
-  '@firecrawl/anydoc-linux-arm64-musl@0.1.7':
+  '@firecrawl/anydoc-linux-arm64-musl@0.1.8':
     optional: true
 
-  '@firecrawl/anydoc-linux-x64-gnu@0.1.7':
+  '@firecrawl/anydoc-linux-x64-gnu@0.1.8':
     optional: true
 
-  '@firecrawl/anydoc-linux-x64-musl@0.1.7':
+  '@firecrawl/anydoc-linux-x64-musl@0.1.8':
     optional: true
 
-  '@firecrawl/anydoc-wasm@0.1.7':
+  '@firecrawl/anydoc-wasm@0.1.8':
     optional: true
 
-  '@firecrawl/anydoc-win32-x64-msvc@0.1.7':
+  '@firecrawl/anydoc-win32-x64-msvc@0.1.8':
     optional: true
 
-  '@firecrawl/anydoc@0.1.7':
+  '@firecrawl/anydoc@0.1.8':
     optionalDependencies:
-      '@firecrawl/anydoc-darwin-arm64': 0.1.7
-      '@firecrawl/anydoc-darwin-x64': 0.1.7
-      '@firecrawl/anydoc-linux-arm64-gnu': 0.1.7
-      '@firecrawl/anydoc-linux-arm64-musl': 0.1.7
-      '@firecrawl/anydoc-linux-x64-gnu': 0.1.7
-      '@firecrawl/anydoc-linux-x64-musl': 0.1.7
-      '@firecrawl/anydoc-win32-x64-msvc': 0.1.7
+      '@firecrawl/anydoc-darwin-arm64': 0.1.8
+      '@firecrawl/anydoc-darwin-x64': 0.1.8
+      '@firecrawl/anydoc-linux-arm64-gnu': 0.1.8
+      '@firecrawl/anydoc-linux-arm64-musl': 0.1.8
+      '@firecrawl/anydoc-linux-x64-gnu': 0.1.8
+      '@firecrawl/anydoc-linux-x64-musl': 0.1.8
+      '@firecrawl/anydoc-win32-x64-msvc': 0.1.8
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

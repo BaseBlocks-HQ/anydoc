@@ -8,12 +8,12 @@ allowBuilds:
   esbuild: true
 
 minimumReleaseAgeExclude:
-  - '@firecrawl/anydoc-wasm@0.1.7'
-  - '@firecrawl/anydoc-darwin-arm64@0.1.7'
-  - '@firecrawl/anydoc-darwin-x64@0.1.7'
-  - '@firecrawl/anydoc-linux-arm64-gnu@0.1.7'
-  - '@firecrawl/anydoc-linux-arm64-musl@0.1.7'
-  - '@firecrawl/anydoc-linux-x64-gnu@0.1.7'
-  - '@firecrawl/anydoc-linux-x64-musl@0.1.7'
-  - '@firecrawl/anydoc-win32-x64-msvc@0.1.7'
-  - '@firecrawl/anydoc@0.1.7'
+  - '@firecrawl/anydoc-wasm@0.1.8'
+  - '@firecrawl/anydoc-darwin-arm64@0.1.8'
+  - '@firecrawl/anydoc-darwin-x64@0.1.8'
+  - '@firecrawl/anydoc-linux-arm64-gnu@0.1.8'
+  - '@firecrawl/anydoc-linux-arm64-musl@0.1.8'
+  - '@firecrawl/anydoc-linux-x64-gnu@0.1.8'
+  - '@firecrawl/anydoc-linux-x64-musl@0.1.8'
+  - '@firecrawl/anydoc-win32-x64-msvc@0.1.8'
+  - '@firecrawl/anydoc@0.1.8'
