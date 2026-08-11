@@ -1,4 +1,4 @@
-# anydoc
+# AnyDoc — BaseBlocks fork
 
 [![Crates.io](https://img.shields.io/crates/v/anydoc.svg)](https://crates.io/crates/anydoc)
 [![npm](https://img.shields.io/npm/v/@firecrawl/anydoc.svg)](https://www.npmjs.com/package/@firecrawl/anydoc)
@@ -6,10 +6,27 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![skills.sh](https://skills.sh/b/firecrawl/anydoc)](https://skills.sh/firecrawl/anydoc)
 
-Fast Rust library that converts documents (Word, PowerPoint, Excel, OpenDocument, RTF, EPUB, CSV, and PDF) into clean GitHub-Flavored Markdown. Includes bindings for [Node.js](node/README.md), [Python](python/README.md), and the [browser](wasm/README.md) (WebAssembly).
+> [!IMPORTANT]
+> This repository is a BaseBlocks-maintained fork of
+> [Firecrawl's `anydoc`](https://github.com/firecrawl/anydoc), originally forked
+> from [`v0.1.7`](https://github.com/firecrawl/anydoc/releases/tag/v0.1.7). The
+> upstream project provides the document parsing and Markdown conversion core.
+> This fork preserves that work and adds an embeddable rendering and viewing
+> platform so applications can preview documents directly.
 
-The BaseBlocks application façade adds `ingest(...)`, a universal React viewer,
-and durable Convex ingestion. See
+The project has two complementary layers:
+
+- **Parsing and ingestion:** the upstream Rust core converts Word, PowerPoint,
+  Excel, OpenDocument, RTF, EPUB, CSV, and PDF files into clean GitHub-Flavored
+  Markdown, with bindings for [Node.js](node/README.md),
+  [Python](python/README.md), and the [browser](wasm/README.md) (WebAssembly).
+- **Embedding and preview:** the BaseBlocks packages add a universal React
+  viewer and modular, format-native renderers designed to be embedded in other
+  applications. They also add runtime-light and durable ingestion APIs around
+  the upstream parser.
+
+The BaseBlocks application façade exposes `ingest(...)`, the universal React
+viewer, and durable Convex ingestion. See
 [`packages/platform/README.md`](packages/platform/README.md) and the
 runtime-light [`packages/ingestion/README.md`](packages/ingestion/README.md).
 
@@ -291,4 +308,7 @@ Releases are tagged `v<version>`, which publishes the crate, the npm package, an
 
 ## License
 
-[MIT](LICENSE)
+This fork is distributed under the [MIT License](LICENSE). It retains the
+original copyright and license notice from Firecrawl / Sideguide Technologies
+Inc.; BaseBlocks modifications are released under the same license. See
+[`NOTICE`](NOTICE) for fork provenance and attribution.

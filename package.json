@@ -1,6 +1,11 @@
 {
   "name": "anydoc-platform-workspace",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BaseBlocks-HQ/anydoc.git"
+  },
   "type": "module",
   "packageManager": "pnpm@11.9.0",
   "engines": {

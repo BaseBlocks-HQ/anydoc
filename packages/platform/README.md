@@ -3,6 +3,12 @@
 The one-install AnyDoc platform: safe browser and Node ingestion plus universal
 format-native React viewers.
 
+This package is part of the
+[BaseBlocks fork](https://github.com/BaseBlocks-HQ/anydoc) of
+[Firecrawl's `anydoc`](https://github.com/firecrawl/anydoc). It complements the
+upstream parser with embeddable renderers and viewers for in-app document
+previews.
+
 ```bash
 npm install @baseblocks/anydoc react react-dom
 ```

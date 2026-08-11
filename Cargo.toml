@@ -15,7 +15,7 @@ repository = "https://github.com/firecrawl/anydoc"
 readme = "README.md"
 keywords = ["markdown", "docx", "pdf", "converter", "document"]
 categories = ["parser-implementations", "text-processing"]
-include = ["/src", "/examples/convert.rs", "/README.md", "/LICENSE"]
+include = ["/src", "/examples/convert.rs", "/README.md", "/LICENSE", "/NOTICE"]
 
 [dev-dependencies]
 insta = "1"

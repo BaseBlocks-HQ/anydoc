@@ -1,3 +1,4 @@
-This package contains viewer-platform contracts derived from AnyDoc.
-AnyDoc attribution: Firecrawl / Sideguide Technologies Inc.; see LICENSE.
-The repository-level NOTICE contains the full fork provenance statement.
+This package is part of the AnyDoc fork maintained by BaseBlocks-HQ.
+Upstream: https://github.com/firecrawl/anydoc
+Original AnyDoc remains copyright Sideguide Technologies Inc. under MIT.
+BaseBlocks modifications are released under the same MIT license. See LICENSE.
