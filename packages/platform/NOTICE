@@ -1,2 +1,7 @@
-AnyDoc platform includes optional third-party viewer packages. See each package
-for its license and third-party notices.
+This package is part of the AnyDoc fork maintained by BaseBlocks-HQ.
+Upstream: https://github.com/firecrawl/anydoc
+Original AnyDoc remains copyright Sideguide Technologies Inc. under MIT.
+BaseBlocks modifications are released under the same MIT license. See LICENSE.
+
+The AnyDoc platform includes optional third-party viewer packages. See each
+package for its license and third-party notices.

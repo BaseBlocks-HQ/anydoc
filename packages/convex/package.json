@@ -4,6 +4,11 @@
   "description": "Durable Convex ingestion adapter for AnyDoc",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BaseBlocks-HQ/anydoc.git",
+    "directory": "packages/convex"
+  },
   "sideEffects": false,
   "files": ["dist", "README.md", "LICENSE", "NOTICE"],
   "main": "./dist/index.js",
