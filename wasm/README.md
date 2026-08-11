@@ -1,6 +1,9 @@
 # @firecrawl/anydoc-wasm
 
-WebAssembly bindings for [anydoc](../README.md), plus the source of the demo page at [firecrawl.github.io/anydoc](https://firecrawl.github.io/anydoc/).
+WebAssembly bindings for [anydoc](../README.md). The original upstream static
+demo remains in [`www/`](www/); the BaseBlocks fork's canonical parse-and-preview
+playground lives in [`../apps/playground`](../apps/playground) and is published
+at [baseblocks-hq.github.io/anydoc](https://baseblocks-hq.github.io/anydoc/).
 
 The API mirrors the Rust library, minus the path-based `to_markdown`: wasm has no filesystem, so conversion always starts from bytes.
 
@@ -70,13 +73,16 @@ node --test wasm/test.mjs
 
 This produces the npm package in `wasm/pkg/`: the module, the JS glue, and TypeScript definitions. Publishing runs from [`../.github/workflows/release.yml`](../.github/workflows/release.yml) on release tags.
 
-## Demo page
+## Upstream static demo
 
-`www/` holds the static demo site, which imports the module from `www/pkg/`. Build into that directory, then serve `www/`:
+`www/` preserves Firecrawl's original parser-only static demo, which imports the
+module from `www/pkg/`. Build into that directory, then serve `www/`:
 
 ```bash
 wasm-pack build wasm --release --target web --no-pack --out-dir www/pkg
 python -m http.server -d wasm/www
 ```
 
-[`../.github/workflows/pages.yml`](../.github/workflows/pages.yml) builds and deploys the same layout to GitHub Pages on every push to main.
+The fork's GitHub Pages workflow deploys the unified React playground instead.
+See [`../apps/playground/README.md`](../apps/playground/README.md) for local
+development instructions.

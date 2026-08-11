@@ -12,6 +12,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "dev:playground": "pnpm --dir apps/playground dev",
     "build:viewers": "pnpm --recursive --if-present build",
     "test:viewers": "pnpm --recursive --if-present test",
     "typecheck:viewers": "pnpm --recursive --if-present typecheck",
