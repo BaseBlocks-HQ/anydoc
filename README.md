@@ -32,7 +32,10 @@ runtime-light [`packages/ingestion/README.md`](packages/ingestion/README.md).
 
 Built by [Firecrawl](https://firecrawl.dev) to turn any office document into LLM-ready Markdown in single-digit milliseconds, with one consistent output no matter which format goes in. It powers [Firecrawl Parse](https://firecrawl.dev/parse), so if you'd rather not run it yourself, the hosted API gives you the same conversion plus our OCR models for the scanned pages anydoc can't read on its own.
 
-**[Try it in your browser](https://firecrawl.github.io/anydoc/)**: the demo page runs the library as WebAssembly, so files are converted locally and never leave your machine.
+**[Try the BaseBlocks playground](https://baseblocks-hq.github.io/anydoc/)**:
+drop in a document, inspect the Markdown produced by the parser, and preview
+supported source formats with the embeddable viewer. The entire demo runs
+locally in the browser, so files never leave your machine.
 
 ## Quick start
 

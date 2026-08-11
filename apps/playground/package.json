@@ -1,11 +1,12 @@
 {
-  "name": "@baseblocks/anydoc-example-react",
+  "name": "@baseblocks/anydoc-playground",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "build": "vite build",
     "dev": "vite --host 127.0.0.1",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -17,8 +18,9 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "latest",
+    "@vitejs/plugin-react": "^4.7.0",
     "typescript": "^5.9.0",
-    "vite": "latest"
+    "vite": "^7.3.6",
+    "vitest": "3.2.6"
   }
 }
