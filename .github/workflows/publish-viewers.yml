@@ -28,6 +28,9 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run release:metadata
+      - name: Confirm the tagged packages are publishable
+        run: pnpm run release:plan
       - run: pnpm run build:viewers
       - run: pnpm run typecheck:viewers
       - run: pnpm run test:viewers

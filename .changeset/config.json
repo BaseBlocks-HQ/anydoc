@@ -1,0 +1,27 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
+  "changelog": false,
+  "commit": false,
+  "fixed": [
+    [
+      "@baseblocks/anydoc-contracts",
+      "@baseblocks/anydoc-spreadsheet-engine",
+      "@baseblocks/anydoc-spreadsheet-viewer",
+      "@baseblocks/anydoc-presentation-viewer",
+      "@baseblocks/anydoc-react-viewer",
+      "@baseblocks/anydoc-ingestion",
+      "@baseblocks/anydoc",
+      "@baseblocks/anydoc-convex"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "privatePackages": {
+    "version": false,
+    "tag": false
+  },
+  "format": "auto",
+  "ignore": []
+}

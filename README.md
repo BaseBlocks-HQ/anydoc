@@ -29,6 +29,9 @@ The BaseBlocks application façade exposes `ingest(...)`, the universal React
 viewer, and durable Convex ingestion. See
 [`packages/platform/README.md`](packages/platform/README.md) and the
 runtime-light [`packages/ingestion/README.md`](packages/ingestion/README.md).
+The public viewer packages use Changesets v3 for lockstep alpha versioning; see
+[`docs/VIEWER_PUBLISHING.md`](docs/VIEWER_PUBLISHING.md) for the contribution,
+version-PR, and tag-gated publishing workflow.
 
 Built by [Firecrawl](https://firecrawl.dev) to turn any office document into LLM-ready Markdown in single-digit milliseconds, with one consistent output no matter which format goes in. It powers [Firecrawl Parse](https://firecrawl.dev/parse), so if you'd rather not run it yourself, the hosted API gives you the same conversion plus our OCR models for the scanned pages anydoc can't read on its own.
 

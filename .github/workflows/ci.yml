@@ -19,6 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Expose the Changesets base branch
+        if: github.event_name == 'pull_request'
+        run: git branch --force main origin/main
       - uses: pnpm/action-setup@v4
         with:
           version: 11.9.0
@@ -27,6 +33,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run release:metadata
+      - name: Require release intent for changed viewer packages
+        if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'changeset-release/')
+        run: pnpm run release:status
       # Build workspace packages first so umbrella subpath declarations resolve
       # exactly as they will for registry consumers.
       - run: pnpm run build:viewers
