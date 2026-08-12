@@ -9,9 +9,10 @@
   "type": "module",
   "packageManager": "pnpm@11.9.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.11.0"
   },
   "scripts": {
+    "changeset": "changeset",
     "dev:playground": "pnpm --dir apps/playground dev",
     "build:viewers": "pnpm --recursive --if-present build",
     "test:viewers": "pnpm --recursive --if-present test",
@@ -21,9 +22,15 @@
     "budget:viewers": "node scripts/check-viewer-budgets.mjs",
     "budget:ingestion": "node scripts/benchmark-ingestion.mjs",
     "closure:server": "node scripts/verify-server-closure.mjs",
-    "closure:platform": "node scripts/verify-packed-platform.mjs"
+    "closure:platform": "node scripts/verify-packed-platform.mjs",
+    "release:metadata": "node scripts/validate-viewer-releases.mjs",
+    "release:status": "changeset status --since main",
+    "release:validate": "pnpm release:metadata && pnpm release:status",
+    "release:plan": "changeset publish-plan",
+    "version:viewers": "pnpm release:metadata && changeset version"
   },
   "devDependencies": {
+    "@changesets/cli": "3.0.0",
     "typescript": "5.9.3",
     "vitest": "3.2.6"
   }
