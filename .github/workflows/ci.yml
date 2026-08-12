@@ -34,15 +34,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run release:metadata
-      - name: Summarize Changesets release intent
-        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
-        id: changeset-status
-        uses: changesets/action/pr-status@22ccf9aa43179fe9e27dc62e575971d28cce197c # v2.0.0
-      - name: Write Changesets status to the job summary
-        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
-        env:
-          CHANGESET_STATUS: ${{ steps.changeset-status.outputs.comment-body }}
-        run: printf '%s\n' "$CHANGESET_STATUS" >> "$GITHUB_STEP_SUMMARY"
       - name: Require release intent for changed viewer packages
         if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'changeset-release/')
         run: pnpm run release:status
