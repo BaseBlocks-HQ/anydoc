@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-convex",
-  "version": "0.1.0-alpha.13",
+  "version": "0.1.0-alpha.14",
   "description": "Durable Convex ingestion adapter for AnyDoc",
   "type": "module",
   "license": "MIT",
@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@baseblocks/anydoc-ingestion": "workspace:0.1.0-alpha.13",
+    "@baseblocks/anydoc-ingestion": "workspace:0.1.0-alpha.14",
     "@convex-dev/workpool": "^0.4.9"
   },
   "peerDependencies": {

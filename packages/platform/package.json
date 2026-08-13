@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc",
-  "version": "0.1.0-alpha.13",
+  "version": "0.1.0-alpha.14",
   "description": "One-install AnyDoc ingestion and universal format-native viewers",
   "type": "module",
   "license": "MIT",
@@ -24,12 +24,12 @@
   "files": ["*.js", "*.d.ts", "README.md", "LICENSE", "NOTICE"],
   "sideEffects": false,
   "engines": { "node": ">=20" },
-  "dependencies": { "@baseblocks/anydoc-ingestion": "workspace:0.1.0-alpha.13" },
+  "dependencies": { "@baseblocks/anydoc-ingestion": "workspace:0.1.0-alpha.14" },
   "optionalDependencies": {
-    "@baseblocks/anydoc-presentation-viewer": "workspace:0.1.0-alpha.13",
-    "@baseblocks/anydoc-react-viewer": "workspace:0.1.0-alpha.13",
-    "@baseblocks/anydoc-spreadsheet-engine": "workspace:0.1.0-alpha.13",
-    "@baseblocks/anydoc-spreadsheet-viewer": "workspace:0.1.0-alpha.13",
+    "@baseblocks/anydoc-presentation-viewer": "workspace:0.1.0-alpha.14",
+    "@baseblocks/anydoc-react-viewer": "workspace:0.1.0-alpha.14",
+    "@baseblocks/anydoc-spreadsheet-engine": "workspace:0.1.0-alpha.14",
+    "@baseblocks/anydoc-spreadsheet-viewer": "workspace:0.1.0-alpha.14",
     "@firecrawl/anydoc-wasm": "0.1.8"
   },
   "peerDependencies": { "react": ">=18" },
