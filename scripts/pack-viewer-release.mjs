@@ -2,18 +2,8 @@ import { createHash } from "node:crypto";
 import { copyFile, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { publicViewerPackageDirectories } from "./viewer-packages.mjs";
 
-const directories = [
-  "packages/contracts",
-  "packages/viewer-ui",
-  "packages/spreadsheet-engine",
-  "packages/spreadsheet-viewer",
-  "packages/presentation-viewer",
-  "packages/react-viewer",
-  "packages/ingestion",
-  "packages/platform",
-  "packages/convex",
-];
 const outputDirectory = resolve(process.argv[2] ?? "release-artifacts");
 const expectedVersion = process.argv[3];
 
@@ -29,7 +19,7 @@ if ((await readdir(outputDirectory)).length > 0) {
 }
 
 const packages = [];
-for (const directory of directories) {
+for (const directory of publicViewerPackageDirectories) {
   const metadata = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
   if (expectedVersion && metadata.version !== expectedVersion) {
     throw new Error(`${directory} is ${metadata.version}; expected ${expectedVersion}.`);

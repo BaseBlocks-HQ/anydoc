@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ViewerControlRegion, viewerRootStyle, viewerScrollerStyle } from "../controls";
+import { ViewerControlRegion, viewerRootStyle, viewerScrollerStyle } from "@baseblocks/anydoc-viewer-ui";
 import { useAbortableValue } from "../hooks";
 import { decodeUtf8, loadDocumentBytes } from "../source";
 import type { TextViewerProps, ViewerControls } from "../types";

@@ -5,7 +5,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
-import { ViewerControlRegion, viewerRootStyle, viewerScrollerStyle } from "../controls";
+import { ViewerControlRegion, viewerRootStyle, viewerScrollerStyle } from "@baseblocks/anydoc-viewer-ui";
 import { useAbortableValue } from "../hooks";
 import { clearSearchHighlights, highlightText } from "../security";
 import { decodeUtf8, loadDocumentBytes } from "../source";

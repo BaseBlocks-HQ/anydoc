@@ -74,18 +74,20 @@ function PresentationThumbnail({
   active,
   index,
   onSelect,
+  visible,
   viewer,
 }: {
   readonly active: boolean;
   readonly index: number;
   readonly onSelect: (index: number) => void;
+  readonly visible: boolean;
   readonly viewer: PptxViewer;
 }) {
   const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const element = previewRef.current;
-    if (!element) return;
+    if (!element || !visible) return;
     let handle: SlideHandle | null = null;
     let rendered = false;
     let renderedWidth = 0;
@@ -103,31 +105,13 @@ function PresentationThumbnail({
     });
     resizeObserver?.observe(element);
 
-    if (typeof IntersectionObserver === "undefined") {
-      render();
-      return () => {
-        resizeObserver?.disconnect();
-        handle?.dispose();
-        element.replaceChildren();
-      };
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-        observer.disconnect();
-        render();
-      },
-      { rootMargin: "400px 0px" },
-    );
-    observer.observe(element);
+    render();
     return () => {
-      observer.disconnect();
       resizeObserver?.disconnect();
       handle?.dispose();
       element.replaceChildren();
     };
-  }, [index, viewer]);
+  }, [index, viewer, visible]);
 
   return (
     <button
@@ -155,6 +139,7 @@ function PresentationThumbnail({
       <div
         ref={previewRef}
         aria-hidden="true"
+        data-thumbnail-index={index}
         style={{
           aspectRatio: "16 / 9",
           background: "#fff",
@@ -182,6 +167,33 @@ function PresentationThumbnailRail({
   readonly viewer: PptxViewer;
 }) {
   const railRef = useRef<HTMLElement>(null);
+  const [visibleSlides, setVisibleSlides] = useState<ReadonlySet<number>>(
+    () => new Set(Array.from({ length: Math.min(8, slideKeys.length) }, (_, index) => index)),
+  );
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setVisibleSlides(new Set(slideKeys.map((_, index) => index)));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      const entered = entries.flatMap((entry) => {
+        if (!entry.isIntersecting) return [];
+        const index = Number((entry.target as HTMLElement).dataset.thumbnailIndex);
+        return Number.isInteger(index) ? [index] : [];
+      });
+      if (entered.length === 0) return;
+      setVisibleSlides((current) => {
+        const next = new Set(current);
+        for (const index of entered) next.add(index);
+        return next.size === current.size ? current : next;
+      });
+    }, { root: rail, rootMargin: "400px 0px" });
+    for (const preview of rail.querySelectorAll<HTMLElement>("[data-thumbnail-index]")) observer.observe(preview);
+    return () => observer.disconnect();
+  }, [slideKeys]);
 
   useEffect(() => {
     const rail = railRef.current;
@@ -209,7 +221,7 @@ function PresentationThumbnailRail({
       style={{ alignContent: "flex-start", background: "color-mix(in srgb, currentColor 4%, Canvas)", borderInlineEnd: "1px solid color-mix(in srgb, currentColor 12%, transparent)", display: "flex", flexDirection: "column", gap: 6, justifyContent: "flex-start", minHeight: 0, minWidth: 0, overflowY: "auto", padding: 8 }}
     >
       {slideKeys.map((slideKey, index) => (
-        <PresentationThumbnail active={currentSlide === index} index={index} key={slideKey} onSelect={onSelect} viewer={viewer} />
+        <PresentationThumbnail active={currentSlide === index} index={index} key={slideKey} onSelect={onSelect} visible={visibleSlides.has(index)} viewer={viewer} />
       ))}
     </nav>
   );

@@ -1,19 +1,9 @@
 import { spawnSync } from "node:child_process";
+import { publicViewerPackageDirectories } from "./viewer-packages.mjs";
 
-const packages = [
-  "packages/contracts",
-  "packages/viewer-ui",
-  "packages/spreadsheet-engine",
-  "packages/spreadsheet-viewer",
-  "packages/presentation-viewer",
-  "packages/react-viewer",
-  "packages/ingestion",
-  "packages/platform",
-  "packages/convex",
-];
 const dryRun = process.argv.includes("--dry-run");
 
-for (const directory of packages) {
+for (const directory of publicViewerPackageDirectories) {
   const result = spawnSync(
     "pnpm",
     ["--dir", directory, "pack", ...(dryRun ? ["--dry-run"] : [])],

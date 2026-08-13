@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const destroy = vi.fn();
 const renderThumbnail = vi.fn(() => ({ dispose: vi.fn() }));
+const intersectionObserve = vi.fn();
+const intersectionDisconnect = vi.fn();
 
 vi.mock("@aiden0z/pptx-renderer", () => ({
   RECOMMENDED_ZIP_LIMITS: {},
@@ -36,6 +38,17 @@ class ResizeObserverMock {
   observe() {}
   disconnect() {}
   unobserve() {}
+}
+
+class IntersectionObserverMock {
+  constructor() {}
+  observe = intersectionObserve;
+  disconnect = intersectionDisconnect;
+  unobserve() {}
+  takeRecords() { return []; }
+  root = null;
+  rootMargin = "400px 0px";
+  thresholds = [0];
 }
 
 describe("PresentationViewer lifecycle", () => {
@@ -92,5 +105,21 @@ describe("PresentationViewer lifecycle", () => {
 
     await act(async () => root.unmount());
     expect(destroy).toHaveBeenCalledOnce();
+  });
+
+  it("uses one observer and initially renders only nearby thumbnails", async () => {
+    vi.stubGlobal("IntersectionObserver", IntersectionObserverMock);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(createElement(PresentationViewer, { source: new ArrayBuffer(16) }));
+    });
+
+    expect(container.querySelectorAll('[aria-label^="Go to slide "]')).toHaveLength(40);
+    expect(intersectionObserve).toHaveBeenCalledTimes(40);
+    expect(renderThumbnail).toHaveBeenCalledTimes(8);
+
+    await act(async () => root.unmount());
+    expect(intersectionDisconnect).toHaveBeenCalledOnce();
   });
 });

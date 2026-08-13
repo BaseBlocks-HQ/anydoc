@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ViewerControlRegion, ViewerStage, viewerRootStyle } from "../controls";
+import { ViewerControlRegion, ViewerStage, viewerRootStyle } from "@baseblocks/anydoc-viewer-ui";
 import { ViewerError, toViewerError } from "../errors";
 import { sanitizeDocxArchive } from "../docx-archive";
 import { clearSearchHighlights, highlightText, sanitizeDocxDom } from "../security";

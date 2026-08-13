@@ -1,7 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
 import { assertCountWithinLimit, defaultDocumentLimits } from "@baseblocks/anydoc-contracts";
-import { ViewerControlRegion, ViewerStage, viewerRootStyle } from "../controls";
+import { ViewerControlRegion, ViewerStage, viewerRootStyle } from "@baseblocks/anydoc-viewer-ui";
 import { ViewerError, toViewerError } from "../errors";
 import { loadDocumentBytes } from "../source";
 import type { PdfViewerProps, ViewerControls } from "../types";

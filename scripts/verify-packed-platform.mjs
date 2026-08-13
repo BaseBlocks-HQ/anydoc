@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { platformConsumerPackageDirectories } from "./viewer-packages.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const temporary = await mkdtemp(join(tmpdir(), "anydoc-platform-consumer-"));
@@ -12,16 +13,7 @@ try {
   await mkdir(artifacts, { recursive: true });
   await mkdir(consumer, { recursive: true });
   const tarballs = [];
-  for (const directory of [
-    "packages/contracts",
-    "packages/viewer-ui",
-    "packages/spreadsheet-engine",
-    "packages/spreadsheet-viewer",
-    "packages/presentation-viewer",
-    "packages/react-viewer",
-    "packages/ingestion",
-    "packages/platform",
-  ]) {
+  for (const directory of platformConsumerPackageDirectories) {
     const output = execFileSync("pnpm", ["--dir", join(root, directory), "pack", "--pack-destination", artifacts], { encoding: "utf8" }).trim();
     tarballs.push(resolve(output.split(/\r?\n/).at(-1)));
   }
