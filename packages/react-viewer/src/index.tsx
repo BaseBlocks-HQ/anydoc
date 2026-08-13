@@ -42,6 +42,7 @@ export function DocumentViewer(props: DocumentViewerProps): ReactElement {
 }
 
 export { DefaultViewerControls, useViewerControls } from "./controls";
+export type { ViewerControlOptions, ViewerControlSetting } from "@baseblocks/anydoc-viewer-ui";
 export { ViewerError, toViewerError } from "./errors";
 export { decodeUtf8, loadDocumentBytes } from "./source";
 export { sanitizeDocxArchive } from "./docx-archive";

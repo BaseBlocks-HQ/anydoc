@@ -16,19 +16,21 @@ import { DocumentViewer } from "@baseblocks/anydoc-react-viewer";
 
 ## Custom controls
 
-Pass `renderControls` to replace the accessible default toolbar without reimplementing viewer state. Pass `controls={false}` for a fully headless surface.
+Pass `controls={{ render }}` to replace the accessible default toolbar without reimplementing viewer state. Pass `controls={false}` for a fully headless surface.
 
 ```tsx
 <DocumentViewer
   format="pdf"
   source={bytes}
-  renderControls={({ pagination, search, zoom }) => (
-    <nav aria-label="Document controls">
-      <button disabled={!pagination || pagination.current <= 1} onClick={pagination?.previous}>Previous</button>
-      <input aria-label="Search document" onChange={(event) => search?.setQuery(event.currentTarget.value)} />
-      <button onClick={zoom?.zoomIn}>Zoom in</button>
-    </nav>
-  )}
+  controls={{
+    render: ({ pagination, search, zoom }) => (
+      <nav aria-label="Document controls">
+        <button disabled={!pagination || pagination.current <= 1} onClick={pagination?.previous}>Previous</button>
+        <input aria-label="Search document" onChange={(event) => search?.setQuery(event.currentTarget.value)} />
+        <button onClick={zoom?.zoomIn}>Zoom in</button>
+      </nav>
+    ),
+  }}
 />
 ```
 

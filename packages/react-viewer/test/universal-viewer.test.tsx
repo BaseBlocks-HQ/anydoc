@@ -1,53 +1,52 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
 import { AnyDocumentViewer, detectViewerFormat, detectViewerFormatFromBytes } from "../src/universal-viewer";
 
-vi.mock("@baseblocks/anydoc-presentation-viewer", () => ({
-  PresentationViewer: ({ renderControls }: { renderControls: (controls: object) => ReactNode }) => (
-    <>{renderControls({
-      currentSlide: 1,
-      error: null,
-      goToSlide: vi.fn(),
-      limitations: 0,
-      nextSearchResult: vi.fn(),
-      nextSlide: vi.fn(),
-      previousSearchResult: vi.fn(),
-      previousSlide: vi.fn(),
-      query: "",
-      ready: true,
-      requestFullscreen: vi.fn(),
-      search: vi.fn(),
-      searchIndex: 0,
-      searchResultCount: 0,
-      slideCount: 3,
-      zoom: 1,
-      zoomTo: vi.fn(),
-    })}</>
-  ),
-}));
+vi.mock("@baseblocks/anydoc-presentation-viewer", async () => {
+  const { createElement } = await import("react");
+  const { ViewerControlRegion } = await import("@baseblocks/anydoc-viewer-ui");
+  return {
+    PresentationViewer: ({ controls, onControls }: { controls?: boolean | object; onControls?: (controls: object | null) => void }) => createElement(ViewerControlRegion, {
+      controls: {
+        actions: [{ id: "fullscreen", icon: "fullscreen", label: "Fullscreen", run: vi.fn() }],
+        format: "pptx",
+        pagination: { current: 1, goTo: vi.fn(), next: vi.fn(), previous: vi.fn(), total: 3 },
+        search: { current: 0, next: vi.fn(), pending: false, previous: vi.fn(), query: "", setQuery: vi.fn(), total: 0 },
+        status: "ready",
+        zoom: { max: 4, min: 0.25, reset: vi.fn(), set: vi.fn(), step: 0.1, value: 1, zoomIn: vi.fn(), zoomOut: vi.fn() },
+      },
+      onControls,
+      setting: controls ?? true,
+    }),
+  };
+});
 
-vi.mock("@baseblocks/anydoc-spreadsheet-viewer", () => ({
-  SpreadsheetViewer: ({ renderControls }: { renderControls: (controls: object) => ReactNode }) => (
-    <>{renderControls({
-      activeCell: { address: "A1", value: "hello" },
-      appearance: "light",
-      copySelection: vi.fn(),
-      hyperlink: null,
-      query: "",
-      search: vi.fn(),
-      searchNext: vi.fn(),
-      searchPrevious: vi.fn(),
-      searchResultCount: 0,
-      searchResultIndex: 0,
-      selectionStatistics: {},
-      switchAppearance: vi.fn(),
-      zoom: 1,
-      zoomTo: vi.fn(),
-    })}</>
-  ),
-}));
+vi.mock("@baseblocks/anydoc-spreadsheet-viewer", async () => {
+  const { createElement } = await import("react");
+  const { ViewerControlRegion } = await import("@baseblocks/anydoc-viewer-ui");
+  return {
+    SpreadsheetViewer: ({ controls, onControls }: { controls?: boolean | object; onControls?: (controls: object | null) => void }) => createElement(ViewerControlRegion, {
+      controls: {
+        actions: [
+          { id: "copy", icon: "copy", label: "Copy", run: vi.fn() },
+          { id: "appearance", icon: "dark", label: "Use dark sheets", run: vi.fn() },
+        ],
+        details: {
+          activeCell: { address: "A1", value: "hello" },
+          appearance: "light",
+          selectionStatistics: {},
+        },
+        format: "xlsx",
+        search: { current: 0, next: vi.fn(), pending: false, previous: vi.fn(), query: "", setQuery: vi.fn(), total: 0 },
+        status: "ready",
+        zoom: { max: 4, min: 0.25, reset: vi.fn(), set: vi.fn(), step: 0.1, value: 1, zoomIn: vi.fn(), zoomOut: vi.fn() },
+      },
+      onControls,
+      setting: controls ?? true,
+    }),
+  };
+});
 
 describe("detectViewerFormat", () => {
   it("uses explicit format, file metadata, and URLs without inspecting bytes in render", () => {

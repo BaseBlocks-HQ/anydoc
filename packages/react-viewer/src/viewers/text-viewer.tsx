@@ -10,7 +10,7 @@ export default function TextViewer({
   controls: showControls = true,
   maxBytes,
   onError,
-  renderControls,
+  onControls,
   signal,
   source,
   style,
@@ -74,7 +74,7 @@ export default function TextViewer({
 
   return (
     <section aria-label={title ? `Text viewer: ${title}` : "Text viewer"} className={className} style={{ ...viewerRootStyle, ...style }}>
-      {showControls ? <ViewerControlRegion controls={viewerControls}>{renderControls}</ViewerControlRegion> : null}
+      <ViewerControlRegion controls={viewerControls} onControls={onControls} setting={showControls} />
       {state.status === "error" ? <div role="alert" style={{ margin: "auto", padding: "1rem" }}>{state.error.message}</div> : null}
       {state.status === "loading" ? <div aria-live="polite" role="status" style={{ margin: "auto", padding: "1rem" }}>Opening text…</div> : null}
       {state.status === "ready" ? (

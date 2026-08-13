@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 
 const packages = [
   "packages/contracts",
+  "packages/viewer-ui",
   "packages/spreadsheet-engine",
   "packages/spreadsheet-viewer",
   "packages/presentation-viewer",

@@ -44,7 +44,7 @@ pdf,via pdf-inspector,parse + preview
 export const playgroundSamples: readonly PlaygroundSample[] = [
   { description: "Word document with structured text", format: "docx", load: () => fixtureFile("document.docx", "docx", docxUrl), name: "DOCX" },
   { description: "Virtualized workbook preview", format: "xlsx", load: () => fixtureFile("workbook.xlsx", "xlsx", xlsxUrl), name: "XLSX" },
-  { description: "Native slide rendering", format: "pptx", load: () => fixtureFile("presentation.pptx", "pptx", pptxUrl), name: "PPTX" },
+  { description: "Ten-slide deck with a scrollable thumbnail rail", format: "pptx", load: () => fixtureFile("presentation.pptx", "pptx", pptxUrl), name: "PPTX" },
   { description: "Selectable text and canvas pages", format: "pdf", load: () => fixtureFile("document.pdf", "pdf", pdfUrl), name: "PDF" },
   { description: "Parser and spreadsheet viewer", format: "csv", load: () => textFile("report.csv", "text/csv", SAMPLE_CSV), name: "CSV" },
   { description: "Semantic parsing without native preview", format: "rtf", load: () => textFile("notes.rtf", "application/rtf", SAMPLE_RTF), name: "RTF" },

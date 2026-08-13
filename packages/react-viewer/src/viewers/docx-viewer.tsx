@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { ViewerControlRegion, viewerRootStyle, viewerScrollerStyle } from "../controls";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ViewerControlRegion, ViewerStage, viewerRootStyle } from "../controls";
 import { ViewerError, toViewerError } from "../errors";
 import { sanitizeDocxArchive } from "../docx-archive";
 import { clearSearchHighlights, highlightText, sanitizeDocxDom } from "../security";
@@ -16,18 +16,20 @@ export default function DocxViewer({
   controls: showControls = true,
   maxBytes,
   onError,
-  renderControls,
+  onControls,
   signal,
   source,
   style,
   title,
 }: DocxViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const matchesRef = useRef<HTMLElement[]>([]);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
   const [error, setError] = useState<ViewerError | null>(null);
   const [matchCount, setMatchCount] = useState(0);
+  const [pageMetrics, setPageMetrics] = useState({ availableWidth: 0, height: 0, width: 0 });
   const [query, setQuery] = useState("");
   const [ready, setReady] = useState(false);
   const [resultIndex, setResultIndex] = useState(0);
@@ -41,6 +43,7 @@ export default function DocxViewer({
     signal?.addEventListener("abort", abort, { once: true });
     if (signal?.aborted) abort();
     liveContainer.replaceChildren();
+    setPageMetrics({ availableWidth: 0, height: 0, width: 0 });
     setError(null);
     setReady(false);
 
@@ -61,7 +64,7 @@ export default function DocxViewer({
         className: "anydoc-docx",
         experimental: true,
         ignoreFonts: false,
-        inWrapper: true,
+        inWrapper: false,
         renderEndnotes: true,
         renderFooters: true,
         renderFootnotes: true,
@@ -91,6 +94,35 @@ export default function DocxViewer({
     };
   }, [allowExternalResource, maxBytes, signal, source]);
 
+  useLayoutEffect(() => {
+    const pages = containerRef.current;
+    const viewport = viewportRef.current;
+    if (!pages || !viewport || !ready) return;
+    const measure = () => {
+      const viewportStyle = getComputedStyle(viewport);
+      const availableWidth = Math.max(
+        1,
+        viewport.clientWidth
+          - Number.parseFloat(viewportStyle.paddingInlineStart || "0")
+          - Number.parseFloat(viewportStyle.paddingInlineEnd || "0"),
+      );
+      const pageWidth = Array.from(pages.querySelectorAll<HTMLElement>(".anydoc-docx"))
+        .reduce((width, page) => Math.max(width, page.offsetWidth), 0);
+      const width = Math.max(pageWidth, pages.scrollWidth);
+      const height = pages.scrollHeight;
+      setPageMetrics((current) => (
+        current.availableWidth === availableWidth && current.height === height && current.width === width
+          ? current
+          : { availableWidth, height, width }
+      ));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(viewport);
+    observer.observe(pages);
+    return () => observer.disconnect();
+  }, [ready]);
+
   useEffect(() => {
     const root = containerRef.current;
     if (!root || !ready) return;
@@ -111,6 +143,8 @@ export default function DocxViewer({
     matchesRef.current[next]?.scrollIntoView({ block: "center" });
   };
   const setBoundedZoom = (value: number) => setZoom(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, value)));
+  const fitScale = pageMetrics.width > 0 ? Math.min(1, pageMetrics.availableWidth / pageMetrics.width) : 1;
+  const renderedScale = fitScale * zoom;
   const viewerControls: ViewerControls = {
     actions: [],
     format: "docx",
@@ -131,21 +165,44 @@ export default function DocxViewer({
 
   return (
     <section aria-label={title ? `DOCX viewer: ${title}` : "DOCX viewer"} className={className} style={{ ...viewerRootStyle, ...style }}>
-      {showControls ? <ViewerControlRegion controls={viewerControls}>{renderControls}</ViewerControlRegion> : null}
+      <ViewerControlRegion controls={viewerControls} onControls={onControls} setting={showControls} />
       {error ? <div role="alert" style={{ margin: "auto", padding: "1rem" }}>{error.message}</div> : null}
       {!error ? (
-        <div style={{ ...viewerScrollerStyle, padding: "1.5rem" }} tabIndex={0}>
+        <ViewerStage
+          data-anydoc-docx-viewport=""
+          ref={viewportRef}
+          style={{ padding: "1.5rem" }}
+        >
+          <style>{`
+            [data-anydoc-docx-viewport] .anydoc-docx {
+              background: white;
+              box-shadow: 0 1px 2px rgb(0 0 0 / 10%), 0 8px 28px rgb(0 0 0 / 12%);
+              color: #171717;
+              margin: 0 auto 24px;
+              outline: 1px solid oklch(0 0 0 / 0.1);
+            }
+            [data-anydoc-docx-pages] { inline-size: 100%; }
+          `}</style>
           {!ready ? <div aria-live="polite" role="status" style={{ textAlign: "center" }}>Opening DOCX…</div> : null}
           <div
-            ref={containerRef}
-            style={{
-              margin: "0 auto",
-              transform: `scale(${zoom})`,
-              transformOrigin: "top center",
-              width: `${100 / zoom}%`,
-            }}
-          />
-        </div>
+            data-anydoc-docx-page-shell=""
+            style={pageMetrics.width > 0 ? {
+              height: pageMetrics.height * renderedScale,
+              marginInline: "auto",
+              width: pageMetrics.width * renderedScale,
+            } : undefined}
+          >
+            <div
+              data-anydoc-docx-pages=""
+              ref={containerRef}
+              style={pageMetrics.width > 0 ? {
+                inlineSize: pageMetrics.width,
+                transform: `scale(${renderedScale})`,
+                transformOrigin: "top left",
+              } : undefined}
+            />
+          </div>
+        </ViewerStage>
       ) : null}
     </section>
   );

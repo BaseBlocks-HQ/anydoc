@@ -1,5 +1,10 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { DocumentPlatformError, defaultDocumentLimits } from "@baseblocks/anydoc-contracts";
+import {
+  ViewerControlRegion,
+  type ViewerControls,
+  type ViewerControlSetting,
+} from "@baseblocks/anydoc-viewer-ui";
 
 import type {
   SpreadsheetCell,
@@ -44,34 +49,21 @@ const STATISTIC_FORMATTER = new Intl.NumberFormat(undefined, { maximumFractionDi
 
 export type SpreadsheetAppearance = "dark" | "light";
 
-export type SpreadsheetViewerControls = Readonly<{
-  activeCell: Readonly<{ address: string; value: string }>;
-  appearance: SpreadsheetAppearance;
-  copySelection: () => void;
-  hyperlink: string | null;
-  query: string;
-  search: (query: string) => void;
-  searchNext: () => void;
-  searchPrevious: () => void;
-  searchResultCount: number;
-  searchResultIndex: number;
-  selectionStatistics: SpreadsheetSelectionStatistics;
-  switchAppearance: () => void;
-  zoom: number;
-  zoomTo: (zoom: number) => void;
-}>;
+export type SpreadsheetViewerControls = ViewerControls;
 
 export type SpreadsheetViewerProps = Readonly<{
   appearance?: SpreadsheetAppearance;
+  controls?: ViewerControlSetting;
   defaultAppearance?: SpreadsheetAppearance;
   onAppearanceChange?: (appearance: SpreadsheetAppearance) => void;
-  renderControls?: (controls: SpreadsheetViewerControls) => ReactNode;
+  onControls?: ((controls: ViewerControls | null) => void) | undefined;
   format?: "csv" | "xlsx";
   maxBytes?: number;
   maxCells?: number;
   onError?: (error: DocumentPlatformError) => void;
   signal?: AbortSignal;
   source: ArrayBuffer;
+  title?: string;
 }>;
 
 function formatStatistic(value: number | null): string {
@@ -96,16 +88,22 @@ async function writeClipboard(text: string, html: string): Promise<void> {
 
 function WorkbookViewer({
   appearance,
+  controlSetting,
+  format,
   metadata,
   onAppearanceChange,
-  renderControls,
+  onControls,
   session,
+  title,
 }: Readonly<{
   appearance: SpreadsheetAppearance;
+  controlSetting: ViewerControlSetting;
+  format: "csv" | "xlsx";
   metadata: SpreadsheetWorkbookMetadata;
   onAppearanceChange: (appearance: SpreadsheetAppearance) => void;
-  renderControls?: (controls: SpreadsheetViewerControls) => ReactNode;
+  onControls?: ((controls: ViewerControls | null) => void) | undefined;
   session: SpreadsheetViewerReadSession;
+  title?: string;
 }>) {
   const visibleSheets = metadata.sheets.filter((sheet) => !sheet.hidden);
   const [activeSheetId, setActiveSheetId] = useState(visibleSheets[0]?.id ?? "");
@@ -250,25 +248,46 @@ function WorkbookViewer({
   };
 
   const hyperlink = cellHyperlink(activeCell);
-  const controls: SpreadsheetViewerControls = {
-    activeCell: {
-      address: selectionAddress(selection),
-      value: formulaBarValue(activeCell),
+  const setBoundedZoom = (value: number) => setZoom(Math.max(0.5, Math.min(2, value)));
+  const viewerControls: ViewerControls = {
+    actions: [
+      { icon: "copy", id: "copy", label: "Copy selection", run: copySelection },
+      {
+        icon: appearance === "light" ? "dark" : "light",
+        id: "appearance",
+        label: appearance === "light" ? "Use dark sheet" : "Use light sheet",
+        pressed: appearance === "dark",
+        run: () => onAppearanceChange(appearance === "light" ? "dark" : "light"),
+      },
+    ],
+    details: {
+      activeCell: { address: selectionAddress(selection), value: formulaBarValue(activeCell) },
+      appearance,
+      hyperlink,
+      selectionStatistics: statistics,
     },
-    appearance,
-    copySelection,
-    hyperlink,
-    query,
-    search: setQuery,
-    searchNext: () => showSearchMatch(searchIndex + 1),
-    searchPrevious: () =>
-      showSearchMatch(searchIndex < 0 ? searchMatches.length - 1 : searchIndex - 1),
-    searchResultCount: searchMatches.length,
-    searchResultIndex: searchIndex < 0 ? 0 : searchIndex + 1,
-    selectionStatistics: statistics,
-    switchAppearance: () => onAppearanceChange(appearance === "light" ? "dark" : "light"),
-    zoom,
-    zoomTo: (value) => setZoom(Math.max(0.5, Math.min(2, value))),
+    format,
+    search: {
+      current: searchIndex < 0 ? 0 : searchIndex + 1,
+      next: () => showSearchMatch(searchIndex + 1),
+      pending: false,
+      previous: () => showSearchMatch(searchIndex < 0 ? searchMatches.length - 1 : searchIndex - 1),
+      query,
+      setQuery,
+      total: searchMatches.length,
+    },
+    status: "ready",
+    ...(title === undefined ? {} : { title }),
+    zoom: {
+      max: 2,
+      min: 0.5,
+      reset: () => setZoom(1),
+      set: setBoundedZoom,
+      step: 0.1,
+      value: zoom,
+      zoomIn: () => setBoundedZoom(zoom + 0.1),
+      zoomOut: () => setBoundedZoom(zoom - 0.1),
+    },
   };
 
   if (!activeSheet) return <div role="alert">This workbook has no visible worksheets.</div>;
@@ -280,20 +299,32 @@ function WorkbookViewer({
         background: appearance === "dark" ? "#1E1E1E" : "#FFFFFF",
         color: appearance === "dark" ? "#F5F5F5" : "#171717",
         colorScheme: appearance,
-        display: "grid",
-        gridTemplateRows: "auto minmax(0, 1fr) auto",
+        display: "flex",
+        flexDirection: "column",
         height: "100%",
         minHeight: 0,
       }}
     >
-      <div style={{ gridRow: 1, minWidth: 0 }}>
-        {renderControls ? (
-          renderControls(controls)
-        ) : (
-          <DefaultControls controls={controls} copyNotice={copyNotice} />
-        )}
+      <ViewerControlRegion controls={viewerControls} onControls={onControls} setting={controlSetting} />
+      <div
+        style={{
+          alignItems: "center",
+          borderBottom: "1px solid color-mix(in srgb, currentColor 12%, transparent)",
+          display: "flex",
+          flex: "0 0 auto",
+          gap: 8,
+          minHeight: 32,
+          minWidth: 0,
+          padding: "4px 8px",
+        }}
+      >
+        <span aria-label="Active cell" style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, minWidth: 48 }}>{selectionAddress(selection)}</span>
+        <span aria-hidden="true" style={{ color: "color-mix(in srgb, currentColor 55%, transparent)", font: "italic 600 12px/1 ui-serif, serif" }}>fx</span>
+        <span aria-label="Formula bar" style={{ flex: 1, fontSize: 12, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={formulaBarValue(activeCell) || undefined}>
+          {formulaBarValue(activeCell)}
+        </span>
       </div>
-      <div style={{ gridRow: 2, minHeight: 0, minWidth: 0, overflow: "hidden" }}>
+      <div style={{ flex: 1, minHeight: 0, minWidth: 0, overflow: "hidden" }}>
         <SpreadsheetErrorBoundary
           fallback={
             <div
@@ -413,105 +444,19 @@ function WorkbookFooter({
   );
 }
 
-function DefaultControls({
-  controls,
-  copyNotice,
-}: Readonly<{ controls: SpreadsheetViewerControls; copyNotice: string | null }>) {
-  return (
-    <div
-      style={{
-        alignItems: "center",
-        borderBottom: "1px solid color-mix(in srgb, currentColor 18%, transparent)",
-        display: "flex",
-        gap: 8,
-        minHeight: 42,
-        overflowX: "auto",
-        padding: "6px 10px",
-      }}
-    >
-      <span
-        aria-label="Active cell"
-        style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, minWidth: 48 }}
-      >
-        {controls.activeCell.address}
-      </span>
-      <span aria-hidden>fx</span>
-      <span
-        aria-label="Formula bar"
-        style={{
-          maxWidth: 360,
-          minWidth: 80,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-        title={controls.activeCell.value || undefined}
-      >
-        {controls.activeCell.value}
-      </span>
-      <input
-        aria-label="Search workbook"
-        onChange={(event) => controls.search(event.currentTarget.value)}
-        placeholder="Search workbook"
-        type="search"
-        value={controls.query}
-      />
-      <button
-        aria-label="Previous search result"
-        disabled={!controls.searchResultCount}
-        onClick={controls.searchPrevious}
-        type="button"
-      >
-        ↑
-      </button>
-      <button
-        aria-label="Next search result"
-        disabled={!controls.searchResultCount}
-        onClick={controls.searchNext}
-        type="button"
-      >
-        ↓
-      </button>
-      <span aria-live="polite" style={{ fontSize: 12 }}>
-        {controls.searchResultIndex} / {controls.searchResultCount}
-      </span>
-      <button onClick={controls.copySelection} type="button">
-        Copy
-      </button>
-      {copyNotice ? (
-        <span aria-live="polite" style={{ fontSize: 12 }}>
-          {copyNotice}
-        </span>
-      ) : null}
-      <button onClick={() => controls.zoomTo(controls.zoom - 0.1)} type="button">
-        −
-      </button>
-      <span style={{ fontSize: 12 }}>{Math.round(controls.zoom * 100)}%</span>
-      <button onClick={() => controls.zoomTo(controls.zoom + 0.1)} type="button">
-        +
-      </button>
-      <button
-        aria-pressed={controls.appearance === "dark"}
-        onClick={controls.switchAppearance}
-        type="button"
-      >
-        {controls.appearance === "light" ? "Dark sheet" : "Light sheet"}
-      </button>
-    </div>
-  );
-}
-
 export function SpreadsheetViewer({
   appearance: controlledAppearance,
+  controls: controlSetting = true,
   defaultAppearance,
   format = "xlsx",
   maxBytes = defaultDocumentLimits.maxBytes,
   maxCells = defaultDocumentLimits.maxSpreadsheetCells,
   onError,
+  onControls,
   onAppearanceChange,
-  renderControls,
   source,
   signal,
+  title,
 }: SpreadsheetViewerProps) {
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
@@ -582,10 +527,13 @@ export function SpreadsheetViewer({
     <SpreadsheetErrorBoundary scope="workbook">
       <WorkbookViewer
         appearance={appearance}
+        controlSetting={controlSetting}
+        format={format}
         metadata={session.metadata}
         onAppearanceChange={updateAppearance}
-        {...(renderControls ? { renderControls } : {})}
+        {...(onControls ? { onControls } : {})}
         session={session}
+        {...(title ? { title } : {})}
       />
     </SpreadsheetErrorBoundary>
   );

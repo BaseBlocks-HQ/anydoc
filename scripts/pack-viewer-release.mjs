@@ -5,6 +5,7 @@ import { spawnSync } from "node:child_process";
 
 const directories = [
   "packages/contracts",
+  "packages/viewer-ui",
   "packages/spreadsheet-engine",
   "packages/spreadsheet-viewer",
   "packages/presentation-viewer",

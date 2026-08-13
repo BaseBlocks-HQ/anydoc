@@ -15,9 +15,8 @@ import { PresentationViewer } from "@baseblocks/anydoc-presentation-viewer";
 <PresentationViewer
   source={arrayBuffer}
   onLink={({ url }) => openTrustedLink(url)}
-  renderControls={(controls) => <MyPresentationControls {...controls} />}
+  controls={{ render: (controls) => <MyPresentationControls {...controls} /> }}
 />
 ```
 
-Omit `renderControls` to use the built-in controls. Set `showDefaultControls={false}` to
-render no toolbar.
+Omit `controls` to use the built-in controls. Set `controls={false}` to render no toolbar.

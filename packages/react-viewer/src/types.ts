@@ -1,6 +1,17 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
+import type {
+  ViewerControls,
+  ViewerControlSetting,
+  ViewerFormat,
+} from "@baseblocks/anydoc-viewer-ui";
 
-export type ViewerFormat = "pdf" | "docx" | "text" | "markdown" | "xlsx" | "csv" | "pptx";
+export type {
+  ViewerAction,
+  ViewerControls,
+  ViewerControlOptions,
+  ViewerControlSetting,
+  ViewerFormat,
+} from "@baseblocks/anydoc-viewer-ui";
 export type DocumentViewerFormat = Extract<ViewerFormat, "pdf" | "docx" | "text" | "markdown">;
 
 export interface UrlDocumentSource {
@@ -22,63 +33,13 @@ export type DocumentSource =
   | UrlDocumentSource
   | BytesDocumentSource;
 
-export interface ViewerSearchControls {
-  readonly current: number;
-  readonly next: () => void;
-  readonly previous: () => void;
-  readonly pending: boolean;
-  readonly query: string;
-  readonly setQuery: (query: string) => void;
-  readonly total: number;
-  readonly truncated?: boolean;
-}
-
-export interface ViewerZoomControls {
-  readonly max: number;
-  readonly min: number;
-  readonly reset: () => void;
-  readonly set: (zoom: number) => void;
-  readonly step: number;
-  readonly value: number;
-  readonly zoomIn: () => void;
-  readonly zoomOut: () => void;
-}
-
-export interface ViewerPaginationControls {
-  readonly current: number;
-  readonly goTo: (page: number) => void;
-  readonly next: () => void;
-  readonly previous: () => void;
-  readonly total: number;
-}
-
-export interface ViewerAction {
-  readonly id: string;
-  readonly label: string;
-  readonly disabled?: boolean;
-  readonly pressed?: boolean;
-  readonly run: () => void;
-}
-
-export interface ViewerControls {
-  readonly actions: ReadonlyArray<ViewerAction>;
-  readonly format: ViewerFormat;
-  readonly pagination?: ViewerPaginationControls;
-  readonly search?: ViewerSearchControls;
-  readonly status: "loading" | "ready" | "error";
-  readonly title?: string;
-  readonly zoom?: ViewerZoomControls;
-  /** Format-specific state that does not fit the universal navigation model. */
-  readonly details?: Readonly<Record<string, unknown>>;
-}
-
 export interface BaseViewerProps {
   readonly source: DocumentSource;
   readonly title?: string;
   readonly className?: string;
   readonly style?: CSSProperties;
-  readonly controls?: boolean;
-  readonly renderControls?: (controls: ViewerControls) => ReactNode;
+  readonly controls?: ViewerControlSetting;
+  readonly onControls?: ((controls: ViewerControls | null) => void) | undefined;
   readonly maxBytes?: number;
   readonly signal?: AbortSignal;
   readonly onError?: (error: import("./errors").ViewerError) => void;

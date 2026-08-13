@@ -1,6 +1,6 @@
 # Any Doc viewer releases
 
-Changesets manages the eight public `@baseblocks/anydoc-*` npm packages as one
+Changesets manages the nine public `@baseblocks/anydoc-*` npm packages as one
 fixed, lockstep release. The workspace is in the `alpha` prerelease channel, so
 each accepted patch changeset advances the shared `0.1.0-alpha.N` version.
 

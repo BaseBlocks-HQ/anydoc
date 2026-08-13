@@ -14,6 +14,7 @@ try {
   const tarballs = [];
   for (const directory of [
     "packages/contracts",
+    "packages/viewer-ui",
     "packages/spreadsheet-engine",
     "packages/spreadsheet-viewer",
     "packages/presentation-viewer",

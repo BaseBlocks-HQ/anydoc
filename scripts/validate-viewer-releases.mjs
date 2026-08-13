@@ -5,6 +5,7 @@ const rootDir = resolve(import.meta.dirname, "..");
 const changesetDir = resolve(rootDir, ".changeset");
 const packageDirs = [
   "packages/contracts",
+  "packages/viewer-ui",
   "packages/spreadsheet-engine",
   "packages/spreadsheet-viewer",
   "packages/presentation-viewer",

@@ -10,7 +10,9 @@ describe("React viewers", () => {
       <TextViewer
         source={bytes("one\ntwo")}
         title="notes.txt"
-        renderControls={(controls) => <output data-testid="controls">{controls.format}:{controls.status}:{controls.title}</output>}
+        controls={{
+          render: (controls) => <output data-testid="controls">{controls.format}:{controls.status}:{controls.title}</output>,
+        }}
       />,
     );
     await waitFor(() => expect(screen.getByTestId("controls")).toHaveTextContent("text:ready:notes.txt"));
