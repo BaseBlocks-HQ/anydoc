@@ -7,6 +7,7 @@ const destroy = vi.fn();
 const renderThumbnail = vi.fn(() => ({ dispose: vi.fn() }));
 const intersectionObserve = vi.fn();
 const intersectionDisconnect = vi.fn();
+let intersectionCallback: IntersectionObserverCallback | undefined;
 
 vi.mock("@aiden0z/pptx-renderer", () => ({
   RECOMMENDED_ZIP_LIMITS: {},
@@ -41,7 +42,9 @@ class ResizeObserverMock {
 }
 
 class IntersectionObserverMock {
-  constructor() {}
+  constructor(callback: IntersectionObserverCallback) {
+    intersectionCallback = callback;
+  }
   observe = intersectionObserve;
   disconnect = intersectionDisconnect;
   unobserve() {}
@@ -118,6 +121,15 @@ describe("PresentationViewer lifecycle", () => {
     expect(container.querySelectorAll('[aria-label^="Go to slide "]')).toHaveLength(40);
     expect(intersectionObserve).toHaveBeenCalledTimes(40);
     expect(renderThumbnail).toHaveBeenCalledTimes(8);
+
+    const previews = [...container.querySelectorAll<HTMLElement>("[data-thumbnail-index]")];
+    await act(async () => {
+      intersectionCallback?.(previews.slice(0, 16).map((target, index) => ({
+        isIntersecting: index >= 8,
+        target,
+      })) as unknown as IntersectionObserverEntry[], {} as IntersectionObserver);
+    });
+    expect(renderThumbnail).toHaveBeenCalledTimes(16);
 
     await act(async () => root.unmount());
     expect(intersectionDisconnect).toHaveBeenCalledOnce();

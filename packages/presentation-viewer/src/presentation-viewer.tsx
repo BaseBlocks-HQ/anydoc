@@ -179,21 +179,21 @@ function PresentationThumbnailRail({
       return;
     }
     const observer = new IntersectionObserver((entries) => {
-      const entered = entries.flatMap((entry) => {
-        if (!entry.isIntersecting) return [];
-        const index = Number((entry.target as HTMLElement).dataset.thumbnailIndex);
-        return Number.isInteger(index) ? [index] : [];
-      });
-      if (entered.length === 0) return;
       setVisibleSlides((current) => {
         const next = new Set(current);
-        for (const index of entered) next.add(index);
-        return next.size === current.size ? current : next;
+        for (const entry of entries) {
+          const index = Number((entry.target as HTMLElement).dataset.thumbnailIndex);
+          if (!Number.isInteger(index)) continue;
+          if (entry.isIntersecting || index === currentSlide) next.add(index);
+          else next.delete(index);
+        }
+        if (next.size === current.size && [...next].every((index) => current.has(index))) return current;
+        return next;
       });
     }, { root: rail, rootMargin: "400px 0px" });
     for (const preview of rail.querySelectorAll<HTMLElement>("[data-thumbnail-index]")) observer.observe(preview);
     return () => observer.disconnect();
-  }, [slideKeys]);
+  }, [currentSlide, slideKeys]);
 
   useEffect(() => {
     const rail = railRef.current;
