@@ -1,7 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
 import { assertCountWithinLimit, defaultDocumentLimits } from "@baseblocks/anydoc-contracts";
-import { ViewerControlRegion, viewerRootStyle, viewerScrollerStyle } from "../controls";
+import { ViewerControlRegion, ViewerStage, viewerRootStyle } from "@baseblocks/anydoc-viewer-ui";
 import { ViewerError, toViewerError } from "../errors";
 import { loadDocumentBytes } from "../source";
 import type { PdfViewerProps, ViewerControls } from "../types";
@@ -104,6 +104,7 @@ function PdfCanvasPage({
         height,
         justifyContent: "center",
         overflow: "hidden",
+        outline: "1px solid oklch(0 0 0 / 0.1)",
         position: "relative",
         width,
       }}
@@ -135,7 +136,7 @@ export default function PdfViewer({
   maxRenderedPages = 7,
   maxSearchPages = 250,
   onError,
-  renderControls,
+  onControls,
   signal,
   source,
   style,
@@ -299,8 +300,8 @@ export default function PdfViewer({
   }, []);
   const viewerControls: ViewerControls = {
     actions: [
-      { id: "rotate", label: "Rotate clockwise", run: () => setRotation((value) => (value + 90) % 360) },
-      { id: "layout", label: mode === "continuous" ? "Single page" : "Continuous", pressed: mode === "single", run: () => setMode((value) => value === "continuous" ? "single" : "continuous") },
+      { icon: "rotate", id: "rotate", label: "Rotate clockwise", run: () => setRotation((value) => (value + 90) % 360) },
+      { icon: mode === "continuous" ? "single" : "continuous", id: "layout", label: mode === "continuous" ? "Single page" : "Continuous pages", pressed: mode === "single", run: () => setMode((value) => value === "continuous" ? "single" : "continuous") },
     ],
     format: "pdf",
     pagination: { current: currentPage, goTo: goToPage, next: () => goToPage(currentPage + 1), previous: () => goToPage(currentPage - 1), total: pageCount },
@@ -313,20 +314,18 @@ export default function PdfViewer({
   return (
     <section aria-label={title ? `PDF viewer: ${title}` : "PDF viewer"} className={className} style={{ ...viewerRootStyle, ...style }}>
       <style>{`.anydoc-pdf-text-layer span,.anydoc-pdf-text-layer br{color:transparent;cursor:text;position:absolute;white-space:pre;transform-origin:0 0}.anydoc-pdf-text-layer ::selection{background:Highlight;color:transparent}`}</style>
-      {showControls ? <ViewerControlRegion controls={viewerControls}>{renderControls}</ViewerControlRegion> : null}
+      <ViewerControlRegion controls={viewerControls} onControls={onControls} setting={showControls} />
       {error ? <div role="alert" style={{ margin: "auto", padding: "1rem" }}>{error.message}</div> : null}
       {!error ? (
-        <div
+        <ViewerStage
           onScroll={(event) => {
             const nextScrollTop = event.currentTarget.scrollTop;
             setScrollTop(nextScrollTop);
             if (mode === "continuous" && pageCount > 0) setCurrentPage(Math.min(pageCount, Math.floor((nextScrollTop + containerSize.height * 0.3) / pageSlot) + 1));
           }}
           ref={scrollRef}
-          style={{ ...viewerScrollerStyle, background: "#e5e7eb", padding: "1rem" }}
-          tabIndex={0}
         >
-          {!document ? <div aria-live="polite" role="status" style={{ color: "#111827", textAlign: "center" }}>Opening PDF…</div> : null}
+          {!document ? <div aria-live="polite" role="status" style={{ textAlign: "center" }}>Opening PDF…</div> : null}
           {document ? (
             <div style={mode === "continuous" ? { height: pageCount * pageSlot, margin: "0 auto", position: "relative", width: pageWidth } : { display: "flex", justifyContent: "center" }}>
               {visiblePages.map((pageNumber) => (
@@ -345,7 +344,7 @@ export default function PdfViewer({
               ))}
             </div>
           ) : null}
-        </div>
+        </ViewerStage>
       ) : null}
     </section>
   );

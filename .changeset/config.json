@@ -5,6 +5,7 @@
   "fixed": [
     [
       "@baseblocks/anydoc-contracts",
+      "@baseblocks/anydoc-viewer-ui",
       "@baseblocks/anydoc-spreadsheet-engine",
       "@baseblocks/anydoc-spreadsheet-viewer",
       "@baseblocks/anydoc-presentation-viewer",

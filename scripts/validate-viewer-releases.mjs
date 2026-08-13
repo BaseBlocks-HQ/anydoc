@@ -1,20 +1,10 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { publicViewerPackageDirectories } from "./viewer-packages.mjs";
 
 const rootDir = resolve(import.meta.dirname, "..");
 const changesetDir = resolve(rootDir, ".changeset");
-const packageDirs = [
-  "packages/contracts",
-  "packages/spreadsheet-engine",
-  "packages/spreadsheet-viewer",
-  "packages/presentation-viewer",
-  "packages/react-viewer",
-  "packages/ingestion",
-  "packages/platform",
-  "packages/convex",
-];
-
-const packages = packageDirs.map((dir) => ({
+const packages = publicViewerPackageDirectories.map((dir) => ({
   dir,
   manifest: JSON.parse(
     readFileSync(resolve(rootDir, dir, "package.json"), "utf8"),

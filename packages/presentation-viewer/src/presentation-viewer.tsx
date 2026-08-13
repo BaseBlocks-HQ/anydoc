@@ -18,8 +18,14 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type ReactNode,
 } from "react";
+import {
+  ViewerControlRegion,
+  ViewerStage,
+  viewerRootStyle,
+  type ViewerControls,
+  type ViewerControlSetting,
+} from "@baseblocks/anydoc-viewer-ui";
 
 import { installHostNavigation, type PresentationLink } from "./navigation.js";
 import { blockExternalPresentationMedia } from "./security.js";
@@ -34,29 +40,7 @@ export type PresentationViewerReadyState = {
   readonly slideCount: number;
 };
 
-export type PresentationViewerControls = {
-  /** Current one-based slide number, or zero until the viewer is ready. */
-  readonly currentSlide: number;
-  readonly error: DocumentPlatformError | null;
-  /** Navigate to a one-based slide number. */
-  readonly goToSlide: (slide: number) => void;
-  readonly limitations: number;
-  readonly nextSearchResult: () => void;
-  readonly nextSlide: () => void;
-  readonly previousSearchResult: () => void;
-  readonly previousSlide: () => void;
-  readonly query: string;
-  readonly ready: boolean;
-  readonly requestFullscreen: () => Promise<void>;
-  readonly search: (query: string) => void;
-  /** Current one-based result number, or zero when there are no results. */
-  readonly searchIndex: number;
-  readonly searchResultCount: number;
-  readonly slideCount: number;
-  /** Zoom multiplier, where 1 is 100%. */
-  readonly zoom: number;
-  readonly zoomTo: (zoom: number) => void;
-};
+export type PresentationViewerControls = ViewerControls;
 
 export type PresentationViewerProps = {
   readonly className?: string;
@@ -64,15 +48,14 @@ export type PresentationViewerProps = {
   readonly onLink?: (link: PresentationLink) => void;
   readonly onError?: (error: DocumentPlatformError) => void;
   readonly onReady?: (state: PresentationViewerReadyState) => void;
-  /** Replaces the default toolbar with host-rendered controls. */
-  readonly renderControls?: (controls: PresentationViewerControls) => ReactNode;
-  /** Defaults to true when renderControls is omitted, otherwise false. */
-  readonly showDefaultControls?: boolean;
+  readonly controls?: ViewerControlSetting;
+  readonly onControls?: ((controls: ViewerControls | null) => void) | undefined;
   readonly source: ArrayBuffer;
   readonly signal?: AbortSignal;
   readonly maxBytes?: number;
   readonly maxSlides?: number;
   readonly style?: CSSProperties;
+  readonly title?: string;
 };
 
 const SOURCE_IDS = new WeakMap<ArrayBuffer, number>();
@@ -87,76 +70,48 @@ function sourceId(source: ArrayBuffer): number {
   return id;
 }
 
-const buttonStyle = {
-  alignItems: "center",
-  background: "var(--presentation-viewer-background, #fff)",
-  border: "1px solid var(--presentation-viewer-border, #d4d4d8)",
-  borderRadius: 6,
-  color: "inherit",
-  cursor: "pointer",
-  display: "inline-flex",
-  fontSize: 12,
-  height: 30,
-  justifyContent: "center",
-  padding: "0 10px",
-  whiteSpace: "nowrap",
-} as const;
-
-const toolbarStyle = {
-  alignItems: "center",
-  background: "var(--presentation-viewer-background, #fff)",
-  borderBottom: "1px solid var(--presentation-viewer-border, #d4d4d8)",
-  display: "flex",
-  gap: 6,
-  minHeight: 44,
-  overflowX: "auto",
-  padding: "6px 10px",
-} as const;
-
 function PresentationThumbnail({
   active,
   index,
   onSelect,
+  visible,
   viewer,
 }: {
   readonly active: boolean;
   readonly index: number;
   readonly onSelect: (index: number) => void;
+  readonly visible: boolean;
   readonly viewer: PptxViewer;
 }) {
   const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const element = previewRef.current;
-    if (!element) return;
+    if (!element || !visible) return;
     let handle: SlideHandle | null = null;
+    let rendered = false;
+    let renderedWidth = 0;
     const render = () => {
-      handle = viewer.renderThumbnailToContainer(index, element, { width: 132 });
+      const width = Math.max(1, Math.round(element.clientWidth));
+      if (rendered && width === renderedWidth) return;
+      handle?.dispose();
+      element.replaceChildren();
+      handle = viewer.renderThumbnailToContainer(index, element, { width });
+      rendered = true;
+      renderedWidth = width;
     };
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => {
+      if (rendered) render();
+    });
+    resizeObserver?.observe(element);
 
-    if (typeof IntersectionObserver === "undefined") {
-      render();
-      return () => {
-        handle?.dispose();
-        element.replaceChildren();
-      };
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-        observer.disconnect();
-        render();
-      },
-      { rootMargin: "400px 0px" },
-    );
-    observer.observe(element);
+    render();
     return () => {
-      observer.disconnect();
+      resizeObserver?.disconnect();
       handle?.dispose();
       element.replaceChildren();
     };
-  }, [index, viewer]);
+  }, [index, viewer, visible]);
 
   return (
     <button
@@ -172,8 +127,10 @@ function PresentationThumbnail({
           ? "2px solid var(--presentation-viewer-accent, #2563eb)"
           : "2px solid transparent",
         borderRadius: 8,
+        boxSizing: "border-box",
         color: "inherit",
         cursor: "pointer",
+        display: "block",
         padding: 6,
         width: "100%",
       }}
@@ -182,20 +139,21 @@ function PresentationThumbnail({
       <div
         ref={previewRef}
         aria-hidden="true"
+        data-thumbnail-index={index}
         style={{
           aspectRatio: "16 / 9",
-          boxShadow: "0 1px 3px rgb(0 0 0 / 18%)",
+          background: "#fff",
+          boxShadow: "0 1px 2px rgb(0 0 0 / 10%), 0 4px 12px rgb(0 0 0 / 12%)",
           margin: "0 auto",
+          outline: "1px solid oklch(0 0 0 / 0.1)",
           overflow: "hidden",
-          width: 132,
+          width: "100%",
         }}
       />
       <span style={{ display: "block", fontSize: 12, marginTop: 5 }}>Slide {index + 1}</span>
     </button>
   );
 }
-
-const THUMBNAIL_HEIGHT = 112;
 
 function PresentationThumbnailRail({
   currentSlide,
@@ -209,149 +167,79 @@ function PresentationThumbnailRail({
   readonly viewer: PptxViewer;
 }) {
   const railRef = useRef<HTMLElement>(null);
-  const [viewport, setViewport] = useState({ height: 600, scrollTop: 0 });
+  const [visibleSlides, setVisibleSlides] = useState<ReadonlySet<number>>(
+    () => new Set(Array.from({ length: Math.min(8, slideKeys.length) }, (_, index) => index)),
+  );
+
   useEffect(() => {
     const rail = railRef.current;
     if (!rail) return;
-    const observer = new ResizeObserver(() => setViewport((value) => ({ ...value, height: rail.clientHeight })));
-    observer.observe(rail);
+    if (typeof IntersectionObserver === "undefined") {
+      setVisibleSlides(new Set(slideKeys.map((_, index) => index)));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      setVisibleSlides((current) => {
+        const next = new Set(current);
+        for (const entry of entries) {
+          const index = Number((entry.target as HTMLElement).dataset.thumbnailIndex);
+          if (!Number.isInteger(index)) continue;
+          if (entry.isIntersecting || index === currentSlide) next.add(index);
+          else next.delete(index);
+        }
+        if (next.size === current.size && [...next].every((index) => current.has(index))) return current;
+        return next;
+      });
+    }, { root: rail, rootMargin: "400px 0px" });
+    for (const preview of rail.querySelectorAll<HTMLElement>("[data-thumbnail-index]")) observer.observe(preview);
     return () => observer.disconnect();
-  }, []);
+  }, [currentSlide, slideKeys]);
+
   useEffect(() => {
     const rail = railRef.current;
     if (!rail) return;
-    const top = currentSlide * THUMBNAIL_HEIGHT;
-    if (top < rail.scrollTop) rail.scrollTop = top;
-    else if (top + THUMBNAIL_HEIGHT > rail.scrollTop + rail.clientHeight) rail.scrollTop = top + THUMBNAIL_HEIGHT - rail.clientHeight;
+    if (currentSlide === 0) {
+      rail.scrollTop = 0;
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      const active = rail.querySelector<HTMLElement>('[aria-current="page"]');
+      if (!active || rail.clientHeight <= 0) return;
+      if (active.offsetTop < rail.scrollTop) rail.scrollTop = active.offsetTop;
+      else if (active.offsetTop + active.offsetHeight > rail.scrollTop + rail.clientHeight) {
+        rail.scrollTop = active.offsetTop + active.offsetHeight - rail.clientHeight;
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   }, [currentSlide]);
-  const start = Math.max(0, Math.floor(viewport.scrollTop / THUMBNAIL_HEIGHT) - 4);
-  const end = Math.min(slideKeys.length, start + Math.ceil(viewport.height / THUMBNAIL_HEIGHT) + 8);
+
   return (
     <nav
       aria-label="Presentation slides"
       className="presentation-viewer-thumbnails"
-      onScroll={(event) => {
-        // React clears currentTarget after the handler returns. Snapshot the DOM
-        // value before scheduling an update so a deferred updater never retains
-        // the SyntheticEvent or reads from a rail that has since unmounted.
-        const scrollTop = event.currentTarget.scrollTop;
-        setViewport((value) => ({ ...value, scrollTop }));
-      }}
       ref={railRef}
-      style={{ borderRight: "1px solid var(--presentation-viewer-border, #d4d4d8)", overflowY: "auto", padding: 8 }}
+      style={{ alignContent: "flex-start", background: "color-mix(in srgb, currentColor 4%, Canvas)", borderInlineEnd: "1px solid color-mix(in srgb, currentColor 12%, transparent)", display: "flex", flexDirection: "column", gap: 6, justifyContent: "flex-start", minHeight: 0, minWidth: 0, overflowY: "auto", padding: 8 }}
     >
-      <div style={{ height: slideKeys.length * THUMBNAIL_HEIGHT, position: "relative" }}>
-        {slideKeys.slice(start, end).map((slideKey, offset) => {
-          const index = start + offset;
-          return (
-            <div key={slideKey} style={{ height: THUMBNAIL_HEIGHT, left: 0, position: "absolute", right: 0, top: index * THUMBNAIL_HEIGHT }}>
-              <PresentationThumbnail active={currentSlide === index} index={index} onSelect={onSelect} viewer={viewer} />
-            </div>
-          );
-        })}
-      </div>
+      {slideKeys.map((slideKey, index) => (
+        <PresentationThumbnail active={currentSlide === index} index={index} key={slideKey} onSelect={onSelect} visible={visibleSlides.has(index)} viewer={viewer} />
+      ))}
     </nav>
-  );
-}
-
-function PresentationToolbar({ controls }: { readonly controls: PresentationViewerControls }) {
-  const {
-    currentSlide,
-    limitations,
-    nextSearchResult,
-    nextSlide,
-    previousSearchResult,
-    previousSlide,
-    query,
-    ready,
-    requestFullscreen,
-    search,
-    searchIndex,
-    searchResultCount,
-    slideCount,
-    zoom,
-    zoomTo,
-  } = controls;
-
-  return (
-    <div style={toolbarStyle}>
-      <button disabled={!ready || currentSlide <= 1} onClick={previousSlide} style={buttonStyle} type="button">
-        Previous
-      </button>
-      <span style={{ fontSize: 12, minWidth: 60, textAlign: "center" }}>
-        {currentSlide || "–"} / {ready ? slideCount : "–"}
-      </span>
-      <button
-        disabled={!ready || currentSlide >= slideCount}
-        onClick={nextSlide}
-        style={buttonStyle}
-        type="button"
-      >
-        Next
-      </button>
-      <button disabled={!ready} onClick={() => zoomTo(zoom - 0.1)} style={buttonStyle} type="button">
-        −
-      </button>
-      <span style={{ fontSize: 12, minWidth: 42, textAlign: "center" }}>{Math.round(zoom * 100)}%</span>
-      <button disabled={!ready} onClick={() => zoomTo(zoom + 0.1)} style={buttonStyle} type="button">
-        +
-      </button>
-      <input
-        aria-label="Search presentation"
-        disabled={!ready}
-        onChange={(event) => search(event.currentTarget.value)}
-        placeholder="Search slides"
-        style={{
-          border: "1px solid var(--presentation-viewer-border, #d4d4d8)",
-          borderRadius: 6,
-          height: 30,
-          minWidth: 150,
-          padding: "0 9px",
-        }}
-        type="search"
-        value={query}
-      />
-      {searchResultCount > 0 ? (
-        <>
-          <button onClick={previousSearchResult} style={buttonStyle} type="button">‹</button>
-          <span style={{ fontSize: 12 }}>{searchIndex} / {searchResultCount}</span>
-          <button onClick={nextSearchResult} style={buttonStyle} type="button">›</button>
-        </>
-      ) : query ? (
-        <span style={{ fontSize: 12 }}>0 matches</span>
-      ) : null}
-      <button
-        disabled={!ready}
-        onClick={() => void requestFullscreen()}
-        style={{ ...buttonStyle, marginLeft: "auto" }}
-        type="button"
-      >
-        Fullscreen
-      </button>
-      {limitations > 0 ? (
-        <span
-          title={`${limitations} blocked or unsupported presentation resources`}
-          style={{ fontSize: 12 }}
-        >
-          {limitations} limitation{limitations === 1 ? "" : "s"}
-        </span>
-      ) : null}
-    </div>
   );
 }
 
 function PresentationViewerSession({
   className,
+  controls: controlSetting = true,
   onLink,
   onError,
+  onControls,
   onReady,
-  renderControls,
-  showDefaultControls,
   source,
   signal,
   maxBytes = defaultDocumentLimits.maxBytes,
   maxSlides = defaultDocumentLimits.maxSlides,
   style,
+  title,
 }: PresentationViewerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const slideRef = useRef<HTMLDivElement>(null);
@@ -506,31 +394,45 @@ function PresentationViewerSession({
     );
   };
 
-  const controls: PresentationViewerControls = {
-    currentSlide: runtime ? currentSlide + 1 : 0,
-    error,
-    goToSlide: (slide) => goToSlideIndex(slide - 1),
-    limitations,
-    nextSearchResult: () => selectSearchResult(searchIndex + 1),
-    nextSlide: () => goToSlideIndex(currentSlide + 1),
-    previousSearchResult: () => selectSearchResult(searchIndex - 1),
-    previousSlide: () => goToSlideIndex(currentSlide - 1),
-    query,
-    ready: runtime !== null,
-    requestFullscreen: async () => {
-      await rootRef.current?.requestFullscreen?.();
+  const viewerControls: ViewerControls = {
+    actions: [{
+      disabled: runtime === null,
+      icon: "fullscreen",
+      id: "fullscreen",
+      label: "Fullscreen",
+      run: () => void rootRef.current?.requestFullscreen?.(),
+    }],
+    details: { limitations },
+    format: "pptx",
+    pagination: {
+      current: runtime ? currentSlide + 1 : 0,
+      goTo: (slide) => goToSlideIndex(slide - 1),
+      next: () => goToSlideIndex(currentSlide + 1),
+      previous: () => goToSlideIndex(currentSlide - 1),
+      total: runtime?.viewer.slideCount ?? 0,
     },
-    search: runSearch,
-    searchIndex: searchResults.length > 0 ? searchIndex + 1 : 0,
-    searchResultCount: searchResults.length,
-    slideCount: runtime?.viewer.slideCount ?? 0,
-    zoom: zoom / 100,
-    zoomTo: (value) => changeZoom(value * 100),
+    search: {
+      current: searchResults.length > 0 ? searchIndex + 1 : 0,
+      next: () => selectSearchResult(searchIndex + 1),
+      pending: false,
+      previous: () => selectSearchResult(searchIndex - 1),
+      query,
+      setQuery: runSearch,
+      total: searchResults.length,
+    },
+    status: error ? "error" : runtime ? "ready" : "loading",
+    ...(title === undefined ? {} : { title }),
+    zoom: {
+      max: 3,
+      min: 0.25,
+      reset: () => changeZoom(100),
+      set: (value) => changeZoom(value * 100),
+      step: 0.1,
+      value: zoom / 100,
+      zoomIn: () => changeZoom(zoom + 10),
+      zoomOut: () => changeZoom(zoom - 10),
+    },
   };
-
-  const useDefaultControls = showDefaultControls ?? renderControls === undefined;
-  const controlsNode = renderControls?.(controls) ??
-    (useDefaultControls ? <PresentationToolbar controls={controls} /> : null);
 
   return (
     <div
@@ -538,15 +440,12 @@ function PresentationViewerSession({
       className={className}
       data-presentation-viewer=""
       style={{
-        color: "var(--presentation-viewer-foreground, #18181b)",
-        display: "grid",
-        gridTemplateRows: controlsNode ? "auto minmax(0, 1fr)" : "minmax(0, 1fr)",
-        height: "100%",
-        minHeight: 0,
+        ...viewerRootStyle,
         ...style,
       }}
     >
       <style>{`
+        [data-presentation-viewer] *, [data-presentation-viewer] *::before, [data-presentation-viewer] *::after { box-sizing: border-box; }
         [data-presentation-viewer] .presentation-viewer-thumbnail { flex: 0 0 auto; }
         @media (max-width: 640px) {
           [data-presentation-viewer] .presentation-viewer-layout {
@@ -555,11 +454,10 @@ function PresentationViewerSession({
           [data-presentation-viewer] .presentation-viewer-thumbnails {
             padding: 4px !important;
           }
-          [data-presentation-viewer] .presentation-viewer-thumbnail [aria-hidden="true"] { width: 92px !important; }
           [data-presentation-viewer] .presentation-viewer-canvas { padding: 8px !important; }
         }
       `}</style>
-      {controlsNode}
+      <ViewerControlRegion controls={viewerControls} onControls={onControls} setting={controlSetting} />
       {error ? (
         <div
           role="alert"
@@ -570,16 +468,21 @@ function PresentationViewerSession({
       ) : (
         <div
           className="presentation-viewer-layout"
-          style={{ display: "grid", gridTemplateColumns: "164px minmax(0, 1fr)", minHeight: 0 }}
+          style={{ display: "grid", flex: 1, gridTemplateColumns: "clamp(112px, 22%, 176px) minmax(0, 1fr)", minHeight: 0, overflow: "hidden" }}
         >
           {runtime ? <PresentationThumbnailRail currentSlide={currentSlide} onSelect={goToSlideIndex} slideKeys={runtime.slideKeys} viewer={runtime.viewer} /> : <nav aria-label="Presentation slides" />}
-          <div
+          <ViewerStage
             className="presentation-viewer-canvas"
-            style={{ minHeight: 0, overflow: "auto", padding: 20 }}
+            style={{ padding: 20 }}
           >
-            {!runtime ? <div role="status" style={{ textAlign: "center" }}>Opening presentation…</div> : null}
-            <div ref={slideRef} style={{ margin: "0 auto", minHeight: 1, width: "100%" }} />
-          </div>
+            <div
+              className="presentation-viewer-slide-frame"
+              style={{ display: "grid", minHeight: "100%", minWidth: "100%", placeItems: "safe center" }}
+            >
+              {!runtime ? <div role="status" style={{ gridArea: "1 / 1", textAlign: "center" }}>Opening presentation…</div> : null}
+              <div ref={slideRef} style={{ gridArea: "1 / 1", minHeight: 1, minWidth: 0, width: "100%" }} />
+            </div>
+          </ViewerStage>
         </div>
       )}
     </div>

@@ -10,14 +10,13 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
-import { DefaultViewerControls } from "./controls";
+import type { ViewerControlOptions, ViewerControlSetting } from "@baseblocks/anydoc-viewer-ui";
 import { ViewerError, toViewerError } from "./errors";
 import { loadDocumentBytes } from "./source";
 import type { DocumentSource, ViewerControls, ViewerFormat } from "./types";
 import type { DocumentViewerProps, DocxViewerProps, MarkdownViewerProps, PdfViewerProps, TextViewerProps } from "./types";
-import type { PresentationViewerControls, PresentationViewerProps } from "@baseblocks/anydoc-presentation-viewer";
-import type { SpreadsheetViewerControls, SpreadsheetViewerProps } from "@baseblocks/anydoc-spreadsheet-viewer";
+import type { PresentationViewerProps } from "@baseblocks/anydoc-presentation-viewer";
+import type { SpreadsheetViewerProps } from "@baseblocks/anydoc-spreadsheet-viewer";
 
 type ViewerModule =
   | { readonly default: ComponentType<DocumentViewerProps> }
@@ -58,14 +57,7 @@ const CONTENT_TYPES: Record<string, ViewerFormat> = {
   "text/x-markdown": "markdown",
 };
 
-export interface UniversalViewerControlOptions {
-  /** Change, add, or remove commands before they reach the renderer. */
-  readonly transform?: (controls: ViewerControls) => ViewerControls;
-  /** Replace the default toolbar. The second argument is the default toolbar node. */
-  readonly render?: (controls: ViewerControls, defaultControls: ReactNode) => ReactNode;
-  /** Render controls into another DOM region while preserving React ownership. */
-  readonly target?: Element | null;
-}
+export type UniversalViewerControlOptions = ViewerControlOptions;
 
 export interface AnyDocumentViewerProps {
   readonly source: DocumentSource;
@@ -78,9 +70,9 @@ export interface AnyDocumentViewerProps {
   readonly maxBytes?: number;
   readonly signal?: AbortSignal;
   /** true/default: built-in controls; false: headless; object: transform, replace, or relocate. */
-  readonly controls?: boolean | UniversalViewerControlOptions;
+  readonly controls?: ViewerControlSetting;
   /** Receives the current universal control model, including in headless mode. */
-  readonly onControls?: (controls: ViewerControls | null) => void;
+  readonly onControls?: ((controls: ViewerControls | null) => void) | undefined;
   readonly onError?: (error: ViewerError) => void;
   readonly loading?: ReactNode | ((format: ViewerFormat) => ReactNode);
   readonly error?: ReactNode | ((error: ViewerError) => ReactNode);
@@ -162,91 +154,9 @@ export async function detectViewerFormatFromBytes(bytes: Uint8Array): Promise<Vi
   return undefined;
 }
 
-function CaptureControls({ controls, onChange }: { readonly controls: ViewerControls; readonly onChange: (controls: ViewerControls) => void }) {
-  useEffect(() => onChange(controls), [controls, onChange]);
-  return null;
-}
-
-function normalizePresentationControls(value: PresentationViewerControls, title?: string): ViewerControls {
-  return {
-    actions: [{
-      disabled: !value.ready,
-      id: "fullscreen",
-      label: "Fullscreen",
-      run: () => void value.requestFullscreen(),
-    }],
-    details: { limitations: value.limitations },
-    format: "pptx",
-    pagination: {
-      current: value.currentSlide,
-      goTo: value.goToSlide,
-      next: value.nextSlide,
-      previous: value.previousSlide,
-      total: value.slideCount,
-    },
-    search: {
-      current: value.searchIndex,
-      next: value.nextSearchResult,
-      pending: false,
-      previous: value.previousSearchResult,
-      query: value.query,
-      setQuery: value.search,
-      total: value.searchResultCount,
-    },
-    status: value.error ? "error" : value.ready ? "ready" : "loading",
-    ...(title === undefined ? {} : { title }),
-    zoom: {
-      max: 3,
-      min: 0.25,
-      reset: () => value.zoomTo(1),
-      set: value.zoomTo,
-      step: 0.1,
-      value: value.zoom,
-      zoomIn: () => value.zoomTo(value.zoom + 0.1),
-      zoomOut: () => value.zoomTo(value.zoom - 0.1),
-    },
-  };
-}
-
-function normalizeSpreadsheetControls(value: SpreadsheetViewerControls, format: "csv" | "xlsx", title?: string): ViewerControls {
-  return {
-    actions: [
-      { id: "copy", label: "Copy", run: value.copySelection },
-      { id: "appearance", label: value.appearance === "light" ? "Dark sheet" : "Light sheet", pressed: value.appearance === "dark", run: value.switchAppearance },
-    ],
-    details: {
-      activeCell: value.activeCell,
-      appearance: value.appearance,
-      hyperlink: value.hyperlink,
-      selectionStatistics: value.selectionStatistics,
-    },
-    format,
-    search: {
-      current: value.searchResultIndex,
-      next: value.searchNext,
-      pending: false,
-      previous: value.searchPrevious,
-      query: value.query,
-      setQuery: value.search,
-      total: value.searchResultCount,
-    },
-    status: "ready",
-    ...(title === undefined ? {} : { title }),
-    zoom: {
-      max: 2,
-      min: 0.5,
-      reset: () => value.zoomTo(1),
-      set: value.zoomTo,
-      step: 0.1,
-      value: value.zoom,
-      zoomIn: () => value.zoomTo(value.zoom + 0.1),
-      zoomOut: () => value.zoomTo(value.zoom - 0.1),
-    },
-  };
-}
-
 const ViewerImplementation = memo(function ViewerImplementation({
   bytes,
+  controls,
   format,
   module,
   onControls,
@@ -256,9 +166,10 @@ const ViewerImplementation = memo(function ViewerImplementation({
   title,
 }: {
   readonly bytes: Uint8Array;
+  readonly controls: ViewerControlSetting;
   readonly format: ViewerFormat;
   readonly module: ViewerModule;
-  readonly onControls: (controls: ViewerControls) => void;
+  readonly onControls?: ((controls: ViewerControls | null) => void) | undefined;
   readonly onError: (error: unknown) => void;
   readonly options: Readonly<Record<string, unknown>>;
   readonly signal?: AbortSignal;
@@ -269,23 +180,21 @@ const ViewerImplementation = memo(function ViewerImplementation({
       ? bytes.buffer
       : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
   ), [bytes]);
-  const capture = (controls: ViewerControls) => <CaptureControls controls={controls} onChange={onControls} />;
-
   if (format === "pptx") {
     const Component = (module as Extract<ViewerModule, { readonly PresentationViewer: unknown }>).PresentationViewer;
-    return <Component {...options} onError={onError} renderControls={(value) => capture(normalizePresentationControls(value, title))} showDefaultControls={false} {...(signal === undefined ? {} : { signal })} source={buffer} />;
+    return <Component {...options} controls={controls} onControls={onControls} onError={onError} {...(signal === undefined ? {} : { signal })} source={buffer} {...(title === undefined ? {} : { title })} />;
   }
   if (format === "xlsx" || format === "csv") {
     const Component = (module as Extract<ViewerModule, { readonly SpreadsheetViewer: unknown }>).SpreadsheetViewer;
-    return <Component {...options} format={format} onError={onError} renderControls={(value) => capture(normalizeSpreadsheetControls(value, format, title))} {...(signal === undefined ? {} : { signal })} source={buffer} />;
+    return <Component {...options} controls={controls} format={format} onControls={onControls} onError={onError} {...(signal === undefined ? {} : { signal })} source={buffer} {...(title === undefined ? {} : { title })} />;
   }
   const Component = (module as Extract<ViewerModule, { readonly default: unknown }>).default;
   const documentProps = {
     ...options,
-    controls: true,
+    controls,
     format,
+    onControls,
     onError,
-    renderControls: capture,
     ...(signal === undefined ? {} : { signal }),
     source: buffer,
     ...(title === undefined ? {} : { title }),
@@ -304,7 +213,6 @@ export function AnyDocumentViewer(props: AnyDocumentViewerProps): ReactElement {
     readonly module?: ViewerModule;
     readonly source?: DocumentSource;
   }>({});
-  const [viewerControls, setViewerControls] = useState<ViewerControls | null>(null);
   const onErrorRef = useRef(props.onError);
   const onControlsRef = useRef(props.onControls);
   onErrorRef.current = props.onError;
@@ -314,7 +222,7 @@ export function AnyDocumentViewer(props: AnyDocumentViewerProps): ReactElement {
     const controller = new AbortController();
     const signal = props.signal ? AbortSignal.any([props.signal, controller.signal]) : controller.signal;
     setState({});
-    setViewerControls(null);
+    onControlsRef.current?.(null);
     void loadDocumentBytes(props.source, { ...(formatHint === undefined ? {} : { format: formatHint }), ...(props.maxBytes === undefined ? {} : { maxBytes: props.maxBytes }), signal })
       .then(async (bytes) => {
         const detected = await detectViewerFormatFromBytes(bytes);
@@ -332,26 +240,13 @@ export function AnyDocumentViewer(props: AnyDocumentViewerProps): ReactElement {
     return () => controller.abort();
   }, [formatHint, props.maxBytes, props.signal, props.source]);
 
-  useEffect(() => { onControlsRef.current?.(viewerControls); }, [viewerControls]);
   useEffect(() => () => onControlsRef.current?.(null), []);
-
-  const setControls = useCallback((next: ViewerControls) => setViewerControls(next), []);
   const handleViewerError = useCallback((cause: unknown) => {
     if (!state.format) return;
     const error = toViewerError(cause, { code: "render-failed", format: state.format, message: "Unable to render this document." });
     onErrorRef.current?.(error);
   }, [state.format]);
   const stateIsCurrent = state.source === props.source;
-  const controlOptions = typeof props.controls === "object" ? props.controls : undefined;
-  const currentControls = stateIsCurrent ? viewerControls : null;
-  const controls = currentControls && controlOptions?.transform ? controlOptions.transform(currentControls) : currentControls;
-  let controlsNode: ReactNode = null;
-  if (props.controls !== false && controls) {
-    const defaults = <DefaultViewerControls controls={controls} />;
-    controlsNode = controlOptions?.render ? controlOptions.render(controls, defaults) : defaults;
-    if (controlsNode && controlOptions?.target) controlsNode = createPortal(controlsNode, controlOptions.target);
-  }
-
   let body: ReactNode;
   if (state.error) body = typeof props.error === "function" ? props.error(state.error) : props.error ?? <div role="alert">{state.error.message}</div>;
   else if (!stateIsCurrent || !state.bytes || !state.module || !state.format) body = typeof props.loading === "function"
@@ -361,12 +256,11 @@ export function AnyDocumentViewer(props: AnyDocumentViewerProps): ReactElement {
     const options = state.format === "pptx" ? props.viewerOptions?.presentation
       : state.format === "xlsx" || state.format === "csv" ? props.viewerOptions?.spreadsheet
       : props.viewerOptions?.[state.format];
-    body = <ViewerImplementation bytes={state.bytes} format={state.format} module={state.module} onControls={setControls} onError={handleViewerError} options={options ?? EMPTY_VIEWER_OPTIONS} {...(props.signal === undefined ? {} : { signal: props.signal })} {...(props.title === undefined ? {} : { title: props.title })} />;
+    body = <ViewerImplementation bytes={state.bytes} controls={props.controls ?? true} format={state.format} module={state.module} onControls={props.onControls} onError={handleViewerError} options={options ?? EMPTY_VIEWER_OPTIONS} {...(props.signal === undefined ? {} : { signal: props.signal })} {...(props.title === undefined ? {} : { title: props.title })} />;
   }
 
   return (
     <div className={props.className} data-any-document-viewer={state.format ?? formatHint ?? "unknown"} style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, ...props.style }}>
-      {controlsNode}
       <div style={{ flex: 1, minHeight: 0 }}>{body}</div>
     </div>
   );

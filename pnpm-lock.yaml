@@ -122,6 +122,9 @@ importers:
       '@baseblocks/anydoc-contracts':
         specifier: workspace:0.1.0-alpha.13
         version: link:../contracts
+      '@baseblocks/anydoc-viewer-ui':
+        specifier: workspace:0.1.0-alpha.13
+        version: link:../viewer-ui
     devDependencies:
       '@types/react':
         specifier: ^19.1.9
@@ -159,6 +162,9 @@ importers:
       '@baseblocks/anydoc-spreadsheet-viewer':
         specifier: workspace:0.1.0-alpha.13
         version: link:../spreadsheet-viewer
+      '@baseblocks/anydoc-viewer-ui':
+        specifier: workspace:0.1.0-alpha.13
+        version: link:../viewer-ui
       '@tanstack/react-virtual':
         specifier: ^3.13.12
         version: 3.14.9(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -260,6 +266,9 @@ importers:
       '@baseblocks/anydoc-spreadsheet-engine':
         specifier: workspace:0.1.0-alpha.13
         version: link:../spreadsheet-engine
+      '@baseblocks/anydoc-viewer-ui':
+        specifier: workspace:0.1.0-alpha.13
+        version: link:../viewer-ui
     devDependencies:
       '@types/react':
         specifier: 19.2.15
@@ -278,6 +287,37 @@ importers:
         version: 19.2.3(react@19.2.3)
       typescript:
         specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 3.2.6
+        version: 3.2.6(@types/debug@4.1.13)(@types/node@24.10.1)(jsdom@26.1.0)(lightningcss@1.33.0)(yaml@2.9.0)
+
+  packages/viewer-ui:
+    dependencies:
+      '@pierre/icons':
+        specifier: 0.7.1
+        version: 0.7.1(react@19.2.3)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.1.9
+        version: 19.2.15
+      '@types/react-dom':
+        specifier: ^19.1.7
+        version: 19.2.3(@types/react@19.2.15)
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0
+      react:
+        specifier: ^19.2.0
+        version: 19.2.3
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.3(react@19.2.3)
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.2
         version: 5.9.3
       vitest:
         specifier: 3.2.6
@@ -1126,6 +1166,11 @@ packages:
     cpu: [x64]
     os: [linux]
     libc: [glibc]
+
+  '@pierre/icons@0.7.1':
+    resolution: {integrity: sha512-GzuvLVd8Hp86DuENXvQNNqlVDW7JQ3H4y7KNTK1bP42NA7+WeM8BuagFTq50jnYhrfG7I1YUju7e2k3exw/0fQ==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
 
   '@pnpm/deps.graph-sequencer@1100.0.1':
     resolution: {integrity: sha512-pOr5+q1fLYKwFN3LAJuGZEnfXDcQ73zqgDHMtGy+K+uIoUqyY+6MeDCWFwfu+4EFuq76I5EPFofoNAI+Bmmq4A==}
@@ -3230,6 +3275,10 @@ snapshots:
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
+
+  '@pierre/icons@0.7.1(react@19.2.3)':
+    dependencies:
+      react: 19.2.3
 
   '@pnpm/deps.graph-sequencer@1100.0.1': {}
 

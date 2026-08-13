@@ -1,6 +1,7 @@
 import { readdir, stat } from "node:fs/promises";
 
 const budgets = [
+  ["packages/viewer-ui/dist/index.js", 25_000],
   ["packages/react-viewer/dist/index.js", 20_000],
   ["packages/react-viewer/dist/pdf-viewer-", 25_000],
   ["packages/react-viewer/dist/docx-viewer-", 15_000],
