@@ -53,7 +53,22 @@ git push origin viewer-v0.1.0-alpha.14
 The `Publish viewer platform` workflow verifies that every package manifest
 matches the tag, uploads the exact verified tarballs, publishes only missing
 packages, verifies any already-published artifacts, and creates the GitHub
-release. Alpha versions publish under the npm `next` dist-tag.
+release. Alpha versions publish under the npm `next` dist-tag. npm uses OpenID
+Connect (OIDC) to authorize this workflow for each package, so the workflow does
+not store or use an npm publishing token. npm creates provenance attestations
+automatically.
+
+If a release fails after its tag exists, retry that immutable tag with the
+current workflow definition:
+
+```sh
+gh workflow run publish-viewers.yml --ref main \
+  -f release_tag=viewer-v0.1.0-alpha.14
+```
+
+The retry checks out the tag, confirms that `HEAD` is the tag commit, and runs
+the same verification and publication gates. Do not move or replace a release
+tag to retry a failed workflow.
 
 Do not use Changesets to version the `@firecrawl/anydoc` binding packages. Their
 cross-language `v*` workflow and version gate remain separate.
