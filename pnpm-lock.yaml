@@ -269,6 +269,9 @@ importers:
       '@baseblocks/anydoc-viewer-ui':
         specifier: workspace:0.1.0-alpha.14
         version: link:../viewer-ui
+      echarts:
+        specifier: 6.1.0
+        version: 6.1.0
     devDependencies:
       '@types/react':
         specifier: 19.2.15

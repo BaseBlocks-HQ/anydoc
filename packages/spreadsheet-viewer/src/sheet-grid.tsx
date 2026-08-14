@@ -7,6 +7,24 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
+import {
+  BarChart,
+  LineChart,
+  PieChart,
+  type BarSeriesOption,
+  type LineSeriesOption,
+  type PieSeriesOption,
+} from "echarts/charts";
+import type { EChartsOption } from "echarts";
+import {
+  AriaComponent,
+  GridComponent,
+  LegendComponent,
+  TitleComponent,
+  TooltipComponent,
+} from "echarts/components";
+import { init, use } from "echarts/core";
+import { SVGRenderer } from "echarts/renderers";
 
 import {
   cellAddress,
@@ -58,130 +76,139 @@ const ROW_HEADER_WIDTH = 52;
 
 const CHART_COLORS = ["#4472C4", "#ED7D31", "#A5A5A5", "#FFC000", "#5B9BD5"];
 
+use([
+  AriaComponent,
+  BarChart,
+  GridComponent,
+  LegendComponent,
+  LineChart,
+  PieChart,
+  SVGRenderer,
+  TitleComponent,
+  TooltipComponent,
+]);
+
+function chartOption(chart: SpreadsheetRenderedChart): EChartsOption {
+  const horizontal = chart.series.length > 0 && chart.series.every(({ type }) => type === "bar");
+  const cartesian = chart.series.some(({ type }) => type !== "pie");
+  const legendPosition = chart.legend === "none" ? undefined : chart.legend;
+  const series: Array<BarSeriesOption | LineSeriesOption | PieSeriesOption> = chart.series.map(
+    (item) => {
+      if (item.type === "pie") {
+        return {
+          data: chart.categories.map((name, index) => ({
+            name,
+            value: item.values[index] ?? 0,
+          })),
+          label: { show: false },
+          name: item.name,
+          radius: "55%",
+          type: "pie",
+        };
+      }
+      if (item.type === "line") {
+        return { data: [...item.values], name: item.name, type: "line" };
+      }
+      return { data: [...item.values], name: item.name, type: "bar" };
+    },
+  );
+  return {
+    animation: false,
+    aria: { enabled: true },
+    backgroundColor: "#FFFFFF",
+    color: CHART_COLORS,
+    ...(cartesian
+      ? {
+          grid: {
+            bottom: legendPosition === "bottom" ? 54 : 34,
+            containLabel: true,
+            left: legendPosition === "left" ? 88 : 36,
+            right: legendPosition === "right" ? 88 : 24,
+            top: chart.title ? 54 : 24,
+          },
+        }
+      : {}),
+    legend:
+      legendPosition === undefined
+        ? { show: false }
+        : {
+            ...(legendPosition === "bottom" ? { bottom: 4 } : {}),
+            ...(legendPosition === "left"
+              ? { left: 4 }
+              : legendPosition === "right"
+                ? {}
+                : { left: "center" }),
+            orient:
+              legendPosition === "left" || legendPosition === "right" ? "vertical" : "horizontal",
+            type: "scroll",
+            ...(legendPosition === "right" ? { right: 4 } : {}),
+            ...(legendPosition === "left" || legendPosition === "right"
+              ? { top: "middle" }
+              : legendPosition === "top"
+                ? { top: chart.title ? 30 : 4 }
+                : {}),
+          },
+    series,
+    textStyle: { color: "#222222", fontFamily: "Arial, sans-serif" },
+    ...(chart.title
+      ? {
+          title: {
+            left: "center",
+            text: chart.title,
+            textStyle: { fontSize: 14, fontWeight: 600 },
+          },
+        }
+      : {}),
+    tooltip: { trigger: cartesian ? "axis" : "item" },
+    ...(cartesian
+      ? {
+          xAxis: horizontal
+            ? { type: "value" as const }
+            : {
+                axisLabel: { interval: 0, overflow: "break", width: 96 },
+                data: [...chart.categories],
+                type: "category" as const,
+              },
+          yAxis: horizontal
+            ? {
+                axisLabel: { interval: 0, overflow: "truncate", width: 120 },
+                data: [...chart.categories],
+                type: "category" as const,
+              }
+            : { type: "value" as const },
+        }
+      : {}),
+  };
+}
+
 function NativeChart({
   chart,
   height,
   width,
-}: Readonly<{ chart: SpreadsheetRenderedChart; height: number; width: number }>) {
-  const top = chart.title ? 30 : 12;
-  const bottom = 30;
-  const left = 40;
-  const plotWidth = Math.max(1, width - left - 12);
-  const plotHeight = Math.max(1, height - top - bottom);
-  const maximum = Math.max(1, ...chart.series.flatMap(({ values }) => values.map(Math.abs)));
-  const categoryPoints = chart.categories.map((label, position) => ({
-    id: cellAddress(1, position + 1),
-    label,
-    position,
-  }));
-  const chartSeries = chart.series.map((series, position) => ({
-    color: CHART_COLORS[position % CHART_COLORS.length],
-    id: cellAddress(position + 1, 1),
-    series,
-  }));
-  if (chart.type === "pie") {
-    const values = chart.series[0]?.values ?? [];
-    const total = values.reduce((sum, value) => sum + Math.max(0, value), 0) || 1;
-    let offset = 0;
-    const gradient = values
-      .map((value, index) => {
-        const start = (offset / total) * 360;
-        offset += Math.max(0, value);
-        return `${CHART_COLORS[index % CHART_COLORS.length]} ${start}deg ${(offset / total) * 360}deg`;
-      })
-      .join(",");
-    return (
-      <div
-        aria-label={chart.title ?? "Pie chart"}
-        role="img"
-        style={{
-          background: "white",
-          color: "#222",
-          height,
-          overflow: "hidden",
-          padding: 8,
-          width,
-        }}
-      >
-        {chart.title ? (
-          <div style={{ fontSize: 14, fontWeight: 600, textAlign: "center" }}>{chart.title}</div>
-        ) : null}
-        <div
-          style={{
-            background: `conic-gradient(${gradient})`,
-            borderRadius: "50%",
-            height: Math.max(20, height - 48),
-            margin: "8px auto",
-            width: Math.max(20, Math.min(width - 24, height - 48)),
-          }}
-        />
-      </div>
-    );
-  }
-  const categoryCount = Math.max(1, chart.categories.length);
-  const groupWidth = plotWidth / categoryCount;
-  const barWidth = Math.max(2, (groupWidth * 0.72) / Math.max(1, chart.series.length));
+}: Readonly<{
+  chart: SpreadsheetRenderedChart;
+  height: number;
+  width: number;
+}>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const instance = init(container, undefined, {
+      height: Math.max(1, height),
+      renderer: "svg",
+      width: Math.max(1, width),
+    });
+    instance.setOption(chartOption(chart), { notMerge: true });
+    return () => instance.dispose();
+  }, [chart, height, width]);
   return (
-    <svg
+    <div
       aria-label={chart.title ?? `${chart.type} chart`}
-      height={height}
+      ref={containerRef}
       role="img"
-      style={{ background: "white", color: "#222", display: "block" }}
-      viewBox={`0 0 ${width} ${height}`}
-      width={width}
-    >
-      {chart.title ? (
-        <text fontSize="14" fontWeight="600" textAnchor="middle" x={width / 2} y={18}>
-          {chart.title}
-        </text>
-      ) : null}
-      <path
-        d={`M${left} ${top}V${top + plotHeight}H${left + plotWidth}`}
-        fill="none"
-        stroke="#999"
-      />
-      {chart.type === "line"
-        ? chartSeries.map(({ color, id, series }) => {
-            const points = series.values
-              .map(
-                (value, index) =>
-                  `${left + groupWidth * (index + 0.5)},${top + plotHeight - (value / maximum) * plotHeight}`,
-              )
-              .join(" ");
-            return <polyline fill="none" key={id} points={points} stroke={color} strokeWidth="2" />;
-          })
-        : chartSeries.flatMap(({ color, id, series }, seriesIndex) =>
-            categoryPoints.map((category) => {
-              const value = series.values[category.position] ?? 0;
-              return (
-                <rect
-                  fill={color}
-                  height={(Math.abs(value) / maximum) * plotHeight}
-                  key={`${id}:${category.id}`}
-                  width={barWidth}
-                  x={
-                    left +
-                    category.position * groupWidth +
-                    groupWidth * 0.14 +
-                    seriesIndex * barWidth
-                  }
-                  y={top + plotHeight - (Math.max(0, value) / maximum) * plotHeight}
-                />
-              );
-            }),
-          )}
-      {categoryPoints.map((category) => (
-        <text
-          fontSize="10"
-          key={category.id}
-          textAnchor="middle"
-          x={left + groupWidth * (category.position + 0.5)}
-          y={height - 10}
-        >
-          {category.label.slice(0, 16)}
-        </text>
-      ))}
-    </svg>
+      style={{ height, overflow: "hidden", width }}
+    />
   );
 }
 
@@ -259,7 +286,12 @@ function visibleRanges(
   for (const row of contiguousIntervals(rows)) {
     for (const column of contiguousIntervals(columns)) {
       const range = tileSpreadsheetViewerRange(
-        { bottom: row.end, left: column.start, right: column.end, top: row.start },
+        {
+          bottom: row.end,
+          left: column.start,
+          right: column.end,
+          top: row.start,
+        },
         { columns: columnCount, rows: rowCount },
       );
       ranges.set(`${range.top}:${range.left}:${range.bottom}:${range.right}`, range);
@@ -465,7 +497,12 @@ function nextSelection(
   column = Math.max(1, Math.min(columnCount, column));
   const range =
     event.shiftKey && event.key !== "Tab"
-      ? { ...active, focusColumn: column, focusRow: row, kind: "cells" as const }
+      ? {
+          ...active,
+          focusColumn: column,
+          focusRow: row,
+          kind: "cells" as const,
+        }
       : createSpreadsheetSelectionRange(row, column);
   return event.shiftKey && event.key !== "Tab"
     ? replaceActiveSelectionRange(selection, range)
@@ -834,7 +871,16 @@ export function SheetGrid({
           width: columnProjection.physicalSize + ROW_HEADER_WIDTH,
         }}
       >
-        <div style={{ height: 0, left: 0, position: "sticky", top: 0, width: 0, zIndex: 9 }}>
+        <div
+          style={{
+            height: 0,
+            left: 0,
+            position: "sticky",
+            top: 0,
+            width: 0,
+            zIndex: 9,
+          }}
+        >
           <button
             aria-label="Select all cells"
             onPointerDown={(event) => beginSelection(1, 1, "all", event)}
@@ -854,7 +900,15 @@ export function SheetGrid({
             ◢
           </button>
         </div>
-        <div style={{ height: 0, position: "sticky", top: 0, width: "100%", zIndex: 7 }}>
+        <div
+          style={{
+            height: 0,
+            position: "sticky",
+            top: 0,
+            width: "100%",
+            zIndex: 7,
+          }}
+        >
           {visible.columns.map((column) => {
             const columnNumber = column.index + 1;
             const selected = selectionIntersectsColumn(selection, columnNumber);
@@ -905,7 +959,15 @@ export function SheetGrid({
             );
           })}
         </div>
-        <div style={{ height: 0, left: 0, position: "sticky", width: 0, zIndex: 6 }}>
+        <div
+          style={{
+            height: 0,
+            left: 0,
+            position: "sticky",
+            width: 0,
+            zIndex: 6,
+          }}
+        >
           {visible.rows.map((row) => {
             const rowNumber = row.index + 1;
             const selected = selectionIntersectsRow(selection, rowNumber);

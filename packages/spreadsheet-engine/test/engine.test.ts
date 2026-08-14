@@ -21,7 +21,7 @@ function prefixSpreadsheetElements(xml: string): string {
 }
 
 async function fixture(
-  options: { prefixedSpreadsheetElements?: boolean } = {},
+  options: { chartXml?: string; prefixedSpreadsheetElements?: boolean } = {},
 ): Promise<Uint8Array> {
   const writer = new ZipWriter(
     new BlobWriter("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
@@ -73,7 +73,7 @@ async function fixture(
     '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdHyper" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="https://example.com/report" TargetMode="External"/><Relationship Id="rIdDrawing" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/><Relationship Id="rIdMalformedDrawing" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing2.xml"/></Relationships>',
   );
   await writer.add("xl/custom/opaque.bin", new Uint8ArrayReader(OPAQUE));
-  await addText("xl/charts/chart1.xml", "<chartSpace/>");
+  await addText("xl/charts/chart1.xml", options.chartXml ?? "<chartSpace/>");
   await addText("xl/charts/chartStyle1.xml", "<chartStyle/>");
   await addText("xl/charts/_rels/chart1.xml.rels", "<Relationships/>");
   await addText(
@@ -91,8 +91,87 @@ async function fixture(
 }
 
 describe("SpreadsheetEngine", () => {
+  it("opens charts whose category formula is an ordered union of worksheet areas", async () => {
+    const session = await SpreadsheetReadSession.open(
+      await fixture({
+        chartXml:
+          '<?xml version="1.0" encoding="UTF-8"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart><c:plotArea><c:barChart><c:barDir val="col"/><c:ser><c:idx val="0"/><c:order val="0"/><c:tx><c:v>Amount</c:v></c:tx><c:cat><c:strRef><c:f>(\'Summary\'!$A$2:$A$2,\'Summary\'!$A$3:$A$3)</c:f><c:strCache><c:ptCount val="2"/><c:pt idx="0"><c:v>stale-a</c:v></c:pt><c:pt idx="1"><c:v>stale-b</c:v></c:pt></c:strCache></c:strRef></c:cat><c:val><c:numRef><c:f>\'Summary\'!$B$2:$B$3</c:f><c:numCache><c:ptCount val="2"/><c:pt idx="0"><c:v>1</c:v></c:pt><c:pt idx="1"><c:v>2</c:v></c:pt></c:numCache></c:numRef></c:val></c:ser><c:axId val="1"/><c:axId val="2"/></c:barChart></c:plotArea></c:chart></c:chartSpace>',
+      }),
+    );
+
+    expect(session.readCharts("1")).toEqual([
+      expect.objectContaining({
+        categories: ["Tickets", "Fees"],
+        series: [expect.objectContaining({ name: "Amount", values: [1200, 120] })],
+      }),
+    ]);
+  });
+
+  it("preserves each chart group and series type in a combination chart", async () => {
+    const session = await SpreadsheetReadSession.open(
+      await fixture({
+        chartXml:
+          '<?xml version="1.0" encoding="UTF-8"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart><c:plotArea><c:barChart><c:barDir val="col"/><c:ser><c:idx val="0"/><c:order val="0"/><c:tx><c:v>Columns</c:v></c:tx><c:cat><c:strRef><c:f>Summary!$A$2:$A$3</c:f></c:strRef></c:cat><c:val><c:numRef><c:f>Summary!$B$2:$B$3</c:f></c:numRef></c:val></c:ser></c:barChart><c:lineChart><c:ser><c:idx val="1"/><c:order val="1"/><c:tx><c:v>Line</c:v></c:tx><c:cat><c:strRef><c:f>Summary!$A$2:$A$3</c:f></c:strRef></c:cat><c:val><c:numRef><c:f>Summary!$B$2:$B$3</c:f></c:numRef></c:val></c:ser></c:lineChart></c:plotArea></c:chart></c:chartSpace>',
+      }),
+    );
+
+    expect(session.readCharts("1")[0]?.series).toEqual([
+      expect.objectContaining({
+        name: "Columns",
+        type: "column",
+        values: [1200, 120],
+      }),
+      expect.objectContaining({
+        name: "Line",
+        type: "line",
+        values: [1200, 120],
+      }),
+    ]);
+  });
+
+  it("uses authored chart caches and reports unsupported reference expressions", async () => {
+    const session = await SpreadsheetReadSession.open(
+      await fixture({
+        chartXml:
+          '<?xml version="1.0" encoding="UTF-8"?><c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart><c:plotArea><c:lineChart><c:ser><c:idx val="0"/><c:order val="0"/><c:cat><c:strRef><c:f>NamedCategories</c:f><c:strCache><c:ptCount val="2"/><c:pt idx="0"><c:v>Cached A</c:v></c:pt><c:pt idx="1"><c:v>Cached B</c:v></c:pt></c:strCache></c:strRef></c:cat><c:val><c:numRef><c:f>NamedValues</c:f><c:numCache><c:ptCount val="2"/><c:pt idx="0"><c:v>10</c:v></c:pt><c:pt idx="1"><c:v>20</c:v></c:pt></c:numCache></c:numRef></c:val></c:ser></c:lineChart></c:plotArea></c:chart></c:chartSpace>',
+      }),
+    );
+
+    expect(session.readCharts("1")[0]).toMatchObject({
+      categories: ["Cached A", "Cached B"],
+      series: [{ values: [10, 20] }],
+    });
+    expect(session.metadata.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "xlsx.chart.reference.unsupported",
+        part: "xl/charts/chart1.xml",
+        severity: "warning",
+      }),
+    );
+  });
+
+  it("keeps the worksheet readable when one chart cannot be projected", async () => {
+    const session = await SpreadsheetReadSession.open(
+      await fixture({
+        chartXml: '<c:chartSpace xmlns:c="chart"><c:broken></c:chartSpace>',
+      }),
+    );
+
+    expect(session.readRange("1", { bottom: 3, left: 1, right: 2, top: 1 }).cells).toHaveLength(6);
+    expect(session.readCharts("1")).toEqual([]);
+    expect(session.metadata.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "xlsx.chart.unavailable",
+        part: "xl/charts/chart1.xml",
+        severity: "warning",
+      }),
+    );
+  });
+
   it("rejects a workbook before projecting more than the configured cell budget", async () => {
-    await expect(SpreadsheetEngine.open(await fixture(), { maxCells: 3 })).rejects.toThrow(/cell limit/iu);
+    await expect(SpreadsheetEngine.open(await fixture(), { maxCells: 3 })).rejects.toThrow(
+      /cell limit/iu,
+    );
   });
 
   it("opens and mutates namespace-prefixed spreadsheet parts", async () => {
@@ -121,7 +200,10 @@ describe("SpreadsheetEngine", () => {
     expect(sheet.rows.sizes.get(1)).toBe(20);
     expect(sheet.merges).toEqual([{ bottom: 1, left: 1, right: 2, top: 1 }]);
     expect(sheet.cells.get(cellKey(1, 1))?.value).toBe("Revenue");
-    expect(sheet.cells.get(cellKey(3, 2))).toMatchObject({ formula: "B2*0.1", formulaResult: 120 });
+    expect(sheet.cells.get(cellKey(3, 2))).toMatchObject({
+      formula: "B2*0.1",
+      formulaResult: 120,
+    });
     expect(workbook.model.features).toContainEqual({
       count: 1,
       editableCount: 0,
@@ -210,8 +292,19 @@ describe("SpreadsheetEngine", () => {
         sheetId: "1",
         style: { background: "#DCE6F1", bold: true, borderBottom: "#1F4E78" },
       },
-      { axis: "columns", end: 2, kind: "resize", sheetId: "1", size: 18, start: 2 },
-      { kind: "merge", range: { bottom: 5, left: 1, right: 2, top: 5 }, sheetId: "1" },
+      {
+        axis: "columns",
+        end: 2,
+        kind: "resize",
+        sheetId: "1",
+        size: 18,
+        start: 2,
+      },
+      {
+        kind: "merge",
+        range: { bottom: 5, left: 1, right: 2, top: 5 },
+        sheetId: "1",
+      },
     ]);
     const bytes = await workbook.export();
     const archive = await OoxmlArchive.open(bytes);
@@ -270,10 +363,15 @@ describe("SpreadsheetEngine", () => {
           legend: "bottom",
           series: [
             {
-              categoryRange: "A2:A3",
+              categories: {
+                range: { bottom: 3, left: 1, right: 1, top: 2 },
+                sheetId: "1",
+              },
               name: "Amount",
-              sourceSheetId: "1",
-              valueRange: "B2:B3",
+              values: {
+                range: { bottom: 3, left: 2, right: 2, top: 2 },
+                sheetId: "1",
+              },
             },
           ],
           title: "Executive summary",
@@ -402,7 +500,10 @@ describe("SpreadsheetEngine", () => {
       session.readRange("1", { bottom: 3, left: 3, right: 3, top: 2 }).cells[0]?.style,
     ).toMatchObject({ background: "#FFC7CE", color: "#9C0006" });
     expect(session.metadata.sheets[1].dataValidations).toHaveLength(1);
-    expect(await workbook.verify()).toMatchObject({ sheetCount: 2, valid: true });
+    expect(await workbook.verify()).toMatchObject({
+      sheetCount: 2,
+      valid: true,
+    });
   });
 
   it("deletes worksheet package parts instead of leaving orphaned ZIP entries", async () => {
@@ -428,7 +529,12 @@ describe("SpreadsheetEngine", () => {
         },
         chart: {
           legend: "none",
-          series: [{ categoryRange: "A2:A2", valueRange: "B2:B2" }],
+          series: [
+            {
+              categories: { range: { bottom: 2, left: 1, right: 1, top: 2 } },
+              values: { range: { bottom: 2, left: 2, right: 2, top: 2 } },
+            },
+          ],
           type: "column",
         },
         kind: "create-chart",
@@ -452,7 +558,12 @@ describe("SpreadsheetEngine", () => {
 
   it("renders deterministic SVG from the same model used for export", async () => {
     const workbook = await SpreadsheetEngine.open(await fixture());
-    const svg = workbook.renderRange("Summary", { bottom: 3, left: 1, right: 2, top: 1 });
+    const svg = workbook.renderRange("Summary", {
+      bottom: 3,
+      left: 1,
+      right: 2,
+      top: 1,
+    });
     expect(svg).toMatch(/^<svg /u);
     expect(svg).toContain("Revenue");
     expect(svg).toContain("120");
@@ -516,7 +627,12 @@ describe("SpreadsheetEngine", () => {
 
   it("inspects bounded ranges without materializing empty cells", async () => {
     const workbook = await SpreadsheetEngine.open(await fixture());
-    const inspection = workbook.inspect("1", { bottom: 3, left: 2, right: 2, top: 2 });
+    const inspection = workbook.inspect("1", {
+      bottom: 3,
+      left: 2,
+      right: 2,
+      top: 2,
+    });
     expect(inspection.cells.map((cell) => cell.address)).toEqual(["B2", "B3"]);
     expect(() => workbook.inspect("1", { bottom: 1000, left: 1, right: 1000, top: 1 })).toThrow(
       "too large",

@@ -31,7 +31,8 @@
   "dependencies": {
     "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.14",
     "@baseblocks/anydoc-viewer-ui": "workspace:0.1.0-alpha.14",
-    "@baseblocks/anydoc-spreadsheet-engine": "workspace:0.1.0-alpha.14"
+    "@baseblocks/anydoc-spreadsheet-engine": "workspace:0.1.0-alpha.14",
+    "echarts": "6.1.0"
   },
   "peerDependencies": {
     "react": ">=18",

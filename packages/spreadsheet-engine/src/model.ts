@@ -1,8 +1,7 @@
 export type SpreadsheetScalar = string | number | boolean | null;
 
 export type SpreadsheetProjectedValue =
-  | SpreadsheetScalar
-  | Readonly<{ displayValue: string; value: Exclude<SpreadsheetScalar, null> }>;
+  SpreadsheetScalar | Readonly<{ displayValue: string; value: Exclude<SpreadsheetScalar, null> }>;
 
 export type SpreadsheetColor = `#${string}`;
 
@@ -78,18 +77,55 @@ export type SpreadsheetObject = Readonly<{
 
 export type SpreadsheetChartType = "bar" | "column" | "line" | "pie";
 
+export type SpreadsheetChartAreaReference = Readonly<{
+  range: SpreadsheetRange;
+  sheetName?: string;
+}>;
+
+export type SpreadsheetChartReference =
+  | Readonly<{
+      areas: ReadonlyArray<SpreadsheetChartAreaReference>;
+      formula: string;
+      kind: "areas";
+    }>
+  | Readonly<{
+      formula: string;
+      kind: "opaque";
+    }>;
+
+export type SpreadsheetChartDataSource = Readonly<{
+  cache: ReadonlyArray<SpreadsheetScalar>;
+  reference?: SpreadsheetChartReference;
+  valueType: "number" | "string";
+}>;
+
 export type SpreadsheetChartSeries = Readonly<{
-  categoryRange: string;
+  categories?: SpreadsheetChartDataSource;
   name?: string;
-  sourceSheetId?: string;
-  sourceSheetName?: string;
-  valueRange: string;
+  values: SpreadsheetChartDataSource;
+}>;
+
+export type SpreadsheetChartGroup = Readonly<{
+  series: ReadonlyArray<SpreadsheetChartSeries>;
+  type: SpreadsheetChartType;
 }>;
 
 export type SpreadsheetChart = Readonly<{
+  groups: ReadonlyArray<SpreadsheetChartGroup>;
   id: string;
   legend: "bottom" | "left" | "none" | "right" | "top";
-  series: ReadonlyArray<SpreadsheetChartSeries>;
+  title?: string;
+}>;
+
+export type SpreadsheetChartSeriesInput = Readonly<{
+  categories: Readonly<{ range: SpreadsheetRange; sheetId?: string }>;
+  name?: string;
+  values: Readonly<{ range: SpreadsheetRange; sheetId?: string }>;
+}>;
+
+export type SpreadsheetChartInput = Readonly<{
+  legend: SpreadsheetChart["legend"];
+  series: ReadonlyArray<SpreadsheetChartSeriesInput>;
   title?: string;
   type: SpreadsheetChartType;
 }>;
@@ -308,7 +344,7 @@ export type SpreadsheetOperation =
     }>
   | Readonly<{
       anchor: SpreadsheetObjectAnchor;
-      chart: Omit<SpreadsheetChart, "id"> & { id?: string };
+      chart: SpreadsheetChartInput;
       kind: "create-chart";
       sheetId: string;
     }>

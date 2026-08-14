@@ -62,7 +62,10 @@ const objectSchema = (properties: Record<string, unknown>, required: readonly st
   type: "object",
 });
 
-const rangeSchema = { pattern: "^[A-Za-z]+[1-9][0-9]*(?::[A-Za-z]+[1-9][0-9]*)?$", type: "string" };
+const rangeSchema = {
+  pattern: "^[A-Za-z]+[1-9][0-9]*(?::[A-Za-z]+[1-9][0-9]*)?$",
+  type: "string",
+};
 const sheetSchema = { minLength: 1, type: "string" };
 const colorSchema = { pattern: "^#[0-9A-Fa-f]{6}$", type: "string" };
 const scalarSchema = {
@@ -126,7 +129,12 @@ const metricSchema = objectSchema(
 );
 const partitionFilterSchema = objectSchema(
   {
-    predicates: { items: predicateSchema, maxItems: 8, minItems: 1, type: "array" },
+    predicates: {
+      items: predicateSchema,
+      maxItems: 8,
+      minItems: 1,
+      type: "array",
+    },
     quantifier: { enum: ["exists", "not-exists"] },
   },
   ["quantifier", "predicates"],
@@ -206,7 +214,12 @@ const commandSchemas = [
           maxItems: 3,
           type: "array",
         },
-        metrics: { items: metricSchema, maxItems: 8, minItems: 1, type: "array" },
+        metrics: {
+          items: metricSchema,
+          maxItems: 8,
+          minItems: 1,
+          type: "array",
+        },
         partitionBy: { minLength: 1, type: "string" },
         partitionFilters: {
           items: partitionFilterSchema,
@@ -410,7 +423,12 @@ const commandSchemas = [
         formula: { minLength: 1, type: "string" },
         range: rangeSchema,
         sheetId: sheetSchema,
-        values: { items: { type: "string" }, maxItems: 100, minItems: 1, type: "array" },
+        values: {
+          items: { type: "string" },
+          maxItems: 100,
+          minItems: 1,
+          type: "array",
+        },
       },
       ["sheetId", "range"],
     ),
@@ -421,7 +439,12 @@ const commandSchemas = [
   {
     description: "Promote a rectangular range with headers to a native structured Excel table.",
     inputSchema: objectSchema(
-      { name: sheetSchema, range: rangeSchema, sheetId: sheetSchema, style: { type: "string" } },
+      {
+        name: sheetSchema,
+        range: rangeSchema,
+        sheetId: sheetSchema,
+        style: { type: "string" },
+      },
       ["sheetId", "range", "name"],
     ),
     mutates: true,
@@ -434,7 +457,12 @@ const commandSchemas = [
     inputSchema: objectSchema(
       {
         name: sheetSchema,
-        rowFields: { items: sheetSchema, maxItems: 3, minItems: 1, type: "array" },
+        rowFields: {
+          items: sheetSchema,
+          maxItems: 3,
+          minItems: 1,
+          type: "array",
+        },
         sourceRange: rangeSchema,
         sourceSheetId: sheetSchema,
         target: rangeSchema,
@@ -444,7 +472,9 @@ const commandSchemas = [
             {
               field: sheetSchema,
               name: sheetSchema,
-              summarizeBy: { enum: ["average", "count", "maximum", "minimum", "sum"] },
+              summarizeBy: {
+                enum: ["average", "count", "maximum", "minimum", "sum"],
+              },
             },
             ["field", "summarizeBy"],
           ),
@@ -637,8 +667,11 @@ function cellInput(value: unknown): SpreadsheetCellInput | SpreadsheetScalar {
   if ("formulaResult" in input && !("formula" in input)) {
     throw new TypeError("formulaResult requires formula.");
   }
-  const result: { formula?: string; formulaResult?: SpreadsheetScalar; value?: SpreadsheetScalar } =
-    {};
+  const result: {
+    formula?: string;
+    formulaResult?: SpreadsheetScalar;
+    value?: SpreadsheetScalar;
+  } = {};
   if ("formula" in input) result.formula = string(input.formula, "formula");
   if ("formulaResult" in input) result.formulaResult = scalar(input.formulaResult);
   if ("value" in input) result.value = scalar(input.value);
@@ -780,8 +813,18 @@ export class SpreadsheetDocumentEngine implements DocumentFormatEngine<Spreadshe
     commands: commandSchemas,
     engineVersion: "anydoc-spreadsheet-1",
     features: {
-      charts: { inspect: true, mutate: true, render: "native", roundTrip: "preserve" },
-      cells: { inspect: true, mutate: true, render: "native", roundTrip: "preserve" },
+      charts: {
+        inspect: true,
+        mutate: true,
+        render: "native",
+        roundTrip: "preserve",
+      },
+      cells: {
+        inspect: true,
+        mutate: true,
+        render: "native",
+        roundTrip: "preserve",
+      },
       "conditional-formatting": {
         inspect: true,
         mutate: true,
@@ -794,12 +837,42 @@ export class SpreadsheetDocumentEngine implements DocumentFormatEngine<Spreadshe
         render: "native",
         roundTrip: "preserve",
       },
-      formulas: { inspect: true, mutate: true, render: "native", roundTrip: "preserve" },
-      merges: { inspect: true, mutate: true, render: "native", roundTrip: "preserve" },
-      "pivot-tables": { inspect: true, mutate: true, render: "native", roundTrip: "preserve" },
-      styles: { inspect: true, mutate: true, render: "native", roundTrip: "preserve" },
-      tables: { inspect: true, mutate: true, render: "native", roundTrip: "preserve" },
-      worksheets: { inspect: true, mutate: true, render: "native", roundTrip: "preserve" },
+      formulas: {
+        inspect: true,
+        mutate: true,
+        render: "native",
+        roundTrip: "preserve",
+      },
+      merges: {
+        inspect: true,
+        mutate: true,
+        render: "native",
+        roundTrip: "preserve",
+      },
+      "pivot-tables": {
+        inspect: true,
+        mutate: true,
+        render: "native",
+        roundTrip: "preserve",
+      },
+      styles: {
+        inspect: true,
+        mutate: true,
+        render: "native",
+        roundTrip: "preserve",
+      },
+      tables: {
+        inspect: true,
+        mutate: true,
+        render: "native",
+        roundTrip: "preserve",
+      },
+      worksheets: {
+        inspect: true,
+        mutate: true,
+        render: "native",
+        roundTrip: "preserve",
+      },
       "unknown-ooxml": {
         inspect: true,
         mutate: false,
@@ -959,7 +1032,11 @@ export class SpreadsheetDocumentEngine implements DocumentFormatEngine<Spreadshe
         row: start.top,
         sheetId: string(args.sheetId, "sheetId"),
       });
-      return { changed: true, result: { writtenRows: cells.length }, state: input.state };
+      return {
+        changed: true,
+        result: { writtenRows: cells.length },
+        state: input.state,
+      };
     }
     if (input.command === "fill_range") {
       const target = range(this.binding, args.range);
@@ -1044,7 +1121,10 @@ export class SpreadsheetDocumentEngine implements DocumentFormatEngine<Spreadshe
       return { changed: true, result: { renamed: true }, state: input.state };
     }
     if (input.command === "delete_sheet") {
-      input.state.apply({ kind: "delete-sheet", sheetId: string(args.sheetId, "sheetId") });
+      input.state.apply({
+        kind: "delete-sheet",
+        sheetId: string(args.sheetId, "sheetId"),
+      });
       return { changed: true, result: { deleted: true }, state: input.state };
     }
     if (input.command === "move_sheet") {
@@ -1062,7 +1142,11 @@ export class SpreadsheetDocumentEngine implements DocumentFormatEngine<Spreadshe
         kind: "set-sheet-visibility",
         sheetId: string(args.sheetId, "sheetId"),
       });
-      return { changed: true, result: { hidden: args.hidden }, state: input.state };
+      return {
+        changed: true,
+        result: { hidden: args.hidden },
+        state: input.state,
+      };
     }
     if (input.command === "create_chart") {
       const anchor = range(this.binding, args.anchor);
@@ -1098,12 +1182,19 @@ export class SpreadsheetDocumentEngine implements DocumentFormatEngine<Spreadshe
           legend,
           series: [
             {
-              categoryRange: string(args.categoryRange, "categoryRange"),
+              categories: {
+                range: range(this.binding, args.categoryRange),
+                ...(args.sourceSheetId === undefined
+                  ? {}
+                  : { sheetId: string(args.sourceSheetId, "sourceSheetId") }),
+              },
               ...(args.name === undefined ? {} : { name: string(args.name, "name") }),
-              ...(args.sourceSheetId === undefined
-                ? {}
-                : { sourceSheetId: string(args.sourceSheetId, "sourceSheetId") }),
-              valueRange: string(args.valueRange, "valueRange"),
+              values: {
+                range: range(this.binding, args.valueRange),
+                ...(args.sourceSheetId === undefined
+                  ? {}
+                  : { sheetId: string(args.sourceSheetId, "sourceSheetId") }),
+              },
             },
           ],
           ...(args.title === undefined ? {} : { title: String(args.title) }),
@@ -1268,10 +1359,19 @@ export class SpreadsheetDocumentEngine implements DocumentFormatEngine<Spreadshe
     const formulaIssues = formulaDiagnostics(reopened, recalculationDiagnostics !== undefined);
     diagnostics.push(...formulaIssues);
     if (recalculationDiagnostics) diagnostics.push(...recalculationDiagnostics);
-    const renderArtifacts: Array<{ bytes: Uint8Array; region: string; surfaceId: string }> = [];
+    const renderArtifacts: Array<{
+      bytes: Uint8Array;
+      region: string;
+      surfaceId: string;
+    }> = [];
     try {
       for (const sheet of reopened.model.sheets) {
-        const target = sheet.usedRange ?? { bottom: 1, left: 1, right: 1, top: 1 };
+        const target = sheet.usedRange ?? {
+          bottom: 1,
+          left: 1,
+          right: 1,
+          top: 1,
+        };
         renderArtifacts.push({
           bytes: new TextEncoder().encode(reopened.renderRange(sheet.id, target)),
           region: `${target.top}:${target.left}:${target.bottom}:${target.right}`,
