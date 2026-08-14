@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-spreadsheet-viewer",
-  "version": "0.1.0-alpha.14",
+  "version": "0.1.0-alpha.15",
   "description": "Worker-backed virtualized React spreadsheet viewer for AnyDoc",
   "type": "module",
   "license": "MIT",
@@ -29,9 +29,9 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.14",
-    "@baseblocks/anydoc-viewer-ui": "workspace:0.1.0-alpha.14",
-    "@baseblocks/anydoc-spreadsheet-engine": "workspace:0.1.0-alpha.14",
+    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.15",
+    "@baseblocks/anydoc-viewer-ui": "workspace:0.1.0-alpha.15",
+    "@baseblocks/anydoc-spreadsheet-engine": "workspace:0.1.0-alpha.15",
     "echarts": "6.1.0"
   },
   "peerDependencies": {

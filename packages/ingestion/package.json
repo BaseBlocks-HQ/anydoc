@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-ingestion",
-  "version": "0.1.0-alpha.14",
+  "version": "0.1.0-alpha.15",
   "description": "Runtime-light AnyDoc ingestion for Node, queues, workers, and server actions",
   "type": "module",
   "license": "MIT",
@@ -22,7 +22,7 @@
   "sideEffects": false,
   "engines": { "node": ">=20" },
   "dependencies": {
-    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.14",
+    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.15",
     "@firecrawl/anydoc": "0.1.8"
   },
   "devDependencies": { "@types/node": "^24.10.1" },

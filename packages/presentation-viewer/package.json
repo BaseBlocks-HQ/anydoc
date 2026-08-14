@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-presentation-viewer",
-  "version": "0.1.0-alpha.14",
+  "version": "0.1.0-alpha.15",
   "description": "Safe, lazy React viewer for PowerPoint presentations",
   "type": "module",
   "license": "MIT",
@@ -34,8 +34,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.14",
-    "@baseblocks/anydoc-viewer-ui": "workspace:0.1.0-alpha.14",
+    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.15",
+    "@baseblocks/anydoc-viewer-ui": "workspace:0.1.0-alpha.15",
     "@aiden0z/pptx-renderer": "1.2.4"
   },
   "peerDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-spreadsheet-engine",
-  "version": "0.1.0-alpha.14",
+  "version": "0.1.0-alpha.15",
   "description": "Bounded OOXML spreadsheet model and read engine for AnyDoc",
   "type": "module",
   "license": "MIT",
@@ -33,7 +33,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.14",
+    "@baseblocks/anydoc-contracts": "workspace:0.1.0-alpha.15",
     "@zip.js/zip.js": "2.8.31",
     "saxes": "5.0.1"
   },

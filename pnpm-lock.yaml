@@ -57,7 +57,7 @@ importers:
   packages/convex:
     dependencies:
       '@baseblocks/anydoc-ingestion':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../ingestion
       '@convex-dev/workpool':
         specifier: ^0.4.9
@@ -79,7 +79,7 @@ importers:
   packages/ingestion:
     dependencies:
       '@baseblocks/anydoc-contracts':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../contracts
       '@firecrawl/anydoc':
         specifier: 0.1.8
@@ -92,23 +92,23 @@ importers:
   packages/platform:
     dependencies:
       '@baseblocks/anydoc-ingestion':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../ingestion
       react:
         specifier: '>=18'
         version: 19.2.3
     optionalDependencies:
       '@baseblocks/anydoc-presentation-viewer':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../presentation-viewer
       '@baseblocks/anydoc-react-viewer':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../react-viewer
       '@baseblocks/anydoc-spreadsheet-engine':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../spreadsheet-engine
       '@baseblocks/anydoc-spreadsheet-viewer':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../spreadsheet-viewer
       '@firecrawl/anydoc-wasm':
         specifier: 0.1.8
@@ -120,10 +120,10 @@ importers:
         specifier: 1.2.4
         version: 1.2.4(pdfjs-dist@6.2.108)
       '@baseblocks/anydoc-contracts':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../contracts
       '@baseblocks/anydoc-viewer-ui':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../viewer-ui
     devDependencies:
       '@types/react':
@@ -154,16 +154,16 @@ importers:
   packages/react-viewer:
     dependencies:
       '@baseblocks/anydoc-contracts':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../contracts
       '@baseblocks/anydoc-presentation-viewer':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../presentation-viewer
       '@baseblocks/anydoc-spreadsheet-viewer':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../spreadsheet-viewer
       '@baseblocks/anydoc-viewer-ui':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../viewer-ui
       '@tanstack/react-virtual':
         specifier: ^3.13.12
@@ -239,7 +239,7 @@ importers:
   packages/spreadsheet-engine:
     dependencies:
       '@baseblocks/anydoc-contracts':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../contracts
       '@zip.js/zip.js':
         specifier: 2.8.31
@@ -261,13 +261,13 @@ importers:
   packages/spreadsheet-viewer:
     dependencies:
       '@baseblocks/anydoc-contracts':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../contracts
       '@baseblocks/anydoc-spreadsheet-engine':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../spreadsheet-engine
       '@baseblocks/anydoc-viewer-ui':
-        specifier: workspace:0.1.0-alpha.14
+        specifier: workspace:0.1.0-alpha.15
         version: link:../viewer-ui
       echarts:
         specifier: 6.1.0
