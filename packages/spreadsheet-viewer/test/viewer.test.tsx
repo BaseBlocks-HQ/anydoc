@@ -27,7 +27,12 @@ describe("spreadsheet viewer read-session integration", () => {
     });
     await expect(
       session.selectionStatistics("1", [{ bottom: 3, left: 2, right: 2, top: 2 }]),
-    ).resolves.toMatchObject({ average: 660, count: 2, numericCount: 2, sum: 1320 });
+    ).resolves.toMatchObject({
+      average: 660,
+      count: 2,
+      numericCount: 2,
+      sum: 1320,
+    });
     await expect(
       session.copy("1", [{ bottom: 3, left: 1, right: 2, top: 1 }]),
     ).resolves.toMatchObject({
@@ -56,7 +61,12 @@ describe("spreadsheet viewer read-session integration", () => {
       },
       chart: {
         legend: "bottom",
-        series: [{ categoryRange: "A2:A3", valueRange: "B2:B3" }],
+        series: [
+          {
+            categories: { range: { bottom: 3, left: 1, right: 1, top: 2 } },
+            values: { range: { bottom: 3, left: 2, right: 2, top: 2 } },
+          },
+        ],
         title: "Revenue summary",
         type: "column",
       },

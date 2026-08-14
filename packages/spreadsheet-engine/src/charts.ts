@@ -1,76 +1,200 @@
-import { cellAddress, cellKey, parseRangeAddress } from "./coordinates.ts";
+import { SaxesParser, type SaxesTagNS } from "saxes";
+
+import { parseChartReferenceFormula, resolveChartDataSource } from "./chart-references.ts";
+import { rangeAddress } from "./coordinates.ts";
 import type {
   SpreadsheetChart,
+  SpreadsheetChartDataSource,
+  SpreadsheetChartGroup,
+  SpreadsheetChartInput,
   SpreadsheetChartSeries,
   SpreadsheetObjectAnchor,
   SpreadsheetScalar,
   SpreadsheetSheet,
 } from "./model.ts";
-import { attributes, decodeXml, escapeXml } from "./xml.ts";
+import { escapeXml } from "./xml.ts";
 
-function formula(source: string, tag: "cat" | "val"): string | undefined {
-  const block = new RegExp(`<c:${tag}\\b[^>]*>([\\s\\S]*?)<\\/c:${tag}>`, "iu").exec(source)?.[1];
-  const value = /<c:f\b[^>]*>([\s\S]*?)<\/c:f>/iu.exec(block ?? "")?.[1];
-  return value === undefined ? undefined : decodeXml(value);
+const MAX_CHART_XML_NODES = 100_000;
+const MAX_CHART_CACHE_POINTS = 1_000_000;
+
+type ChartXmlNode = {
+  attributes: Readonly<Record<string, string>>;
+  children: ChartXmlNode[];
+  name: string;
+  text: string;
+};
+
+function parseChartXml(xml: string): ChartXmlNode | undefined {
+  const roots: ChartXmlNode[] = [];
+  const stack: ChartXmlNode[] = [];
+  let nodeCount = 0;
+  let failure: Error | undefined;
+  const parser = new SaxesParser({ xmlns: true });
+  parser.on("opentag", (tag: SaxesTagNS) => {
+    nodeCount += 1;
+    if (nodeCount > MAX_CHART_XML_NODES) {
+      failure = new Error("Chart XML exceeds the node limit.");
+      return;
+    }
+    const attributes: Record<string, string> = {};
+    for (const attribute of Object.values(tag.attributes)) {
+      attributes[attribute.local] = attribute.value;
+      attributes[attribute.name] = attribute.value;
+    }
+    const node: ChartXmlNode = {
+      attributes,
+      children: [],
+      name: tag.local,
+      text: "",
+    };
+    const parent = stack.at(-1);
+    if (parent) parent.children.push(node);
+    else roots.push(node);
+    stack.push(node);
+  });
+  parser.on("text", (text: string) => {
+    const node = stack.at(-1);
+    if (node) node.text += text;
+  });
+  parser.on("cdata", (text: string) => {
+    const node = stack.at(-1);
+    if (node) node.text += text;
+  });
+  parser.on("closetag", () => {
+    stack.pop();
+  });
+  parser.on("error", (error: Error) => {
+    failure = error;
+  });
+  parser.write(xml).close();
+  return failure ? undefined : roots[0];
 }
 
-function stripSheet(range: string): string {
-  return range.slice(range.lastIndexOf("!") + 1).replaceAll("$", "");
+function child(node: ChartXmlNode | undefined, name: string): ChartXmlNode | undefined {
+  return node?.children.find((candidate) => candidate.name === name);
 }
 
-function formulaSheetName(range: string): string | undefined {
-  const separator = range.lastIndexOf("!");
-  if (separator < 0) return undefined;
-  const value = range.slice(0, separator);
-  return value.startsWith("'") && value.endsWith("'")
-    ? value.slice(1, -1).replaceAll("''", "'")
-    : value;
+function children(node: ChartXmlNode | undefined, name: string): readonly ChartXmlNode[] {
+  return node?.children.filter((candidate) => candidate.name === name) ?? [];
+}
+
+function descendants(node: ChartXmlNode | undefined, name: string): readonly ChartXmlNode[] {
+  if (!node) return [];
+  const matches: ChartXmlNode[] = [];
+  const visit = (candidate: ChartXmlNode) => {
+    if (candidate.name === name) matches.push(candidate);
+    for (const nested of candidate.children) visit(nested);
+  };
+  visit(node);
+  return matches;
+}
+
+function firstText(node: ChartXmlNode | undefined, names: readonly string[]): string | undefined {
+  for (const name of names) {
+    const value = descendants(node, name)[0]?.text.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function cachedValues(
+  container: ChartXmlNode,
+  valueType: SpreadsheetChartDataSource["valueType"],
+): readonly SpreadsheetScalar[] {
+  const cache =
+    descendants(container, valueType === "number" ? "numCache" : "strCache")[0] ??
+    descendants(container, "multiLvlStrCache")[0] ??
+    descendants(container, valueType === "number" ? "numLit" : "strLit")[0];
+  if (!cache) return [];
+  const pointCount = Number(child(cache, "ptCount")?.attributes.val ?? 0);
+  const points = descendants(cache, "pt")
+    .map((point) => ({
+      index: Number(point.attributes.idx),
+      value: child(point, "v")?.text ?? "",
+    }))
+    .filter(({ index }) => Number.isInteger(index) && index >= 0 && index < MAX_CHART_CACHE_POINTS);
+  const length = Math.min(
+    MAX_CHART_CACHE_POINTS,
+    Math.max(
+      Number.isInteger(pointCount) ? pointCount : 0,
+      ...points.map(({ index }) => index + 1),
+      0,
+    ),
+  );
+  const values: SpreadsheetScalar[] = Array.from({ length }, () => null);
+  for (const point of points) {
+    if (valueType === "string") values[point.index] = point.value;
+    else {
+      const numeric = Number(point.value);
+      values[point.index] = Number.isFinite(numeric) ? numeric : null;
+    }
+  }
+  return values;
+}
+
+function dataSource(
+  series: ChartXmlNode,
+  role: "cat" | "val",
+): SpreadsheetChartDataSource | undefined {
+  const container = child(series, role);
+  if (!container) return undefined;
+  const sourceKind = ["numRef", "numLit", "strRef", "strLit", "multiLvlStrRef"].find(
+    (name) => descendants(container, name).length > 0,
+  );
+  if (!sourceKind) return undefined;
+  const valueType = sourceKind.startsWith("num") ? "number" : "string";
+  const formula = descendants(container, "f")[0]?.text.trim();
+  return {
+    cache: cachedValues(container, valueType),
+    ...(formula ? { reference: parseChartReferenceFormula(formula) } : {}),
+    valueType,
+  };
+}
+
+function chartType(group: ChartXmlNode): SpreadsheetChartGroup["type"] | undefined {
+  if (group.name === "lineChart") return "line";
+  if (group.name === "pieChart") return "pie";
+  if (group.name === "barChart") {
+    return child(group, "barDir")?.attributes.val === "bar" ? "bar" : "column";
+  }
+  return undefined;
 }
 
 export function parseChart(part: string, xml: string): SpreadsheetChart | undefined {
-  const typeMatch = /<c:(barChart|lineChart|pieChart)\b/iu.exec(xml)?.[1];
-  if (!typeMatch) return undefined;
-  const barDirection = attributes(/<c:barDir\b([^>]*)\/>/iu.exec(xml)?.[1] ?? "").val;
-  const type =
-    typeMatch === "lineChart"
-      ? "line"
-      : typeMatch === "pieChart"
-        ? "pie"
-        : barDirection === "bar"
-          ? "bar"
-          : "column";
-  const title = decodeXml(
-    /<c:title\b[\s\S]*?<a:t\b[^>]*>([\s\S]*?)<\/a:t>[\s\S]*?<\/c:title>/iu.exec(xml)?.[1] ?? "",
-  );
-  const legendPosition = attributes(/<c:legendPos\b([^>]*)\/>/iu.exec(xml)?.[1] ?? "").val;
-  const legend = {
-    b: "bottom",
-    l: "left",
-    r: "right",
-    t: "top",
-  }[legendPosition ?? ""] as SpreadsheetChart["legend"] | undefined;
-  const series: SpreadsheetChartSeries[] = [];
-  for (const match of xml.matchAll(/<c:ser\b[^>]*>([\s\S]*?)<\/c:ser>/giu)) {
-    const categoryRange = formula(match[1], "cat");
-    const valueRange = formula(match[1], "val");
-    if (!categoryRange || !valueRange) continue;
-    const name = decodeXml(
-      /<c:tx\b[\s\S]*?<c:v\b[^>]*>([\s\S]*?)<\/c:v>[\s\S]*?<\/c:tx>/iu.exec(match[1])?.[1] ?? "",
-    );
-    const sourceSheetName = formulaSheetName(valueRange);
-    series.push({
-      categoryRange: stripSheet(categoryRange),
-      ...(name ? { name } : {}),
-      ...(sourceSheetName ? { sourceSheetName } : {}),
-      valueRange: stripSheet(valueRange),
-    });
+  const root = parseChartXml(xml);
+  const plotArea = descendants(root, "plotArea")[0];
+  const groups: SpreadsheetChartGroup[] = [];
+  for (const groupNode of plotArea?.children ?? []) {
+    const type = chartType(groupNode);
+    if (!type) continue;
+    const series: SpreadsheetChartSeries[] = [];
+    for (const seriesNode of children(groupNode, "ser")) {
+      const values = dataSource(seriesNode, "val");
+      if (!values) continue;
+      const categories = dataSource(seriesNode, "cat");
+      const name = firstText(child(seriesNode, "tx"), ["v"]);
+      series.push({
+        ...(categories ? { categories } : {}),
+        ...(name ? { name } : {}),
+        values,
+      });
+    }
+    if (series.length > 0) groups.push({ series, type });
   }
+  if (groups.length === 0) return undefined;
+  const legendNode = descendants(root, "legend")[0];
+  const legendPosition = descendants(legendNode, "legendPos")[0]?.attributes.val;
+  const legend = legendNode
+    ? (({ b: "bottom", l: "left", r: "right", t: "top" } as const)[legendPosition as "b"] ??
+      "right")
+    : "none";
+  const titleNode = descendants(root, "title")[0];
+  const title = firstText(titleNode, ["t", "v"]);
   return {
+    groups,
     id: part,
-    legend: /<c:legend\b/iu.test(xml) ? (legend ?? "right") : "none",
-    series,
+    legend,
     ...(title ? { title } : {}),
-    type,
   };
 }
 
@@ -79,16 +203,16 @@ function quotedSheet(name: string): string {
 }
 
 export function chartXml(
-  chart: SpreadsheetChart,
-  sheetName: string,
-  sourceSheetName: (series: SpreadsheetChartSeries) => string = () => sheetName,
+  chart: SpreadsheetChartInput,
+  sourceSheetName: (source: SpreadsheetChartInput["series"][number]["values"]) => string,
 ): string {
   const tag = chart.type === "line" ? "lineChart" : chart.type === "pie" ? "pieChart" : "barChart";
   const series = chart.series
-    .map(
-      (item, index) =>
-        `<c:ser><c:idx val="${index}"/><c:order val="${index}"/>${item.name ? `<c:tx><c:v>${escapeXml(item.name)}</c:v></c:tx>` : ""}<c:cat><c:strRef><c:f>${escapeXml(`${quotedSheet(sourceSheetName(item))}!${item.categoryRange}`)}</c:f></c:strRef></c:cat><c:val><c:numRef><c:f>${escapeXml(`${quotedSheet(sourceSheetName(item))}!${item.valueRange}`)}</c:f></c:numRef></c:val></c:ser>`,
-    )
+    .map((item, index) => {
+      const categoryFormula = `${quotedSheet(sourceSheetName(item.categories))}!${rangeAddress(item.categories.range)}`;
+      const valueFormula = `${quotedSheet(sourceSheetName(item.values))}!${rangeAddress(item.values.range)}`;
+      return `<c:ser><c:idx val="${index}"/><c:order val="${index}"/>${item.name ? `<c:tx><c:v>${escapeXml(item.name)}</c:v></c:tx>` : ""}<c:cat><c:strRef><c:f>${escapeXml(categoryFormula)}</c:f></c:strRef></c:cat><c:val><c:numRef><c:f>${escapeXml(valueFormula)}</c:f></c:numRef></c:val></c:ser>`;
+    })
     .join("");
   const chartBody =
     tag === "barChart"
@@ -127,49 +251,48 @@ export function chartAnchorXml(
   return `<xdr:absoluteAnchor><xdr:pos x="${anchor.position.xEmu}" y="${anchor.position.yEmu}"/><xdr:ext cx="${anchor.size.widthEmu}" cy="${anchor.size.heightEmu}"/>${frame}</xdr:absoluteAnchor>`;
 }
 
-function scalar(sheet: SpreadsheetSheet, address: string): SpreadsheetScalar {
-  const range = parseRangeAddress(address);
-  const cell = sheet.cells.get(cellKey(range.top, range.left));
-  return cell?.formula ? (cell.formulaResult ?? null) : (cell?.value ?? null);
-}
-
-function values(sheet: SpreadsheetSheet, address: string): readonly SpreadsheetScalar[] {
-  const range = parseRangeAddress(address);
-  const result: SpreadsheetScalar[] = [];
-  for (let row = range.top; row <= range.bottom; row += 1)
-    for (let column = range.left; column <= range.right; column += 1)
-      result.push(scalar(sheet, cellAddress(row, column)));
-  return result;
-}
-
 export type SpreadsheetRenderedChart = Readonly<{
   chartId: string;
   categories: readonly string[];
-  series: ReadonlyArray<Readonly<{ name: string; values: readonly number[] }>>;
+  legend: SpreadsheetChart["legend"];
+  series: ReadonlyArray<
+    Readonly<{
+      name: string;
+      type: SpreadsheetChartGroup["type"];
+      values: readonly number[];
+    }>
+  >;
   title?: string;
-  type: SpreadsheetChart["type"];
+  type: SpreadsheetChartGroup["type"];
 }>;
 
 export function renderChartModel(
   chart: SpreadsheetChart,
   sheet: SpreadsheetSheet,
-  resolveSourceSheet: (series: SpreadsheetChartSeries) => SpreadsheetSheet = () => sheet,
+  resolveSheet: (name: string) => SpreadsheetSheet | undefined = () => undefined,
 ): SpreadsheetRenderedChart {
-  const first = chart.series[0];
-  const firstSheet = first ? resolveSourceSheet(first) : sheet;
-  const categories = first
-    ? values(firstSheet, first.categoryRange).map((value) => (value === null ? "" : String(value)))
+  const firstGroup = chart.groups[0];
+  if (!firstGroup) throw new Error("A rendered chart requires at least one chart group.");
+  const first = firstGroup.series[0];
+  const categories = first?.categories
+    ? resolveChartDataSource(first.categories, sheet, resolveSheet).map((value) =>
+        value === null ? "" : String(value),
+      )
     : [];
   return {
     chartId: chart.id,
     categories,
-    series: chart.series.map((item, index) => ({
-      name: item.name ?? `Series ${index + 1}`,
-      values: values(resolveSourceSheet(item), item.valueRange).map((value) =>
-        typeof value === "number" && Number.isFinite(value) ? value : 0,
-      ),
-    })),
+    legend: chart.legend,
+    series: chart.groups.flatMap((group) =>
+      group.series.map((item, index) => ({
+        name: item.name ?? `Series ${index + 1}`,
+        type: group.type,
+        values: resolveChartDataSource(item.values, sheet, resolveSheet).map((value) =>
+          typeof value === "number" && Number.isFinite(value) ? value : 0,
+        ),
+      })),
+    ),
     ...(chart.title ? { title: chart.title } : {}),
-    type: chart.type,
+    type: firstGroup.type,
   };
 }

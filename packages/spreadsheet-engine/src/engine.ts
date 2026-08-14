@@ -20,6 +20,7 @@ import { translateSpreadsheetFormula } from "./formula-fill.ts";
 import {
   chartAnchorXml,
   chartXml,
+  parseChart,
   renderChartModel,
   type SpreadsheetRenderedChart,
 } from "./charts.ts";
@@ -162,7 +163,11 @@ function parseRelationships(xml: string): ReadonlyMap<string, Relationship> {
   for (const match of xml.matchAll(/<Relationship\b([^>]*)\/?\s*>/giu)) {
     const attrs = attributes(match[1]);
     if (attrs.Id && attrs.Target && attrs.Type) {
-      result.set(attrs.Id, { id: attrs.Id, target: attrs.Target, type: attrs.Type });
+      result.set(attrs.Id, {
+        id: attrs.Id,
+        target: attrs.Target,
+        type: attrs.Type,
+      });
     }
   }
   return result;
@@ -495,7 +500,11 @@ function featureDiagnostics(
 }
 
 function publicAxis(axis: MutableAxis): SpreadsheetAxis {
-  return { defaultSize: axis.defaultSize, hidden: axis.hidden, sizes: axis.sizes };
+  return {
+    defaultSize: axis.defaultSize,
+    hidden: axis.hidden,
+    sizes: axis.sizes,
+  };
 }
 
 function publicSheet(sheet: SheetState): SpreadsheetSheet {
@@ -685,7 +694,8 @@ export class SpreadsheetEngine {
 
   static async open(bytes: Uint8Array, limits?: SpreadsheetOpenLimits): Promise<SpreadsheetEngine> {
     const maxCells = limits?.maxCells ?? defaultDocumentLimits.maxSpreadsheetCells;
-    if (!Number.isInteger(maxCells) || maxCells < 1) throw new Error("Spreadsheet cell limit is invalid.");
+    if (!Number.isInteger(maxCells) || maxCells < 1)
+      throw new Error("Spreadsheet cell limit is invalid.");
     const cellBudget = { remaining: maxCells };
     const archive = await OoxmlArchive.open(bytes, limits);
     for (const required of ["[Content_Types].xml", "_rels/.rels", MAIN_WORKBOOK, WORKBOOK_RELS]) {
@@ -1123,14 +1133,11 @@ export class SpreadsheetEngine {
     return sheet.objects.flatMap((object) =>
       object.chart
         ? [
-            renderChartModel(object.chart, publicModel, (series) => {
-              const source =
-                series.sourceSheetId !== undefined
-                  ? this.#sheet(series.sourceSheetId)
-                  : series.sourceSheetName !== undefined
-                    ? this.#sheet(series.sourceSheetName)
-                    : sheet;
-              return publicSheet(source);
+            renderChartModel(object.chart, publicModel, (name) => {
+              const source = this.#sheets.find(
+                (candidate) => candidate.id === name || candidate.name === name,
+              );
+              return source ? publicSheet(source) : undefined;
             }),
           ]
         : [],
@@ -1346,9 +1353,10 @@ export class SpreadsheetEngine {
     this.#ensureRelationshipNamespace(sheet);
     if (chartInput.series.length === 0) throw new Error("A chart requires at least one series.");
     for (const series of chartInput.series) {
-      this.#sheet(series.sourceSheetId ?? sheet.id);
-      const categories = parseRangeAddress(series.categoryRange);
-      const values = parseRangeAddress(series.valueRange);
+      this.#sheet(series.categories.sheetId ?? sheet.id);
+      this.#sheet(series.values.sheetId ?? sheet.id);
+      const categories = normalizeRange(series.categories.range);
+      const values = normalizeRange(series.values.range);
       if (rangeCellCount(categories) !== rangeCellCount(values)) {
         throw new Error("Chart category and value ranges must contain the same number of cells.");
       }
@@ -1357,14 +1365,13 @@ export class SpreadsheetEngine {
       }
     }
     const chartPart = this.#journal.allocatePart("xl/charts", "chart");
-    const chart = {
-      ...chartInput,
-      id: chartInput.id ?? chartPart,
-    };
-    this.#journal.write(
-      chartPart,
-      chartXml(chart, sheet.name, (series) => this.#sheet(series.sourceSheetId ?? sheet.id).name),
+    const serializedChart = chartXml(
+      chartInput,
+      (source) => this.#sheet(source.sheetId ?? sheet.id).name,
     );
+    const chart = parseChart(chartPart, serializedChart);
+    if (!chart) throw new Error("The created chart could not be projected.");
+    this.#journal.write(chartPart, serializedChart);
     this.#journal.addContentType(chartPart, CHART_CONTENT_TYPE);
     const existingDrawing = this.#journal
       .relationships(sheet.partName)

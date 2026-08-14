@@ -3,6 +3,7 @@ import { parseChart } from "./charts.ts";
 import { cellKey, parseRangeAddress } from "./coordinates.ts";
 import type {
   SpreadsheetAnchorPoint,
+  SpreadsheetChart,
   SpreadsheetDiagnostic,
   SpreadsheetHyperlink,
   SpreadsheetObject,
@@ -19,6 +20,32 @@ type Relationship = Readonly<{
   targetMode?: string;
   type: string;
 }>;
+
+function chartDiagnostics(
+  chart: SpreadsheetChart,
+  part: string,
+  sheetId: string,
+): readonly SpreadsheetDiagnostic[] {
+  const diagnostics: SpreadsheetDiagnostic[] = [];
+  const formulas = new Set<string>();
+  for (const group of chart.groups) {
+    for (const series of group.series) {
+      for (const source of [series.categories, series.values]) {
+        if (source?.reference?.kind !== "opaque" || formulas.has(source.reference.formula))
+          continue;
+        formulas.add(source.reference.formula);
+        diagnostics.push({
+          code: "xlsx.chart.reference.unsupported",
+          message: `Chart data uses an unsupported reference expression and will use its authored cache: ${source.reference.formula}`,
+          part,
+          severity: "warning",
+          sheetId,
+        });
+      }
+    }
+  }
+  return diagnostics;
+}
 
 export type WorksheetProjection = Readonly<{
   diagnostics: ReadonlyArray<SpreadsheetDiagnostic>;
@@ -276,6 +303,19 @@ function drawingObjects(input: {
       chartPart && input.archive.has(chartPart)
         ? parseChart(chartPart, input.archive.text(chartPart))
         : undefined;
+    if (chart && chartPart) {
+      input.diagnostics.push(...chartDiagnostics(chart, chartPart, input.sheetId));
+    } else if (kind === "chart") {
+      input.diagnostics.push({
+        code: "xlsx.chart.unavailable",
+        message: chartPart
+          ? "The chart part could not be projected and was preserved without blocking the worksheet."
+          : "The chart relationship target is missing and was preserved without blocking the worksheet.",
+        part: chartPart ?? input.drawingPart,
+        severity: "warning",
+        sheetId: input.sheetId,
+      });
+    }
     objects.push({
       ...(anchor ? { anchor } : {}),
       ...(chart ? { chart } : {}),
@@ -394,5 +434,11 @@ export function projectWorksheetObjects(input: {
       }),
     );
   }
-  return { diagnostics, hyperlinkCount, hyperlinks, objects, surfacedHyperlinkCount };
+  return {
+    diagnostics,
+    hyperlinkCount,
+    hyperlinks,
+    objects,
+    surfacedHyperlinkCount,
+  };
 }
