@@ -20,18 +20,14 @@ The project has two complementary layers:
   Excel, OpenDocument, RTF, EPUB, CSV, and PDF files into clean GitHub-Flavored
   Markdown, with bindings for [Node.js](node/README.md),
   [Python](python/README.md), and the [browser](wasm/README.md) (WebAssembly).
-- **Embedding and preview:** the BaseBlocks packages add a universal React
-  viewer and modular, format-native renderers designed to be embedded in other
-  applications. They also add runtime-light and durable ingestion APIs around
-  the upstream parser.
+- **Embedding and preview:** the BaseBlocks packages add a universal document
+  viewer — a framework-neutral headless engine plus React adapters — and the
+  shared contracts used by both stacks.
 
-The BaseBlocks application façade exposes `ingest(...)`, the universal React
-viewer, and durable Convex ingestion. See
-[`packages/platform/README.md`](packages/platform/README.md) and the
-runtime-light [`packages/ingestion/README.md`](packages/ingestion/README.md).
-The public viewer packages use Changesets v3 for lockstep alpha versioning; see
-[`docs/VIEWER_PUBLISHING.md`](docs/VIEWER_PUBLISHING.md) for the contribution,
-version-PR, and tag-gated publishing workflow.
+The viewer packages expose `AnyDocumentViewer` for format-native previews of
+untrusted files. See
+[`packages/viewer/README.md`](packages/viewer/README.md) and
+[`packages/contracts/README.md`](packages/contracts/README.md).
 
 Built by [Firecrawl](https://firecrawl.dev) to turn any office document into LLM-ready Markdown in single-digit milliseconds, with one consistent output no matter which format goes in. It powers [Firecrawl Parse](https://firecrawl.dev/parse), so if you'd rather not run it yourself, the hosted API gives you the same conversion plus our OCR models for the scanned pages anydoc can't read on its own.
 
@@ -233,10 +229,18 @@ ingestion model: extracted Markdown is for content workflows, while viewers use
 format-native renderers.
 
 ```tsx
-import { AnyDocumentViewer } from '@baseblocks/anydoc/react';
+import { AnyDocumentViewer } from '@baseblocks/anydoc-viewer/react';
 
 <AnyDocumentViewer source={fileOrBytes} filename="report.xlsx" />
 ```
+
+The platform has two public packages. `@baseblocks/anydoc-viewer` is the
+document viewer: a framework-neutral headless engine (format detection, bounded
+byte loading, security primitives, and the spreadsheet read engine) at its root
+entry, with every React viewer behind a `/react` subpath.
+`@baseblocks/anydoc-contracts` carries the shared capability, error, and
+safe-sources contracts, including `readSource`/`iterableSource` for reading
+untrusted bytes under hard limits (`@baseblocks/anydoc-contracts/sources`).
 
 The alpha capability matrix covers text/Markdown, PDF, DOCX, XLSX/CSV, and PPTX.
 Viewers must enforce bounded resources and treat files as untrusted: macros,

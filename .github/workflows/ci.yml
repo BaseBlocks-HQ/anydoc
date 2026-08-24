@@ -37,16 +37,15 @@ jobs:
       - name: Require release intent for changed viewer packages
         if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'changeset-release/')
         run: pnpm run release:status
-      # Build workspace packages first so umbrella subpath declarations resolve
+      # Build workspace packages first so subpath declarations resolve
       # exactly as they will for registry consumers.
       - run: pnpm run build:viewers
       - run: pnpm run typecheck:viewers
       - run: pnpm run test:viewers
       - run: pnpm run budget:viewers
-      - run: pnpm run budget:ingestion
       - run: pnpm run pack:check
       - run: pnpm run closure:server
-      - run: pnpm run closure:platform
+      - run: pnpm run closure:viewer
 
   rust:
     name: Rust

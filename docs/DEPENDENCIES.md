@@ -9,5 +9,6 @@ Notable runtime boundaries:
 - `@aiden0z/pptx-renderer` (Apache-2.0) parses presentations locally; AnyDoc blocks automatic external media and delegates link navigation to the host.
 - `@zip.js/zip.js`, `saxes`, and the spreadsheet engine parse XLSX archives under explicit archive, entry, cell, and string limits.
 - `@firecrawl/anydoc` and its platform-specific native bindings (MIT) provide Node ingestion. The browser subpath uses `@firecrawl/anydoc-wasm` and loads it only on demand.
+- Consumers of this repository's npm packages pin the upstream binding family (`@firecrawl/anydoc`, `@firecrawl/anydoc-wasm`) to the version this repository last tagged (`v0.1.9`). The BaseBlocks app previously installed `0.1.8`; moving to `0.1.9` tracks the upstream sync already validated here by the fixture snapshot corpus, robustness tests, and fuzz targets.
 
 Before each release, run `pnpm licenses list --prod --json`, inspect newly introduced packages and transitive licenses, and review lockfile changes. Native bindings are optional per platform; the umbrella package repeats the upstream optional dependencies because some package managers do not install nested optional native packages reliably.

@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-contracts",
-  "version": "0.1.0-alpha.15",
+  "version": "0.2.0-alpha.0",
   "description": "Framework-neutral capability, error, and security contracts for AnyDoc",
   "type": "module",
   "license": "MIT",
@@ -13,10 +13,32 @@
     ".": {
       "types": "./index.d.ts",
       "import": "./index.js"
+    },
+    "./sources": {
+      "types": "./sources.d.ts",
+      "import": "./sources.js"
+    },
+    "./sources/node": {
+      "types": "./node-sources.d.ts",
+      "import": "./node-sources.js"
     }
   },
-  "files": ["index.js", "index.d.ts", "LICENSE", "NOTICE", "README.md"],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "sources.js",
+    "sources.d.ts",
+    "node-sources.js",
+    "node-sources.d.ts",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
   "sideEffects": false,
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/*.test.mjs" }
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
 }

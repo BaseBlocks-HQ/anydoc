@@ -71,10 +71,9 @@ jobs:
       - run: pnpm run typecheck:viewers
       - run: pnpm run test:viewers
       - run: pnpm run budget:viewers
-      - run: pnpm run budget:ingestion
       - run: pnpm run pack:check
       - run: pnpm run closure:server
-      - run: pnpm run closure:platform
+      - run: pnpm run closure:viewer
       - run: pnpm audit --prod --audit-level high
       - name: Pack the exact verified release artifacts
         env:
