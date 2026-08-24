@@ -371,7 +371,7 @@ fn extract_text(
                 continue;
             };
             let units: Vec<u16> =
-                bytes.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
+                bytes.as_chunks::<2>().0.iter().map(|c| u16::from_le_bytes(*c)).collect();
             let mut unit_idx = 0usize;
             for r in char::decode_utf16(units.iter().copied()) {
                 let c = r.unwrap_or('\u{fffd}');

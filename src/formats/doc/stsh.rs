@@ -110,8 +110,10 @@ fn parse_std(record: &[u8], cb_std_base: usize) -> Option<Std> {
         .and_then(|rest| rest.get(2..))
         .and_then(|rest| rest.get(..name_bytes))
         .unwrap_or_default()
-        .chunks_exact(2)
-        .map(|c| u16::from_le_bytes([c[0], c[1]]))
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|c| u16::from_le_bytes(*c))
         .collect();
     let name = String::from_utf16_lossy(&name_units);
     let mut upx_pos = name_off.checked_add(4)?.checked_add(name_bytes)?;
