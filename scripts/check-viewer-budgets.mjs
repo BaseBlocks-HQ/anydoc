@@ -1,7 +1,7 @@
 import { readdir, stat } from "node:fs/promises";
 
 const budgets = [
-  ["packages/viewer/dist/pdf.worker.min.mjs", 1_300_000],
+  ["packages/viewer/dist/viewers/pdf.worker.min.mjs", 1_300_000],
   ["apps/playground/dist/assets/anydoc_wasm_bg-", 7_000_000],
 ];
 
