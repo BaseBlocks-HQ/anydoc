@@ -20,14 +20,13 @@
     "pack:check": "node scripts/pack-viewers.mjs --dry-run",
     "pack:release": "node scripts/pack-viewer-release.mjs",
     "budget:viewers": "node scripts/check-viewer-budgets.mjs",
-    "budget:ingestion": "node scripts/benchmark-ingestion.mjs",
     "closure:server": "node scripts/verify-server-closure.mjs",
-    "closure:platform": "node scripts/verify-packed-platform.mjs",
     "release:metadata": "node scripts/validate-viewer-releases.mjs",
     "release:status": "changeset status --since main",
     "release:validate": "pnpm release:metadata && pnpm release:status",
     "release:plan": "changeset publish-plan",
-    "version:viewers": "pnpm release:metadata && changeset version"
+    "version:viewers": "pnpm release:metadata && changeset version",
+    "closure:viewer": "node scripts/verify-packed-viewer.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "3.0.0",

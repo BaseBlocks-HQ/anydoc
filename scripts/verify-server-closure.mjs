@@ -11,14 +11,11 @@ const consumer = join(temporary, "consumer");
 try {
   await mkdir(artifacts, { recursive: true });
   await mkdir(consumer, { recursive: true });
-  const tarballs = [];
-  for (const directory of ["packages/contracts", "packages/ingestion", "packages/convex"]) {
-    const output = execFileSync("pnpm", ["--dir", join(root, directory), "pack", "--pack-destination", artifacts], { encoding: "utf8" }).trim();
-    tarballs.push(resolve(output.split(/\r?\n/).at(-1)));
-  }
-  execFileSync("npm", ["install", "--before=2100-01-01", "--ignore-scripts", "--no-audit", "--no-fund", "--package-lock=false", ...tarballs], { cwd: consumer, stdio: "inherit" });
+  const output = execFileSync("pnpm", ["--dir", join(root, "packages/contracts"), "pack", "--pack-destination", artifacts], { encoding: "utf8" }).trim();
+  const tarball = resolve(output.split(/\r?\n/).at(-1));
+  execFileSync("npm", ["install", "--before=2100-01-01", "--ignore-scripts", "--no-audit", "--no-fund", "--package-lock=false", tarball], { cwd: consumer, stdio: "inherit" });
 
-  const forbidden = /(?:react|viewer|spreadsheet|presentation)/i;
+  const forbidden = /(?:react|viewer|spreadsheet|presentation|ingestion|convex)/i;
   const visited = new Set();
   let bytes = 0;
   async function directoryBytes(directory) {
@@ -37,7 +34,7 @@ try {
     if (visited.has(canonical)) return;
     visited.add(canonical);
     const manifest = JSON.parse(await readFile(canonical, "utf8"));
-    if (forbidden.test(manifest.name)) throw new Error(`Server closure contains forbidden UI package: ${manifest.name}`);
+    if (forbidden.test(manifest.name)) throw new Error(`Server closure contains forbidden package: ${manifest.name}`);
     const packageDirectory = dirname(canonical);
     bytes += await directoryBytes(packageDirectory);
     for (const dependency of Object.keys({ ...manifest.dependencies, ...manifest.optionalDependencies })) {
@@ -45,17 +42,21 @@ try {
       await visit(dependency, consumer);
     }
   }
-  await visit("@baseblocks/anydoc-convex", consumer);
-  const maxBytes = 30 * 1024 * 1024;
-  if (bytes > maxBytes) throw new Error(`Server dependency closure is ${(bytes / 1024 / 1024).toFixed(2)} MiB; budget is 30 MiB.`);
+  await visit("@baseblocks/anydoc-contracts", consumer);
+  const maxBytes = 1 * 1024 * 1024;
+  if (bytes > maxBytes) throw new Error(`Server dependency closure is ${(bytes / 1024).toFixed(0)} KiB; budget is 1 MiB.`);
 
-  const ingestion = await import(join(consumer, "node_modules/@baseblocks/anydoc-ingestion/node.js"));
-  const sources = await import(join(consumer, "node_modules/@baseblocks/anydoc-ingestion/src/sources.js"));
-  const convex = await import(join(consumer, "node_modules/@baseblocks/anydoc-convex/dist/node.js"));
-  if (typeof ingestion.ingest !== "function" || typeof sources.iterableSource !== "function" || typeof convex.createConvexIngestionHandler !== "function" || typeof convex.iterableSource !== "function") {
+  const contracts = await import(join(consumer, "node_modules/@baseblocks/anydoc-contracts/index.js"));
+  const sources = await import(join(consumer, "node_modules/@baseblocks/anydoc-contracts/sources.js"));
+  if (
+    typeof contracts.isSafeExternalUrl !== "function"
+    || typeof sources.iterableSource !== "function"
+    || typeof sources.readSource !== "function"
+    || typeof sources.bytesSource !== "function"
+  ) {
     throw new Error("Packed server consumer is missing a required public API.");
   }
-  console.log(`PASS packed Convex server closure: ${(bytes / 1024 / 1024).toFixed(2)} MiB; no UI packages`);
+  console.log(`PASS packed contracts server closure: ${(bytes / 1024).toFixed(0)} KiB; no UI packages`);
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

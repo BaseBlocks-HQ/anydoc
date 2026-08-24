@@ -1,6 +1,6 @@
 # Viewer package publishing
 
-The nine public `@baseblocks/anydoc-*` npm packages are versioned together with
+The two public `@baseblocks/anydoc-*` npm packages (`anydoc-contracts`, `anydoc-viewer`) are versioned together with
 Changesets v3. They remain independent from the Rust, native Node, WASM, and
 Python `@firecrawl/anydoc` release family.
 
@@ -20,7 +20,7 @@ pnpm changeset --empty
 ```
 
 CI runs `changeset status --since main` so a changed viewer package cannot be
-merged without recorded release intent. Changesets keeps all nine packages in
+merged without recorded release intent. Changesets keeps both packages in
 one fixed group and updates their internal `workspace:` dependency ranges.
 
 ## Version PR

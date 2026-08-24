@@ -469,7 +469,7 @@ impl Extractor {
             }
             // TextCharsAtom: UTF-16LE.
             0x0FA0 => {
-                let units = body.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]]));
+                let units = body.as_chunks::<2>().0.iter().map(|c| u16::from_le_bytes(*c));
                 let text: String =
                     char::decode_utf16(units).map(|r| r.unwrap_or('\u{fffd}')).collect();
                 self.push_text(text);

@@ -1,5 +1,5 @@
-import { ingest } from "@baseblocks/anydoc/browser";
-import { AnyDocumentViewer, type ViewerFormat } from "@baseblocks/anydoc/react";
+import { ingest, type PlaygroundIngestionResult } from "./ingest.js";
+import { AnyDocumentViewer, type ViewerFormat } from "@baseblocks/anydoc-viewer/react";
 import {
   StrictMode,
   useEffect,
@@ -14,7 +14,7 @@ import { canPreview, fileExtension } from "./playground-model";
 import { playgroundSamples, type PlaygroundSample } from "./samples";
 import "./styles.css";
 
-type IngestionResult = Awaited<ReturnType<typeof ingest>>;
+type IngestionResult = PlaygroundIngestionResult;
 type Theme = "dark" | "light";
 
 const ACCEPTED_EXTENSIONS = [
@@ -279,7 +279,7 @@ function App() {
         <nav aria-label="Primary navigation">
           <a href="#playground">Playground</a>
           <a href="https://github.com/BaseBlocks-HQ/anydoc">GitHub</a>
-          <a className="pkg" href="https://www.npmjs.com/package/@baseblocks/anydoc">npm</a>
+          <a className="pkg" href="https://www.npmjs.com/package/@baseblocks/anydoc-viewer">npm</a>
           <a className="pkg" href="https://crates.io/crates/anydoc">crates.io</a>
           <ThemeButton onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} theme={theme} />
         </nav>
@@ -300,7 +300,7 @@ function App() {
           <h1>Any document in.<br /><span className="heat">Markdown and preview out.</span></h1>
           <p className="lede">The fast open-source Rust parser from Firecrawl, complemented by embeddable BaseBlocks viewers for PDF, Word, Excel, PowerPoint, Markdown, and text. Parse and preview locally: <strong>files never leave your machine</strong>.</p>
           <ul className="badges">
-            <Badge href="https://www.npmjs.com/package/@baseblocks/anydoc" label="npm" value="@baseblocks/anydoc" />
+            <Badge href="https://www.npmjs.com/package/@baseblocks/anydoc-viewer" label="npm" value="@baseblocks/anydoc-viewer" />
             <Badge href="https://crates.io/crates/anydoc" label="crates.io" value="anydoc" />
             <Badge href="https://www.npmjs.com/package/@firecrawl/anydoc" label="npm" value="@firecrawl/anydoc" />
             <Badge href="https://pypi.org/project/firecrawl-anydoc/" label="PyPI" value="firecrawl-anydoc" />
@@ -320,7 +320,7 @@ function App() {
             <dt>Speed</dt><dd>Pure Rust, no ML models, no services: median upstream conversion is under 5 ms. Of seven converters <a href="https://github.com/firecrawl/anydoc#benchmark">benchmarked</a> on 100 documents, AnyDoc was the only one to handle all fourteen tested formats.</dd>
             <dt>Viewers</dt><dd>BaseBlocks adds bounded, lazy viewers for PDF, DOCX, XLSX, CSV, PPTX, Markdown, and text. Macros, formulas, scripts, external media, and active HTML are never executed automatically.</dd>
             <dt>PDF</dt><dd>Text-based PDFs convert locally through <a href="https://github.com/firecrawl/pdf-inspector">pdf-inspector</a>. Scanned pages remain visually viewable with PDF.js; semantic extraction requires OCR such as <a href="https://firecrawl.dev/parse">Firecrawl Parse</a>.</dd>
-            <dt>This page</dt><dd>The playground uses <a href="https://www.npmjs.com/package/@baseblocks/anydoc">@baseblocks/anydoc</a>, including <a href="https://www.npmjs.com/package/@firecrawl/anydoc-wasm">@firecrawl/anydoc-wasm</a> and the same viewer interfaces applications embed. Drop them into your own app the same way.</dd>
+            <dt>This page</dt><dd>The playground uses <a href="https://www.npmjs.com/package/@baseblocks/anydoc-viewer">@baseblocks/anydoc-viewer</a> and <a href="https://www.npmjs.com/package/@firecrawl/anydoc-wasm">@firecrawl/anydoc-wasm</a>, including <a href="https://www.npmjs.com/package/@firecrawl/anydoc-wasm">@firecrawl/anydoc-wasm</a> and the same viewer interfaces applications embed. Drop them into your own app the same way.</dd>
             <dt>Provenance</dt><dd>This repository is a <a href="https://github.com/BaseBlocks-HQ/anydoc">BaseBlocks-maintained fork</a> of <a href="https://github.com/firecrawl/anydoc">Firecrawl AnyDoc</a>. Upstream parsing and BaseBlocks additions are distributed under MIT.</dd>
           </dl>
         </section>
@@ -328,7 +328,7 @@ function App() {
         <section className="band">
           <h2>Install</h2>
           <dl className="installs">
-            <dt>Full platform</dt><dd><span className="dollar">$</span> <code className="cmd">npm install @baseblocks/anydoc react react-dom</code></dd>
+            <dt>Viewer platform</dt><dd><span className="dollar">$</span> <code className="cmd">npm install @baseblocks/anydoc-viewer react react-dom</code></dd>
             <dt>Rust parser</dt><dd><span className="dollar">$</span> <code className="cmd">cargo add anydoc</code></dd>
             <dt>Node parser</dt><dd><span className="dollar">$</span> <code className="cmd">npm install @firecrawl/anydoc</code></dd>
             <dt>Python parser</dt><dd><span className="dollar">$</span> <code className="cmd">pip install firecrawl-anydoc</code></dd>
@@ -336,7 +336,7 @@ function App() {
             <dt>CLI</dt><dd><span className="dollar">$</span> <code className="cmd">npx @firecrawl/anydoc report.docx</code></dd>
             <dt>Agent skill</dt><dd><span className="dollar">$</span> <code className="cmd">npx skills add firecrawl/anydoc</code></dd>
           </dl>
-          <p className="prose install-note">The parser API is the same everywhere: convert from a path or from bytes, or stop at the document model and keep the embedded assets. Use one BaseBlocks install for browser and Node ingestion plus universal React viewers. Server-only frameworks and queues can depend on the runtime-light <code>@baseblocks/anydoc-ingestion</code> package instead. See the <a href="https://github.com/BaseBlocks-HQ/anydoc#quick-start">README</a>.</p>
+          <p className="prose install-note">The parser API is the same everywhere: convert from a path or from bytes, or stop at the document model and keep the embedded assets. Install <code>@baseblocks/anydoc-viewer</code> for the universal viewer, or <code>@firecrawl/anydoc-wasm</code> for parsing alone. See the <a href="https://github.com/BaseBlocks-HQ/anydoc#quick-start">README</a>.</p>
         </section>
       </main>
 

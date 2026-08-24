@@ -5,14 +5,7 @@
   "fixed": [
     [
       "@baseblocks/anydoc-contracts",
-      "@baseblocks/anydoc-viewer-ui",
-      "@baseblocks/anydoc-spreadsheet-engine",
-      "@baseblocks/anydoc-spreadsheet-viewer",
-      "@baseblocks/anydoc-presentation-viewer",
-      "@baseblocks/anydoc-react-viewer",
-      "@baseblocks/anydoc-ingestion",
-      "@baseblocks/anydoc",
-      "@baseblocks/anydoc-convex"
+      "@baseblocks/anydoc-viewer"
     ]
   ],
   "linked": [],
