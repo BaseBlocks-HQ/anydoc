@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
+import { act } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { MarkdownViewer, TextViewer } from "../src/react.js";
 
 const bytes = (value: string) => new TextEncoder().encode(value);
+
+// Lazy viewer chunks resolve through the React scheduler's setImmediate
+// queue; drain pending work while the jsdom environment still exists so no
+// callback fires after teardown.
+afterEach(async () => {
+  await act(async () => {
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+});
 
 describe("React viewers", () => {
   it("exposes live state to custom controls", async () => {
