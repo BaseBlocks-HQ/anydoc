@@ -12,9 +12,9 @@
   "dependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@baseblocks/anydoc-viewer": "workspace:0.2.0-alpha.2",
+    "@baseblocks/anydoc-viewer": "workspace:0.2.0-alpha.3",
     "@firecrawl/anydoc-wasm": "0.1.9",
-    "@baseblocks/anydoc-contracts": "workspace:0.2.0-alpha.2"
+    "@baseblocks/anydoc-contracts": "workspace:0.2.0-alpha.3"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.7.0",

@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-viewer",
-  "version": "0.2.0-alpha.2",
+  "version": "0.2.0-alpha.3",
   "description": "Framework-neutral document viewer engine and React adapter for AnyDoc",
   "type": "module",
   "license": "MIT",
@@ -30,7 +30,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && cp ../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs dist/pdf.worker.min.mjs",
+    "build": "tsc -p tsconfig.build.json && cp ../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs dist/viewers/pdf.worker.min.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
@@ -50,7 +50,7 @@
     }
   },
   "dependencies": {
-    "@baseblocks/anydoc-contracts": "workspace:0.2.0-alpha.2",
+    "@baseblocks/anydoc-contracts": "workspace:0.2.0-alpha.3",
     "@aiden0z/pptx-renderer": "1.2.4",
     "@tanstack/react-virtual": "^3.13.12",
     "@zip.js/zip.js": "2.8.31",
