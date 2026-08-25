@@ -21,10 +21,10 @@ importers:
   apps/playground:
     dependencies:
       '@baseblocks/anydoc-contracts':
-        specifier: workspace:0.2.0-alpha.3
+        specifier: workspace:0.2.0-alpha.4
         version: link:../../packages/contracts
       '@baseblocks/anydoc-viewer':
-        specifier: workspace:0.2.0-alpha.3
+        specifier: workspace:0.2.0-alpha.4
         version: link:../../packages/viewer
       '@firecrawl/anydoc-wasm':
         specifier: 0.1.9
@@ -57,7 +57,7 @@ importers:
         specifier: 1.2.4
         version: 1.2.4(pdfjs-dist@6.2.108)
       '@baseblocks/anydoc-contracts':
-        specifier: workspace:0.2.0-alpha.3
+        specifier: workspace:0.2.0-alpha.4
         version: link:../contracts
       '@tanstack/react-virtual':
         specifier: ^3.13.12
