@@ -40,44 +40,43 @@ function isNode(): boolean {
   );
 }
 
-/** Repository-layout fallback so tests can run the artifact before packaging. */
-function developmentGlueUrl(): URL {
-  return new URL("../../../../spreadsheet-view/pkg/spreadsheet_view.js", import.meta.url);
+// Specifier fragments are assembled at runtime so bundlers never try to
+// resolve the engine asset statically: the browser fetches it lazily next to
+// this module, and tests resolve it against the crate's pkg/ output.
+const glueFile = ["spreadsheet", "view.js"].join("_");
+const wasmFile = ["spreadsheet", "view_bg.wasm"].join("_");
+const devGluePath = ["../../../../spreadsheet-", `view/pkg/${glueFile}`].join("");
+
+async function loadFrom(glueUrl: URL): Promise<WasmExports | undefined> {
+  if (isNode()) {
+    const fsPromises = "node:" + "fs/promises";
+    const { readFile } = await import(fsPromises);
+    const bytes = await readFile(new URL(wasmFile, glueUrl));
+    const glue = (await import(glueUrl.href)) as WasmGlue;
+    if (typeof glue.initSync !== "function" || typeof glue.openWorkbook !== "function") {
+      return undefined;
+    }
+    glue.initSync({ module: await WebAssembly.compile(bytes) });
+    return glue as WasmExports;
+  }
+  const glue = (await import(glueUrl.href)) as WasmGlue;
+  if (typeof glue.default !== "function" || typeof glue.openWorkbook !== "function") {
+    return undefined;
+  }
+  await glue.default();
+  return glue as WasmExports;
 }
 
-async function loadInNode(): Promise<WasmExports> {
-  // Computed specifiers keep bundlers from resolving Node builtins into
-  // browser graphs; this branch only runs outside the browser.
-  const fsPromises = "node:fs" + "/promises";
-  const { readFile } = await import(/* @vite-ignore */ fsPromises);
-  for (const glueUrl of [new URL("./spreadsheet-view.js", import.meta.url), developmentGlueUrl()]) {
+async function loadExports(): Promise<WasmExports> {
+  for (const relative of [glueFile, devGluePath]) {
     try {
-      const [wasmBytes] = await Promise.all([
-        readFile(new URL("./spreadsheet_view_bg.wasm", glueUrl)),
-      ]);
-      const glue = (await import(glueUrl.href)) as WasmGlue;
-      if (typeof glue.initSync !== "function" || typeof glue.openWorkbook !== "function") {
-        continue;
-      }
-      glue.initSync({ module: await WebAssembly.compile(wasmBytes) });
-      return glue as WasmExports;
+      const exports = await loadFrom(new URL(relative, import.meta.url));
+      if (exports) return exports;
     } catch {
       continue;
     }
   }
   throw new Error("The spreadsheet engine could not be loaded.");
-}
-
-async function loadExports(): Promise<WasmExports> {
-  if (isNode()) return loadInNode();
-  const glue = (await import(
-    /* @vite-ignore */ new URL("./spreadsheet-view.js", import.meta.url).href
-  )) as WasmGlue;
-  if (typeof glue.default !== "function") {
-    throw new Error("The spreadsheet engine is missing its Wasm initializer.");
-  }
-  await glue.default();
-  return glue as WasmExports;
 }
 
 /** The lazily-initialized spreadsheet parser exports. */
