@@ -1,4 +1,4 @@
-import type { SpreadsheetAxis } from "./engine/index.js";
+import type { SpreadsheetAxis } from "./model.js";
 
 const axisLayoutCache = new WeakMap<SpreadsheetAxis, Map<string, SpreadsheetAxisLayout>>();
 

@@ -13,12 +13,14 @@ import {
   cellKey,
   XLSX_MAX_COLUMNS,
   XLSX_MAX_ROWS,
-  type SpreadsheetCell,
-  type SpreadsheetMerge,
-  type SpreadsheetRange,
-  type SpreadsheetRenderedChart,
-  type SpreadsheetSheetMetadata,
-} from "./engine/index.js";
+} from "./coordinates.js";
+import type {
+  SpreadsheetCell,
+  SpreadsheetMerge,
+  SpreadsheetRange,
+  SpreadsheetRenderedChart,
+  SpreadsheetSheetMetadata,
+} from "./model.js";
 
 import {
   createSpreadsheetAxisLayout,

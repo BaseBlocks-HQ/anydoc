@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { SpreadsheetCell } from "../src/spreadsheet/engine/index.js";
+import type { SpreadsheetCell } from "../src/spreadsheet/model.js";
 
 import {
   cellHyperlink,

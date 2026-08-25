@@ -14,7 +14,9 @@ export type {
   ViewerFormat,
 } from "./controls.js";
 export type * from "./types.js";
-export * from "./spreadsheet/engine/index.js";
+export * from "./spreadsheet/coordinates.js";
+export * from "./spreadsheet/model.js";
+export * from "./spreadsheet/session.js";
 export * from "./spreadsheet/axis-layout.js";
 export * from "./spreadsheet/scroll-projection.js";
 export * from "./spreadsheet/viewer-model.js";

@@ -12,7 +12,7 @@ import type {
   SpreadsheetSelectionStatistics,
   SpreadsheetSheetMetadata,
   SpreadsheetWorkbookMetadata,
-} from "./engine/index.js";
+} from "./model.js";
 
 import { SpreadsheetErrorBoundary } from "./error-boundary.tsx";
 import {

@@ -1,205 +1,61 @@
-import { cellAddress, cellKey, normalizeRange } from "./coordinates.ts";
-import { SpreadsheetEngine } from "./engine.ts";
+import { cellKey } from "./coordinates.js";
 import type {
+  SpreadsheetAxis,
   SpreadsheetCell,
-  SpreadsheetDateSystem,
-  SpreadsheetDiagnostic,
-  SpreadsheetFeature,
+  SpreadsheetCellStyle,
+  SpreadsheetConditionalFormat,
+  SpreadsheetCopyResult,
+  SpreadsheetDataValidation,
+  SpreadsheetMerge,
+  SpreadsheetObject,
+  SpreadsheetPivotTable,
   SpreadsheetRange,
+  SpreadsheetRangeRead,
+  SpreadsheetRenderedChart,
+  SpreadsheetSearchMatch,
+  SpreadsheetSearchResult,
+  SpreadsheetSelectionStatistics,
   SpreadsheetSheet,
-  SpreadsheetWorkbookModel,
-} from "./model.ts";
-import type { SpreadsheetRenderedChart } from "./charts.ts";
-import type { SpreadsheetOpenLimits } from "./archive.ts";
+  SpreadsheetSheetMetadata,
+  SpreadsheetTable,
+  SpreadsheetWorkbookMetadata,
+} from "./model.js";
+import type { SpreadsheetWorkbookModel } from "./model.js";
+import { openWorkbookModel, parseCsvModel } from "./wasm.js";
 
 const MAX_READ_CELLS = 50_000;
 const MAX_COPY_CELLS = 100_000;
 const MAX_COPY_CHARACTERS = 10_000_000;
 const MAX_INDEXED_STATISTIC_CELLS = 100_000;
 const DEFAULT_SEARCH_LIMIT = 500;
-const MAX_CSV_BYTES = 25 * 1024 * 1024;
-const MAX_CSV_ROWS = 100_000;
-const MAX_CSV_COLUMNS = 100;
-const MAX_CSV_CELLS = 100_000;
-const MAX_CSV_CELL_CHARACTERS = 1_000_000;
 
-function decodeCsv(bytes: Uint8Array): string {
-  if (bytes[0] === 0xff && bytes[1] === 0xfe) {
-    return new TextDecoder("utf-16le", { fatal: false }).decode(bytes.subarray(2));
-  }
-  if (bytes[0] === 0xfe && bytes[1] === 0xff) {
-    return new TextDecoder("utf-16be", { fatal: false }).decode(bytes.subarray(2));
-  }
-  const offset = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf ? 3 : 0;
-  return new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(offset));
-}
-
-function delimiterScore(source: string, delimiter: string): number {
-  const counts: number[] = [];
-  let count = 0;
-  let quoted = false;
-  for (let index = 0; index < source.length && counts.length < 20; index += 1) {
-    const character = source[index];
-    if (character === '"') {
-      if (quoted && source[index + 1] === '"') index += 1;
-      else quoted = !quoted;
-    } else if (!quoted && character === delimiter) count += 1;
-    else if (!quoted && character === "\n") {
-      if (count > 0) counts.push(count);
-      count = 0;
-    }
-  }
-  if (count > 0) counts.push(count);
-  if (counts.length === 0) return 0;
-  const frequencies = new Map<number, number>();
-  for (const value of counts) frequencies.set(value, (frequencies.get(value) ?? 0) + 1);
-  const [mode, frequency] = [...frequencies.entries()].sort(
-    ([leftCount, leftFrequency], [rightCount, rightFrequency]) =>
-      rightFrequency - leftFrequency || rightCount - leftCount,
-  )[0] ?? [0, 0];
-  return mode * frequency;
-}
-
-function sniffDelimiter(source: string): string {
-  return [",", ";", "\t"].reduce((best, candidate) =>
-    delimiterScore(source, candidate) > delimiterScore(source, best) ? candidate : best,
-  );
-}
-
-function parseCsv(bytes: Uint8Array, limits: SpreadsheetOpenLimits = {}): SpreadsheetWorkbookModel {
-  const maxBytes = Math.min(MAX_CSV_BYTES, limits.maxInputBytes ?? MAX_CSV_BYTES);
-  const maxCells = Math.min(MAX_CSV_CELLS, limits.maxCells ?? MAX_CSV_CELLS);
-  if (bytes.byteLength > maxBytes) throw new Error("CSV input exceeds the byte limit.");
-  const source = decodeCsv(bytes);
-  const delimiter = sniffDelimiter(source);
-  const rows: string[][] = [[]];
-  let value = "";
-  let quoted = false;
-  let cellCount = 0;
-  const commitCell = () => {
-    if (value.length > MAX_CSV_CELL_CHARACTERS) throw new Error("CSV cell is too large.");
-    const row = rows.at(-1);
-    if (!row) throw new Error("CSV parser state is invalid.");
-    if (row.length >= MAX_CSV_COLUMNS) throw new Error("CSV exceeds the 100 column limit.");
-    row.push(value);
-    cellCount += 1;
-    value = "";
-    if (cellCount > maxCells) {
-      throw new Error("CSV exceeds the configured cell limit.");
-    }
-  };
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index];
-    if (quoted) {
-      if (character === '"' && source[index + 1] === '"') {
-        value += '"';
-        index += 1;
-      } else if (character === '"') quoted = false;
-      else value += character;
-      continue;
-    }
-    if (character === '"' && value.length === 0) quoted = true;
-    else if (character === delimiter) commitCell();
-    else if (character === "\n") {
-      commitCell();
-      if (rows.length >= MAX_CSV_ROWS) throw new Error("CSV exceeds the 100,000 row limit.");
-      rows.push([]);
-    } else if (character !== "\r") value += character;
-  }
-  if (quoted) throw new Error("CSV contains an unterminated quoted field.");
-  commitCell();
-  if (rows.at(-1)?.every((cell) => cell === "")) rows.pop();
-
-  const cells = new Map<string, SpreadsheetCell>();
-  let right = 0;
-  rows.forEach((row, rowIndex) => {
-    right = Math.max(right, row.length);
-    row.forEach((displayValue, columnIndex) => {
-      if (displayValue === "") return;
-      const rowNumber = rowIndex + 1;
-      const column = columnIndex + 1;
-      const address = cellAddress(rowNumber, column);
-      cells.set(cellKey(rowNumber, column), {
-        address,
-        column,
-        displayValue,
-        row: rowNumber,
-        style: {},
-        value: displayValue,
-      });
-    });
-  });
-  const sheet: SpreadsheetSheet = {
-    cells,
-    conditionalFormats: [],
-    columns: { defaultSize: 12, hidden: new Set(), sizes: new Map() },
-    dataValidations: [],
-    frozenColumns: 0,
-    frozenRows: 0,
-    hidden: false,
-    id: "csv-sheet-1",
-    merges: [],
-    name: "CSV",
-    objects: [],
-    pivotTables: [],
-    rows: { defaultSize: 20, hidden: new Set(), sizes: new Map() },
-    showGridLines: true,
-    tables: [],
-    usedRange: rows.length > 0 ? { bottom: rows.length, left: 1, right, top: 1 } : null,
-  };
-  return { dateSystem: "1900", diagnostics: [], features: [], objects: [], sheets: [sheet] };
-}
-
-export type SpreadsheetSheetMetadata = Readonly<
-  Omit<SpreadsheetSheet, "cells"> & { objectCount: number }
->;
-
-export type SpreadsheetWorkbookMetadata = Readonly<{
-  dateSystem: SpreadsheetDateSystem;
-  diagnostics: ReadonlyArray<SpreadsheetDiagnostic>;
-  features: ReadonlyArray<SpreadsheetFeature>;
-  sheets: ReadonlyArray<SpreadsheetSheetMetadata>;
-}>;
-
-export type SpreadsheetRangeRead = Readonly<{
-  cells: ReadonlyArray<SpreadsheetCell>;
-  range: SpreadsheetRange;
-  sheetId: string;
-}>;
-
-export type SpreadsheetSearchMatch = Readonly<{
-  address: string;
-  column: number;
-  preview: string;
-  row: number;
-  sheetId: string;
-  sheetName: string;
-}>;
-
-export type SpreadsheetSearchResult = Readonly<{
-  matches: ReadonlyArray<SpreadsheetSearchMatch>;
-  total: number;
-  truncated: boolean;
-}>;
-
-export type SpreadsheetSelectionStatistics = Readonly<{
-  average: number | null;
-  count: number;
-  maximum: number | null;
-  minimum: number | null;
-  numericCount: number;
-  sum: number | null;
-}>;
-
-export type SpreadsheetCopyResult = Readonly<{
-  cellCount: number;
-  html: string;
-  text: string;
-  truncated: boolean;
-}>;
+export type SpreadsheetOpenLimits = {
+  maxCells?: number;
+  maxInputBytes?: number;
+};
 
 function rangeCellCount(range: SpreadsheetRange): number {
   return (range.bottom - range.top + 1) * (range.right - range.left + 1);
+}
+
+function normalizeRange(range: SpreadsheetRange): SpreadsheetRange {
+  assertCoordinate(range.top, range.left);
+  assertCoordinate(range.bottom, range.right);
+  return {
+    bottom: Math.max(range.top, range.bottom),
+    left: Math.min(range.left, range.right),
+    right: Math.max(range.left, range.right),
+    top: Math.min(range.top, range.bottom),
+  };
+}
+
+function assertCoordinate(row: number, column: number): void {
+  if (!Number.isInteger(row) || row < 1) {
+    throw new Error("Row must be between 1 and 1048576.");
+  }
+  if (!Number.isInteger(column) || column < 1) {
+    throw new Error("Column must be between 1 and 16384.");
+  }
 }
 
 function displayValue(cell: SpreadsheetCell | undefined): string {
@@ -250,6 +106,46 @@ function clipToUsedRange(
   return clipped.top <= clipped.bottom && clipped.left <= clipped.right ? clipped : null;
 }
 
+/** Reconstruct `Set`/`Map` axis fields delivered as arrays from the parser. */
+function toAxis(axis: {
+  defaultSize: number;
+  hidden: readonly number[];
+  sizes: readonly (readonly [number, number])[];
+}): SpreadsheetAxis {
+  return {
+    defaultSize: axis.defaultSize,
+    hidden: new Set(axis.hidden),
+    sizes: new Map(axis.sizes.map(([index, size]) => [index, size])),
+  };
+}
+
+function toCells(cells: readonly SpreadsheetCell[]): ReadonlyMap<string, SpreadsheetCell> {
+  return new Map(cells.map((cell) => [cellKey(cell.row, cell.column), cell]));
+}
+
+function toSheet(
+  sheet: SpreadsheetWorkbookModel["sheets"][number],
+): SpreadsheetSheet {
+  return {
+    cells: toCells(sheet.cells),
+    conditionalFormats: sheet.conditionalFormats,
+    columns: toAxis(sheet.columns),
+    dataValidations: sheet.dataValidations,
+    frozenColumns: sheet.frozenColumns,
+    frozenRows: sheet.frozenRows,
+    hidden: sheet.hidden,
+    id: sheet.id,
+    merges: sheet.merges,
+    name: sheet.name,
+    objects: sheet.objects as readonly SpreadsheetObject[],
+    pivotTables: sheet.pivotTables as readonly SpreadsheetPivotTable[],
+    rows: toAxis(sheet.rows),
+    showGridLines: sheet.showGridLines,
+    tables: sheet.tables as readonly SpreadsheetTable[],
+    usedRange: sheet.usedRange,
+  };
+}
+
 function metadataForSheet(sheet: SpreadsheetSheet): SpreadsheetSheetMetadata {
   return {
     conditionalFormats: sheet.conditionalFormats,
@@ -275,17 +171,22 @@ export class SpreadsheetReadSession {
   readonly #metadata: SpreadsheetWorkbookMetadata;
   readonly #renderedCharts: ReadonlyMap<string, readonly SpreadsheetRenderedChart[]>;
   readonly #sheets: ReadonlyMap<string, SpreadsheetSheet>;
-  readonly #conditionalStyles: ReadonlyMap<string, ReadonlyMap<string, SpreadsheetCell["style"]>>;
+  readonly #conditionalStyles: ReadonlyMap<string, ReadonlyMap<string, SpreadsheetCellStyle>>;
 
-  private constructor(
-    model: SpreadsheetWorkbookModel,
-    renderedCharts: ReadonlyMap<string, readonly SpreadsheetRenderedChart[]>,
-  ) {
-    this.#sheets = new Map(model.sheets.map((sheet) => [sheet.id, sheet]));
-    this.#renderedCharts = renderedCharts;
+  constructor(model: SpreadsheetWorkbookModel) {
+    const sheets = model.sheets.map(toSheet);
+    this.#sheets = new Map(sheets.map((sheet) => [sheet.id, sheet]));
+    this.#renderedCharts = new Map(
+      sheets.map((sheet) => [
+        sheet.id,
+        (
+          model.sheets.find((candidate) => candidate.id === sheet.id) as SpreadsheetWorkbookModel["sheets"][number]
+        ).renderedCharts as readonly SpreadsheetRenderedChart[],
+      ]),
+    );
     this.#conditionalStyles = new Map(
-      model.sheets.map((sheet) => {
-        const resolved = new Map<string, SpreadsheetCell["style"]>();
+      sheets.map((sheet) => {
+        const resolved = new Map<string, SpreadsheetCellStyle>();
         for (const rule of sheet.conditionalFormats) {
           const candidates = [...sheet.cells.entries()].filter(
             ([, cell]) =>
@@ -324,20 +225,24 @@ export class SpreadsheetReadSession {
       dateSystem: model.dateSystem,
       diagnostics: model.diagnostics,
       features: model.features,
-      sheets: model.sheets.map(metadataForSheet),
+      sheets: sheets.map(metadataForSheet),
     };
   }
 
-  static async open(bytes: Uint8Array, limits?: SpreadsheetOpenLimits): Promise<SpreadsheetReadSession> {
-    const engine = await SpreadsheetEngine.open(bytes, limits);
-    return new SpreadsheetReadSession(
-      engine.model,
-      new Map(engine.model.sheets.map((sheet) => [sheet.id, engine.renderCharts(sheet.id)])),
-    );
+  static async open(
+    bytes: Uint8Array,
+    limits?: SpreadsheetOpenLimits,
+  ): Promise<SpreadsheetReadSession> {
+    const model = await openWorkbookModel(bytes, limits ?? {});
+    return new SpreadsheetReadSession(model);
   }
 
-  static openCsv(bytes: Uint8Array, limits?: SpreadsheetOpenLimits): SpreadsheetReadSession {
-    return new SpreadsheetReadSession(parseCsv(bytes, limits), new Map());
+  static async openCsv(
+    bytes: Uint8Array,
+    limits?: SpreadsheetOpenLimits,
+  ): Promise<SpreadsheetReadSession> {
+    const model = await parseCsvModel(bytes, limits ?? {});
+    return new SpreadsheetReadSession(model);
   }
 
   get metadata(): SpreadsheetWorkbookMetadata {

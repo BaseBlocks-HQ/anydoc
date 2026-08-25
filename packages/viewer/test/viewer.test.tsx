@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { SpreadsheetEngine } from "../src/spreadsheet/engine/index.js";
-
 import { createSpreadsheetViewerReadSession } from "../src/spreadsheet/read-session.js";
 import { generatedWorkbookFixture } from "./fixture.ts";
 
@@ -52,38 +50,16 @@ describe("spreadsheet viewer read-session integration", () => {
   });
 
   it("projects native chart data through the same worker-safe read session", async () => {
-    const workbook = await SpreadsheetEngine.open(new Uint8Array(await generatedWorkbookFixture()));
-    workbook.apply({
-      anchor: {
-        from: { column: 4, columnOffsetEmu: 0, row: 2, rowOffsetEmu: 0 },
-        kind: "two-cell",
-        to: { column: 10, columnOffsetEmu: 0, row: 18, rowOffsetEmu: 0 },
-      },
-      chart: {
-        legend: "bottom",
-        series: [
-          {
-            categories: { range: { bottom: 3, left: 1, right: 1, top: 2 } },
-            values: { range: { bottom: 3, left: 2, right: 2, top: 2 } },
-          },
-        ],
-        title: "Revenue summary",
-        type: "column",
-      },
-      kind: "create-chart",
-      sheetId: "1",
+    const session = await createSpreadsheetViewerReadSession(await generatedWorkbookFixture());
+    const charts = await session.readCharts("1");
+    expect(charts).toHaveLength(1);
+    expect(charts[0]).toMatchObject({
+      categories: ["Tickets", "Fees"],
+      series: [expect.objectContaining({ values: [1200, 120] })],
+      title: "Revenue summary",
+      type: "column",
+      legend: "bottom",
     });
-    const bytes = await workbook.export();
-    const source = new ArrayBuffer(bytes.byteLength);
-    new Uint8Array(source).set(bytes);
-    const session = await createSpreadsheetViewerReadSession(source);
-    await expect(session.readCharts("1")).resolves.toEqual([
-      expect.objectContaining({
-        categories: ["Tickets", "Fees"],
-        series: [expect.objectContaining({ values: [1200, 120] })],
-        title: "Revenue summary",
-      }),
-    ]);
     session.close();
   });
 });
