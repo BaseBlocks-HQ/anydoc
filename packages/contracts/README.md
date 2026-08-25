@@ -1,6 +1,6 @@
 # AnyDoc contracts
 
-Framework-neutral capability, structured-error, resource-limit, URL, and filename contracts shared across the AnyDoc stacks.
+Structured errors, resource limits, URL safety, and bounded source readers shared across the AnyDoc stacks.
 
 Subpaths:
 
