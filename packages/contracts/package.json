@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-contracts",
-  "version": "0.2.0-alpha.4",
+  "version": "0.2.0-alpha.5",
   "description": "Shared error, resource-limit, URL-safety, and untrusted-source contracts for AnyDoc",
   "type": "module",
   "license": "MIT",
