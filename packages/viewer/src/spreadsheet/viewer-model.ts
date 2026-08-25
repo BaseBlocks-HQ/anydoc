@@ -3,9 +3,8 @@ import {
   XLSX_MAX_ROWS,
   cellAddress,
   columnName,
-  type SpreadsheetCell,
-  type SpreadsheetRange,
-} from "./engine/index.js";
+} from "./coordinates.js";
+import type { SpreadsheetCell, SpreadsheetRange } from "./model.js";
 
 export type SpreadsheetSelectionKind = "all" | "cells" | "columns" | "rows";
 

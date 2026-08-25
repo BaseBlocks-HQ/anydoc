@@ -1,13 +1,15 @@
 import {
   SpreadsheetReadSession,
-  type SpreadsheetCopyResult,
-  type SpreadsheetRange,
-  type SpreadsheetRangeRead,
-  type SpreadsheetRenderedChart,
-  type SpreadsheetSearchResult,
-  type SpreadsheetSelectionStatistics,
-  type SpreadsheetWorkbookMetadata,
-} from "./engine/index.js";
+} from "./session.js";
+import type {
+  SpreadsheetCopyResult,
+  SpreadsheetRange,
+  SpreadsheetRangeRead,
+  SpreadsheetRenderedChart,
+  SpreadsheetSearchResult,
+  SpreadsheetSelectionStatistics,
+  SpreadsheetWorkbookMetadata,
+} from "./model.js";
 import { defaultDocumentLimits, type DocumentLimits } from "@baseblocks/anydoc-contracts";
 
 export type SpreadsheetViewerReadSession = Readonly<{
@@ -201,9 +203,9 @@ export async function createSpreadsheetViewerReadSession(
       }
     }
   }
-  return new LocalSpreadsheetViewerReadSession(
+  const session =
     format === "csv"
-      ? SpreadsheetReadSession.openCsv(new Uint8Array(source), { maxCells: limits.maxSpreadsheetCells, maxInputBytes: limits.maxBytes })
-      : await SpreadsheetReadSession.open(new Uint8Array(source), { maxCells: limits.maxSpreadsheetCells, maxInputBytes: limits.maxBytes }),
-  );
+      ? await SpreadsheetReadSession.openCsv(new Uint8Array(source), { maxCells: limits.maxSpreadsheetCells, maxInputBytes: limits.maxBytes })
+      : await SpreadsheetReadSession.open(new Uint8Array(source), { maxCells: limits.maxSpreadsheetCells, maxInputBytes: limits.maxBytes });
+  return new LocalSpreadsheetViewerReadSession(session);
 }

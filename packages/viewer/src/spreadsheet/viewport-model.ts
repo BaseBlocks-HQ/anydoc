@@ -1,9 +1,8 @@
 import {
   XLSX_MAX_COLUMNS,
   XLSX_MAX_ROWS,
-  type SpreadsheetRange,
-  type SpreadsheetSheetMetadata,
-} from "./engine/index.js";
+} from "./coordinates.js";
+import type { SpreadsheetRange, SpreadsheetSheetMetadata } from "./model.js";
 
 const COLUMN_TILE_SIZE = 32;
 const ROW_TILE_SIZE = 64;

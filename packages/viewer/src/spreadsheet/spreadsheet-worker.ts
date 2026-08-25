@@ -1,7 +1,5 @@
-import {
-  SpreadsheetReadSession,
-  type SpreadsheetRange,
-} from "./engine/index.js";
+import type { SpreadsheetRange } from "./model.js";
+import { SpreadsheetReadSession } from "./session.js";
 
 import type { SpreadsheetWorkerRequest, SpreadsheetWorkerResponse } from "./read-session.ts";
 import type { DocumentLimits } from "@baseblocks/anydoc-contracts";
@@ -34,10 +32,11 @@ async function handleRequest(request: SpreadsheetWorkerRequest): Promise<unknown
     const format = request.args[1] === "csv" ? "csv" : "xlsx";
     const limits = request.args[2] as Pick<DocumentLimits, "maxBytes" | "maxSpreadsheetCells">;
     if (!(source instanceof ArrayBuffer)) throw new Error("The workbook source is invalid.");
-    session =
+    session = await (
       format === "csv"
         ? SpreadsheetReadSession.openCsv(new Uint8Array(source), { maxCells: limits.maxSpreadsheetCells, maxInputBytes: limits.maxBytes })
-        : await SpreadsheetReadSession.open(new Uint8Array(source), { maxCells: limits.maxSpreadsheetCells, maxInputBytes: limits.maxBytes });
+        : SpreadsheetReadSession.open(new Uint8Array(source), { maxCells: limits.maxSpreadsheetCells, maxInputBytes: limits.maxBytes })
+    );
     return session.metadata;
   }
   if (!session) throw new Error("No workbook is open.");

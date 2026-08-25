@@ -18,7 +18,7 @@ import {
 import { init, use } from "echarts/core";
 import { SVGRenderer } from "echarts/renderers";
 
-import type { SpreadsheetRenderedChart } from "./engine/index.js";
+import type { SpreadsheetRenderedChart } from "./model.js";
 
 const CHART_COLORS = ["#4472C4", "#ED7D31", "#A5A5A5", "#FFC000", "#5B9BD5"];
 
