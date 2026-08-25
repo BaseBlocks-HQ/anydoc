@@ -1,0 +1,192 @@
+{
+  "file": "csv/handmade-quoted.csv",
+  "openError": null,
+  "metadata": {
+    "dateSystem": "1900",
+    "diagnostics": [],
+    "features": [],
+    "sheets": [
+      {
+        "columns": {
+          "defaultSize": 12,
+          "hidden": [],
+          "sizes": []
+        },
+        "conditionalFormats": [],
+        "dataValidations": [],
+        "frozenColumns": 0,
+        "frozenRows": 0,
+        "hidden": false,
+        "id": "csv-sheet-1",
+        "merges": [],
+        "name": "CSV",
+        "objectCount": 0,
+        "objects": [],
+        "pivotTables": [],
+        "rows": {
+          "defaultSize": 20,
+          "hidden": [],
+          "sizes": []
+        },
+        "showGridLines": true,
+        "tables": [],
+        "usedRange": {
+          "bottom": 3,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        }
+      }
+    ]
+  },
+  "sheets": [
+    {
+      "readCharts": [],
+      "search": {
+        "matches": [
+          {
+            "address": "A1",
+            "column": 1,
+            "preview": "name",
+            "row": 1,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "B1",
+            "column": 2,
+            "preview": "desc",
+            "row": 1,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "preview": "  padded  ",
+            "row": 2,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "B2",
+            "column": 2,
+            "preview": "comma, inside",
+            "row": 2,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "B3",
+            "column": 2,
+            "preview": "multi\nline",
+            "row": 3,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          }
+        ],
+        "total": 5,
+        "truncated": false
+      },
+      "selectionStatistics": {
+        "average": null,
+        "count": 9,
+        "maximum": null,
+        "minimum": null,
+        "numericCount": 0,
+        "sum": null
+      },
+      "copy": {
+        "cellCount": 9,
+        "html": "<table><tr><td>name</td><td>desc</td><td>qty</td></tr><tr><td>  padded  </td><td>comma, inside</td><td>3</td></tr><tr><td>plain</td><td>multi\nline</td><td>4</td></tr></table>",
+        "text": "name\tdesc\tqty\n  padded  \tcomma, inside\t3\nplain\tmulti\nline\t4",
+        "truncated": false
+      },
+      "suggestAxisSizeColumn1": 90,
+      "suggestAxisSizeRow1": 20,
+      "readRange": {
+        "cells": [
+          {
+            "address": "A1",
+            "column": 1,
+            "displayValue": "name",
+            "row": 1,
+            "style": {},
+            "value": "name"
+          },
+          {
+            "address": "B1",
+            "column": 2,
+            "displayValue": "desc",
+            "row": 1,
+            "style": {},
+            "value": "desc"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "displayValue": "qty",
+            "row": 1,
+            "style": {},
+            "value": "qty"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "displayValue": "  padded  ",
+            "row": 2,
+            "style": {},
+            "value": "  padded  "
+          },
+          {
+            "address": "B2",
+            "column": 2,
+            "displayValue": "comma, inside",
+            "row": 2,
+            "style": {},
+            "value": "comma, inside"
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "displayValue": "3",
+            "row": 2,
+            "style": {},
+            "value": "3"
+          },
+          {
+            "address": "A3",
+            "column": 1,
+            "displayValue": "plain",
+            "row": 3,
+            "style": {},
+            "value": "plain"
+          },
+          {
+            "address": "B3",
+            "column": 2,
+            "displayValue": "multi\nline",
+            "row": 3,
+            "style": {},
+            "value": "multi\nline"
+          },
+          {
+            "address": "C3",
+            "column": 3,
+            "displayValue": "4",
+            "row": 3,
+            "style": {},
+            "value": "4"
+          }
+        ],
+        "range": {
+          "bottom": 3,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        },
+        "sheetId": "csv-sheet-1"
+      }
+    }
+  ]
+}

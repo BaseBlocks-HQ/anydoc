@@ -1,0 +1,136 @@
+{
+  "file": "csv/handmade-utf16.csv",
+  "openError": null,
+  "metadata": {
+    "dateSystem": "1900",
+    "diagnostics": [],
+    "features": [],
+    "sheets": [
+      {
+        "columns": {
+          "defaultSize": 12,
+          "hidden": [],
+          "sizes": []
+        },
+        "conditionalFormats": [],
+        "dataValidations": [],
+        "frozenColumns": 0,
+        "frozenRows": 0,
+        "hidden": false,
+        "id": "csv-sheet-1",
+        "merges": [],
+        "name": "CSV",
+        "objectCount": 0,
+        "objects": [],
+        "pivotTables": [],
+        "rows": {
+          "defaultSize": 20,
+          "hidden": [],
+          "sizes": []
+        },
+        "showGridLines": true,
+        "tables": [],
+        "usedRange": {
+          "bottom": 3,
+          "left": 1,
+          "right": 2,
+          "top": 1
+        }
+      }
+    ]
+  },
+  "sheets": [
+    {
+      "readCharts": [],
+      "search": {
+        "matches": [
+          {
+            "address": "A2",
+            "column": 1,
+            "preview": "naïve",
+            "row": 2,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          }
+        ],
+        "total": 1,
+        "truncated": false
+      },
+      "selectionStatistics": {
+        "average": null,
+        "count": 6,
+        "maximum": null,
+        "minimum": null,
+        "numericCount": 0,
+        "sum": null
+      },
+      "copy": {
+        "cellCount": 6,
+        "html": "<table><tr><td>col1</td><td>col2</td></tr><tr><td>naïve</td><td>café</td></tr><tr><td>Αθήνα</td><td>数据</td></tr></table>",
+        "text": "col1\tcol2\nnaïve\tcafé\nΑθήνα\t数据",
+        "truncated": false
+      },
+      "suggestAxisSizeColumn1": 54,
+      "suggestAxisSizeRow1": 20,
+      "readRange": {
+        "cells": [
+          {
+            "address": "A1",
+            "column": 1,
+            "displayValue": "col1",
+            "row": 1,
+            "style": {},
+            "value": "col1"
+          },
+          {
+            "address": "B1",
+            "column": 2,
+            "displayValue": "col2",
+            "row": 1,
+            "style": {},
+            "value": "col2"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "displayValue": "naïve",
+            "row": 2,
+            "style": {},
+            "value": "naïve"
+          },
+          {
+            "address": "B2",
+            "column": 2,
+            "displayValue": "café",
+            "row": 2,
+            "style": {},
+            "value": "café"
+          },
+          {
+            "address": "A3",
+            "column": 1,
+            "displayValue": "Αθήνα",
+            "row": 3,
+            "style": {},
+            "value": "Αθήνα"
+          },
+          {
+            "address": "B3",
+            "column": 2,
+            "displayValue": "数据",
+            "row": 3,
+            "style": {},
+            "value": "数据"
+          }
+        ],
+        "range": {
+          "bottom": 3,
+          "left": 1,
+          "right": 2,
+          "top": 1
+        },
+        "sheetId": "csv-sheet-1"
+      }
+    }
+  ]
+}

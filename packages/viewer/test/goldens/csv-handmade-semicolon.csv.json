@@ -1,0 +1,151 @@
+{
+  "file": "csv/handmade-semicolon.csv",
+  "openError": null,
+  "metadata": {
+    "dateSystem": "1900",
+    "diagnostics": [],
+    "features": [],
+    "sheets": [
+      {
+        "columns": {
+          "defaultSize": 12,
+          "hidden": [],
+          "sizes": []
+        },
+        "conditionalFormats": [],
+        "dataValidations": [],
+        "frozenColumns": 0,
+        "frozenRows": 0,
+        "hidden": false,
+        "id": "csv-sheet-1",
+        "merges": [],
+        "name": "CSV",
+        "objectCount": 0,
+        "objects": [],
+        "pivotTables": [],
+        "rows": {
+          "defaultSize": 20,
+          "hidden": [],
+          "sizes": []
+        },
+        "showGridLines": true,
+        "tables": [],
+        "usedRange": {
+          "bottom": 3,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        }
+      }
+    ]
+  },
+  "sheets": [
+    {
+      "readCharts": [],
+      "search": {
+        "matches": [],
+        "total": 0,
+        "truncated": false
+      },
+      "selectionStatistics": {
+        "average": null,
+        "count": 9,
+        "maximum": null,
+        "minimum": null,
+        "numericCount": 0,
+        "sum": null
+      },
+      "copy": {
+        "cellCount": 9,
+        "html": "<table><tr><td>a</td><td>b</td><td>c</td></tr><tr><td>1,5</td><td>2,5</td><td>x</td></tr><tr><td>3,0</td><td>y</td><td>z</td></tr></table>",
+        "text": "a\tb\tc\n1,5\t2,5\tx\n3,0\ty\tz",
+        "truncated": false
+      },
+      "suggestAxisSizeColumn1": 40,
+      "suggestAxisSizeRow1": 20,
+      "readRange": {
+        "cells": [
+          {
+            "address": "A1",
+            "column": 1,
+            "displayValue": "a",
+            "row": 1,
+            "style": {},
+            "value": "a"
+          },
+          {
+            "address": "B1",
+            "column": 2,
+            "displayValue": "b",
+            "row": 1,
+            "style": {},
+            "value": "b"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "displayValue": "c",
+            "row": 1,
+            "style": {},
+            "value": "c"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "displayValue": "1,5",
+            "row": 2,
+            "style": {},
+            "value": "1,5"
+          },
+          {
+            "address": "B2",
+            "column": 2,
+            "displayValue": "2,5",
+            "row": 2,
+            "style": {},
+            "value": "2,5"
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "displayValue": "x",
+            "row": 2,
+            "style": {},
+            "value": "x"
+          },
+          {
+            "address": "A3",
+            "column": 1,
+            "displayValue": "3,0",
+            "row": 3,
+            "style": {},
+            "value": "3,0"
+          },
+          {
+            "address": "B3",
+            "column": 2,
+            "displayValue": "y",
+            "row": 3,
+            "style": {},
+            "value": "y"
+          },
+          {
+            "address": "C3",
+            "column": 3,
+            "displayValue": "z",
+            "row": 3,
+            "style": {},
+            "value": "z"
+          }
+        ],
+        "range": {
+          "bottom": 3,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        },
+        "sheetId": "csv-sheet-1"
+      }
+    }
+  ]
+}

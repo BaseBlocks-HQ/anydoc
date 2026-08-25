@@ -238,8 +238,8 @@ The platform has two public packages. `@baseblocks/anydoc-viewer` is the
 document viewer: a framework-neutral headless engine (format detection, bounded
 byte loading, security primitives, and the spreadsheet read engine) at its root
 entry, with every React viewer behind a `/react` subpath.
-`@baseblocks/anydoc-contracts` carries the shared capability, error, and
-safe-sources contracts, including `readSource`/`iterableSource` for reading
+`@baseblocks/anydoc-contracts` carries the shared error, limit,
+URL-safety, and safe-source-reader contracts, including `readSource`/`iterableSource` for reading
 untrusted bytes under hard limits (`@baseblocks/anydoc-contracts/sources`).
 
 The alpha capability matrix covers text/Markdown, PDF, DOCX, XLSX/CSV, and PPTX.
