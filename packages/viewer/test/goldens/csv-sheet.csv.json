@@ -1,0 +1,376 @@
+{
+  "file": "csv/sheet.csv",
+  "openError": null,
+  "metadata": {
+    "dateSystem": "1900",
+    "diagnostics": [],
+    "features": [],
+    "sheets": [
+      {
+        "columns": {
+          "defaultSize": 12,
+          "hidden": [],
+          "sizes": []
+        },
+        "conditionalFormats": [],
+        "dataValidations": [],
+        "frozenColumns": 0,
+        "frozenRows": 0,
+        "hidden": false,
+        "id": "csv-sheet-1",
+        "merges": [],
+        "name": "CSV",
+        "objectCount": 0,
+        "objects": [],
+        "pivotTables": [],
+        "rows": {
+          "defaultSize": 20,
+          "hidden": [],
+          "sizes": []
+        },
+        "showGridLines": true,
+        "tables": [],
+        "usedRange": {
+          "bottom": 8,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        }
+      }
+    ]
+  },
+  "sheets": [
+    {
+      "readCharts": [],
+      "search": {
+        "matches": [
+          {
+            "address": "B1",
+            "column": 2,
+            "preview": "Value",
+            "row": 1,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "preview": "Note",
+            "row": 1,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "preview": "Percent",
+            "row": 2,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "preview": "fifteen and a half",
+            "row": 2,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "A3",
+            "column": 1,
+            "preview": "Currency",
+            "row": 3,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "C4",
+            "column": 3,
+            "preview": "grouped",
+            "row": 4,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "A5",
+            "column": 1,
+            "preview": "Date",
+            "row": 5,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "C5",
+            "column": 3,
+            "preview": "ides of March",
+            "row": 5,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "C6",
+            "column": 3,
+            "preview": "over a day",
+            "row": 6,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "C7",
+            "column": 3,
+            "preview": "four ten-millionths",
+            "row": 7,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "A8",
+            "column": 1,
+            "preview": "Boolean",
+            "row": 8,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "B8",
+            "column": 2,
+            "preview": "TRUE",
+            "row": 8,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          },
+          {
+            "address": "C8",
+            "column": 3,
+            "preview": "yes",
+            "row": 8,
+            "sheetId": "csv-sheet-1",
+            "sheetName": "CSV"
+          }
+        ],
+        "total": 13,
+        "truncated": false
+      },
+      "selectionStatistics": {
+        "average": null,
+        "count": 24,
+        "maximum": null,
+        "minimum": null,
+        "numericCount": 0,
+        "sum": null
+      },
+      "copy": {
+        "cellCount": 24,
+        "html": "<table><tr><td>Kind</td><td>Value</td><td>Note</td></tr><tr><td>Percent</td><td>15.5%</td><td>fifteen and a half</td></tr><tr><td>Currency</td><td>1234.5</td><td>dollars</td></tr><tr><td>Thousands</td><td>9876543</td><td>grouped</td></tr><tr><td>Date</td><td>2026-03-15</td><td>ides of March</td></tr><tr><td>Duration</td><td>26:30:15</td><td>over a day</td></tr><tr><td>Tiny</td><td>0.0000004</td><td>four ten-millionths</td></tr><tr><td>Boolean</td><td>TRUE</td><td>yes</td></tr></table>",
+        "text": "Kind\tValue\tNote\nPercent\t15.5%\tfifteen and a half\nCurrency\t1234.5\tdollars\nThousands\t9876543\tgrouped\nDate\t2026-03-15\tides of March\nDuration\t26:30:15\tover a day\nTiny\t0.0000004\tfour ten-millionths\nBoolean\tTRUE\tyes",
+        "truncated": false
+      },
+      "suggestAxisSizeColumn1": 83,
+      "suggestAxisSizeRow1": 20,
+      "readRange": {
+        "cells": [
+          {
+            "address": "A1",
+            "column": 1,
+            "displayValue": "Kind",
+            "row": 1,
+            "style": {},
+            "value": "Kind"
+          },
+          {
+            "address": "B1",
+            "column": 2,
+            "displayValue": "Value",
+            "row": 1,
+            "style": {},
+            "value": "Value"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "displayValue": "Note",
+            "row": 1,
+            "style": {},
+            "value": "Note"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "displayValue": "Percent",
+            "row": 2,
+            "style": {},
+            "value": "Percent"
+          },
+          {
+            "address": "B2",
+            "column": 2,
+            "displayValue": "15.5%",
+            "row": 2,
+            "style": {},
+            "value": "15.5%"
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "displayValue": "fifteen and a half",
+            "row": 2,
+            "style": {},
+            "value": "fifteen and a half"
+          },
+          {
+            "address": "A3",
+            "column": 1,
+            "displayValue": "Currency",
+            "row": 3,
+            "style": {},
+            "value": "Currency"
+          },
+          {
+            "address": "B3",
+            "column": 2,
+            "displayValue": "1234.5",
+            "row": 3,
+            "style": {},
+            "value": "1234.5"
+          },
+          {
+            "address": "C3",
+            "column": 3,
+            "displayValue": "dollars",
+            "row": 3,
+            "style": {},
+            "value": "dollars"
+          },
+          {
+            "address": "A4",
+            "column": 1,
+            "displayValue": "Thousands",
+            "row": 4,
+            "style": {},
+            "value": "Thousands"
+          },
+          {
+            "address": "B4",
+            "column": 2,
+            "displayValue": "9876543",
+            "row": 4,
+            "style": {},
+            "value": "9876543"
+          },
+          {
+            "address": "C4",
+            "column": 3,
+            "displayValue": "grouped",
+            "row": 4,
+            "style": {},
+            "value": "grouped"
+          },
+          {
+            "address": "A5",
+            "column": 1,
+            "displayValue": "Date",
+            "row": 5,
+            "style": {},
+            "value": "Date"
+          },
+          {
+            "address": "B5",
+            "column": 2,
+            "displayValue": "2026-03-15",
+            "row": 5,
+            "style": {},
+            "value": "2026-03-15"
+          },
+          {
+            "address": "C5",
+            "column": 3,
+            "displayValue": "ides of March",
+            "row": 5,
+            "style": {},
+            "value": "ides of March"
+          },
+          {
+            "address": "A6",
+            "column": 1,
+            "displayValue": "Duration",
+            "row": 6,
+            "style": {},
+            "value": "Duration"
+          },
+          {
+            "address": "B6",
+            "column": 2,
+            "displayValue": "26:30:15",
+            "row": 6,
+            "style": {},
+            "value": "26:30:15"
+          },
+          {
+            "address": "C6",
+            "column": 3,
+            "displayValue": "over a day",
+            "row": 6,
+            "style": {},
+            "value": "over a day"
+          },
+          {
+            "address": "A7",
+            "column": 1,
+            "displayValue": "Tiny",
+            "row": 7,
+            "style": {},
+            "value": "Tiny"
+          },
+          {
+            "address": "B7",
+            "column": 2,
+            "displayValue": "0.0000004",
+            "row": 7,
+            "style": {},
+            "value": "0.0000004"
+          },
+          {
+            "address": "C7",
+            "column": 3,
+            "displayValue": "four ten-millionths",
+            "row": 7,
+            "style": {},
+            "value": "four ten-millionths"
+          },
+          {
+            "address": "A8",
+            "column": 1,
+            "displayValue": "Boolean",
+            "row": 8,
+            "style": {},
+            "value": "Boolean"
+          },
+          {
+            "address": "B8",
+            "column": 2,
+            "displayValue": "TRUE",
+            "row": 8,
+            "style": {},
+            "value": "TRUE"
+          },
+          {
+            "address": "C8",
+            "column": 3,
+            "displayValue": "yes",
+            "row": 8,
+            "style": {},
+            "value": "yes"
+          }
+        ],
+        "range": {
+          "bottom": 8,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        },
+        "sheetId": "csv-sheet-1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,810 @@
+{
+  "file": "xlsx/sheet.xlsx",
+  "openError": null,
+  "metadata": {
+    "dateSystem": "1900",
+    "diagnostics": [],
+    "features": [],
+    "sheets": [
+      {
+        "columns": {
+          "defaultSize": 11.53515625,
+          "hidden": [],
+          "sizes": []
+        },
+        "conditionalFormats": [],
+        "dataValidations": [],
+        "frozenColumns": 0,
+        "frozenRows": 0,
+        "hidden": false,
+        "id": "1",
+        "merges": [],
+        "name": "Values",
+        "objectCount": 0,
+        "objects": [],
+        "pivotTables": [],
+        "rows": {
+          "defaultSize": 12.8,
+          "hidden": [],
+          "sizes": [
+            [
+              1,
+              12.8
+            ],
+            [
+              2,
+              12.8
+            ],
+            [
+              3,
+              12.8
+            ],
+            [
+              4,
+              12.8
+            ],
+            [
+              5,
+              12.8
+            ],
+            [
+              6,
+              12.8
+            ],
+            [
+              7,
+              12.8
+            ],
+            [
+              8,
+              12.8
+            ]
+          ]
+        },
+        "showGridLines": true,
+        "tables": [],
+        "usedRange": {
+          "bottom": 8,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        }
+      },
+      {
+        "columns": {
+          "defaultSize": 11.53515625,
+          "hidden": [],
+          "sizes": []
+        },
+        "conditionalFormats": [],
+        "dataValidations": [],
+        "frozenColumns": 0,
+        "frozenRows": 0,
+        "hidden": false,
+        "id": "2",
+        "merges": [
+          {
+            "bottom": 1,
+            "left": 1,
+            "right": 2,
+            "top": 1
+          }
+        ],
+        "name": "Merged Grid",
+        "objectCount": 0,
+        "objects": [],
+        "pivotTables": [],
+        "rows": {
+          "defaultSize": 12.8,
+          "hidden": [],
+          "sizes": [
+            [
+              1,
+              12.8
+            ],
+            [
+              2,
+              12.8
+            ]
+          ]
+        },
+        "showGridLines": true,
+        "tables": [],
+        "usedRange": {
+          "bottom": 2,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        }
+      }
+    ]
+  },
+  "sheets": [
+    {
+      "readCharts": [],
+      "search": {
+        "matches": [
+          {
+            "address": "B1",
+            "column": 2,
+            "preview": "Value",
+            "row": 1,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "preview": "Note",
+            "row": 1,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "preview": "Percent",
+            "row": 2,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "preview": "fifteen and a half",
+            "row": 2,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "A3",
+            "column": 1,
+            "preview": "Currency",
+            "row": 3,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C4",
+            "column": 3,
+            "preview": "grouped",
+            "row": 4,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "A5",
+            "column": 1,
+            "preview": "Date",
+            "row": 5,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C5",
+            "column": 3,
+            "preview": "ides of March",
+            "row": 5,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C6",
+            "column": 3,
+            "preview": "over a day",
+            "row": 6,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "B7",
+            "column": 2,
+            "preview": "4e-7",
+            "row": 7,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C7",
+            "column": 3,
+            "preview": "four ten-millionths",
+            "row": 7,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "A8",
+            "column": 1,
+            "preview": "Boolean",
+            "row": 8,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "B8",
+            "column": 2,
+            "preview": "TRUE",
+            "row": 8,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C8",
+            "column": 3,
+            "preview": "yes",
+            "row": 8,
+            "sheetId": "1",
+            "sheetName": "Values"
+          }
+        ],
+        "total": 14,
+        "truncated": false
+      },
+      "selectionStatistics": {
+        "average": 1653979.1265567795,
+        "count": 24,
+        "maximum": 9876543,
+        "minimum": 4e-7,
+        "numericCount": 6,
+        "sum": 9923874.759340677
+      },
+      "copy": {
+        "cellCount": 24,
+        "html": "<table><tr><td>Kind</td><td>Value</td><td>Note</td></tr><tr><td>Percent</td><td>15.5%</td><td>fifteen and a half</td></tr><tr><td>Currency</td><td>1,234.50</td><td>dollars</td></tr><tr><td>Thousands</td><td>9,876,543</td><td>grouped</td></tr><tr><td>Date</td><td>03/15/2026</td><td>ides of March</td></tr><tr><td>Duration</td><td>::1</td><td>over a day</td></tr><tr><td>Tiny</td><td>4e-7</td><td>four ten-millionths</td></tr><tr><td>Boolean</td><td>TRUE</td><td>yes</td></tr></table>",
+        "text": "Kind\tValue\tNote\nPercent\t15.5%\tfifteen and a half\nCurrency\t1,234.50\tdollars\nThousands\t9,876,543\tgrouped\nDate\t03/15/2026\tides of March\nDuration\t::1\tover a day\nTiny\t4e-7\tfour ten-millionths\nBoolean\tTRUE\tyes",
+        "truncated": false
+      },
+      "suggestAxisSizeColumn1": 83,
+      "suggestAxisSizeRow1": 20,
+      "readRange": {
+        "cells": [
+          {
+            "address": "A1",
+            "column": 1,
+            "displayValue": "Kind",
+            "row": 1,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Kind"
+          },
+          {
+            "address": "B1",
+            "column": 2,
+            "displayValue": "Value",
+            "row": 1,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Value"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "displayValue": "Note",
+            "row": 1,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Note"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "displayValue": "Percent",
+            "row": 2,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Percent"
+          },
+          {
+            "address": "B2",
+            "column": 2,
+            "displayValue": "15.5%",
+            "row": 2,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "0.0%",
+              "vertical": "bottom"
+            },
+            "value": 0.155
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "displayValue": "fifteen and a half",
+            "row": 2,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "fifteen and a half"
+          },
+          {
+            "address": "A3",
+            "column": 1,
+            "displayValue": "Currency",
+            "row": 3,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Currency"
+          },
+          {
+            "address": "B3",
+            "column": 2,
+            "displayValue": "1,234.50",
+            "row": 3,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "[$$-409]#,##0.00",
+              "vertical": "bottom"
+            },
+            "value": 1234.5
+          },
+          {
+            "address": "C3",
+            "column": 3,
+            "displayValue": "dollars",
+            "row": 3,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "dollars"
+          },
+          {
+            "address": "A4",
+            "column": 1,
+            "displayValue": "Thousands",
+            "row": 4,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Thousands"
+          },
+          {
+            "address": "B4",
+            "column": 2,
+            "displayValue": "9,876,543",
+            "row": 4,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "#,##0",
+              "vertical": "bottom"
+            },
+            "value": 9876543
+          },
+          {
+            "address": "C4",
+            "column": 3,
+            "displayValue": "grouped",
+            "row": 4,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "grouped"
+          },
+          {
+            "address": "A5",
+            "column": 1,
+            "displayValue": "Date",
+            "row": 5,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Date"
+          },
+          {
+            "address": "B5",
+            "column": 2,
+            "displayValue": "03/15/2026",
+            "row": 5,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "yyyy\\-mm\\-dd",
+              "vertical": "bottom"
+            },
+            "value": 46096
+          },
+          {
+            "address": "C5",
+            "column": 3,
+            "displayValue": "ides of March",
+            "row": 5,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "ides of March"
+          },
+          {
+            "address": "A6",
+            "column": 1,
+            "displayValue": "Duration",
+            "row": 6,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Duration"
+          },
+          {
+            "address": "B6",
+            "column": 2,
+            "displayValue": "::1",
+            "row": 6,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "[hh]:mm:ss",
+              "vertical": "bottom"
+            },
+            "value": 1.10434027777778
+          },
+          {
+            "address": "C6",
+            "column": 3,
+            "displayValue": "over a day",
+            "row": 6,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "over a day"
+          },
+          {
+            "address": "A7",
+            "column": 1,
+            "displayValue": "Tiny",
+            "row": 7,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Tiny"
+          },
+          {
+            "address": "B7",
+            "column": 2,
+            "displayValue": "4e-7",
+            "row": 7,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": 4e-7
+          },
+          {
+            "address": "C7",
+            "column": 3,
+            "displayValue": "four ten-millionths",
+            "row": 7,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "four ten-millionths"
+          },
+          {
+            "address": "A8",
+            "column": 1,
+            "displayValue": "Boolean",
+            "row": 8,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Boolean"
+          },
+          {
+            "address": "B8",
+            "column": 2,
+            "displayValue": "TRUE",
+            "row": 8,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "\"TRUE\";\"TRUE\";\"FALSE\"",
+              "vertical": "bottom"
+            },
+            "value": true
+          },
+          {
+            "address": "C8",
+            "column": 3,
+            "displayValue": "yes",
+            "row": 8,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "yes"
+          }
+        ],
+        "range": {
+          "bottom": 8,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        },
+        "sheetId": "1"
+      }
+    },
+    {
+      "readCharts": [],
+      "search": {
+        "matches": [
+          {
+            "address": "B1",
+            "column": 2,
+            "preview": "Value",
+            "row": 1,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "preview": "Note",
+            "row": 1,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "preview": "Percent",
+            "row": 2,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "preview": "fifteen and a half",
+            "row": 2,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "A3",
+            "column": 1,
+            "preview": "Currency",
+            "row": 3,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C4",
+            "column": 3,
+            "preview": "grouped",
+            "row": 4,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "A5",
+            "column": 1,
+            "preview": "Date",
+            "row": 5,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C5",
+            "column": 3,
+            "preview": "ides of March",
+            "row": 5,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C6",
+            "column": 3,
+            "preview": "over a day",
+            "row": 6,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "B7",
+            "column": 2,
+            "preview": "4e-7",
+            "row": 7,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C7",
+            "column": 3,
+            "preview": "four ten-millionths",
+            "row": 7,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "A8",
+            "column": 1,
+            "preview": "Boolean",
+            "row": 8,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "B8",
+            "column": 2,
+            "preview": "TRUE",
+            "row": 8,
+            "sheetId": "1",
+            "sheetName": "Values"
+          },
+          {
+            "address": "C8",
+            "column": 3,
+            "preview": "yes",
+            "row": 8,
+            "sheetId": "1",
+            "sheetName": "Values"
+          }
+        ],
+        "total": 14,
+        "truncated": false
+      },
+      "selectionStatistics": {
+        "average": 2,
+        "count": 5,
+        "maximum": 3,
+        "minimum": 1,
+        "numericCount": 3,
+        "sum": 6
+      },
+      "copy": {
+        "cellCount": 6,
+        "html": "<table><tr><td>Span two</td><td></td><td>Right</td></tr><tr><td>1</td><td>2</td><td>3</td></tr></table>",
+        "text": "Span two\t\tRight\n1\t2\t3",
+        "truncated": false
+      },
+      "suggestAxisSizeColumn1": 76,
+      "suggestAxisSizeRow1": 20,
+      "readRange": {
+        "cells": [
+          {
+            "address": "A1",
+            "column": 1,
+            "displayValue": "Span two",
+            "row": 1,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Span two"
+          },
+          {
+            "address": "B1",
+            "column": 2,
+            "displayValue": "",
+            "row": 1,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": null
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "displayValue": "Right",
+            "row": 1,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": "Right"
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "displayValue": "1",
+            "row": 2,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": 1
+          },
+          {
+            "address": "B2",
+            "column": 2,
+            "displayValue": "2",
+            "row": 2,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": 2
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "displayValue": "3",
+            "row": 2,
+            "style": {
+              "fontFamily": "Arial",
+              "fontSize": 10,
+              "numberFormat": "General",
+              "vertical": "bottom"
+            },
+            "value": 3
+          }
+        ],
+        "range": {
+          "bottom": 2,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        },
+        "sheetId": "2"
+      }
+    }
+  ]
+}

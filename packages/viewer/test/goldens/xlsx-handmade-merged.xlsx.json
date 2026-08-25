@@ -1,0 +1,169 @@
+{
+  "file": "xlsx/handmade-merged.xlsx",
+  "openError": null,
+  "metadata": {
+    "dateSystem": "1900",
+    "diagnostics": [],
+    "features": [],
+    "sheets": [
+      {
+        "columns": {
+          "defaultSize": 8.43,
+          "hidden": [],
+          "sizes": []
+        },
+        "conditionalFormats": [],
+        "dataValidations": [],
+        "frozenColumns": 0,
+        "frozenRows": 0,
+        "hidden": false,
+        "id": "1",
+        "merges": [
+          {
+            "bottom": 1,
+            "left": 1,
+            "right": 2,
+            "top": 1
+          },
+          {
+            "bottom": 3,
+            "left": 1,
+            "right": 1,
+            "top": 2
+          }
+        ],
+        "name": "Merged",
+        "objectCount": 0,
+        "objects": [],
+        "pivotTables": [],
+        "rows": {
+          "defaultSize": 15,
+          "hidden": [],
+          "sizes": []
+        },
+        "showGridLines": true,
+        "tables": [],
+        "usedRange": {
+          "bottom": 3,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        }
+      }
+    ]
+  },
+  "sheets": [
+    {
+      "readCharts": [],
+      "search": {
+        "matches": [
+          {
+            "address": "A1",
+            "column": 1,
+            "preview": "Merged across",
+            "row": 1,
+            "sheetId": "1",
+            "sheetName": "Merged"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "preview": "  padded  ",
+            "row": 1,
+            "sheetId": "1",
+            "sheetName": "Merged"
+          }
+        ],
+        "total": 2,
+        "truncated": false
+      },
+      "selectionStatistics": {
+        "average": 3.5,
+        "count": 6,
+        "maximum": 3.5,
+        "minimum": 3.5,
+        "numericCount": 1,
+        "sum": 3.5
+      },
+      "copy": {
+        "cellCount": 9,
+        "html": "<table><tr><td>Merged across</td><td></td><td>  padded  </td></tr><tr><td>tall</td><td>b2</td><td>3.5</td></tr><tr><td></td><td>b3</td><td></td></tr></table>",
+        "text": "Merged across\t\t  padded  \ntall\tb2\t3.5\n\tb3\t",
+        "truncated": false
+      },
+      "suggestAxisSizeColumn1": 112,
+      "suggestAxisSizeRow1": 20,
+      "readRange": {
+        "cells": [
+          {
+            "address": "A1",
+            "column": 1,
+            "displayValue": "Merged across",
+            "row": 1,
+            "style": {
+              "numberFormat": "General"
+            },
+            "value": "Merged across"
+          },
+          {
+            "address": "C1",
+            "column": 3,
+            "displayValue": "  padded  ",
+            "row": 1,
+            "style": {
+              "numberFormat": "General"
+            },
+            "value": "  padded  "
+          },
+          {
+            "address": "A2",
+            "column": 1,
+            "displayValue": "tall",
+            "row": 2,
+            "style": {
+              "numberFormat": "General"
+            },
+            "value": "tall"
+          },
+          {
+            "address": "B2",
+            "column": 2,
+            "displayValue": "b2",
+            "row": 2,
+            "style": {
+              "numberFormat": "General"
+            },
+            "value": "b2"
+          },
+          {
+            "address": "C2",
+            "column": 3,
+            "displayValue": "3.5",
+            "row": 2,
+            "style": {
+              "numberFormat": "General"
+            },
+            "value": 3.5
+          },
+          {
+            "address": "B3",
+            "column": 2,
+            "displayValue": "b3",
+            "row": 3,
+            "style": {
+              "numberFormat": "General"
+            },
+            "value": "b3"
+          }
+        ],
+        "range": {
+          "bottom": 3,
+          "left": 1,
+          "right": 3,
+          "top": 1
+        },
+        "sheetId": "1"
+      }
+    }
+  ]
+}
