@@ -30,7 +30,7 @@
     }
   },
   "scripts": {
-    "build": "node ../../scripts/build-spreadsheet-wasm.mjs && tsc -p tsconfig.build.json && cp ../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs dist/viewers/pdf.worker.min.mjs",
+    "build": "node ../../scripts/build-spreadsheet-wasm.mjs && tsc -p tsconfig.build.json && node ../../scripts/bundle-spreadsheet-assets.mjs && cp ../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs dist/viewers/pdf.worker.min.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
@@ -71,6 +71,7 @@
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^4.7.0",
+    "esbuild": "^0.28.1",
     "jsdom": "^26.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
