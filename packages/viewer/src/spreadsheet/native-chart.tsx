@@ -67,8 +67,9 @@ function chartOption(chart: SpreadsheetRenderedChart): EChartsOption {
       ? {
           grid: {
             bottom: legendPosition === "bottom" ? 54 : 34,
-            containLabel: true,
             left: legendPosition === "left" ? 88 : 36,
+            outerBoundsContain: "axisLabel",
+            outerBoundsMode: "same",
             right: legendPosition === "right" ? 88 : 24,
             top: chart.title ? 54 : 24,
           },

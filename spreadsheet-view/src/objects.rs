@@ -154,32 +154,57 @@ fn strip_markup(source: &str) -> String {
 /// prefix, returning the inner content.
 fn prefixed_element_inner(source: &str, name: &str) -> Option<String> {
     let lower = source.to_ascii_lowercase();
-    let needle = format!("<{name}");
+    let bytes = lower.as_bytes();
+    let wanted = name.to_ascii_lowercase();
+    let is_name_byte =
+        |byte: u8| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_' | b':');
     let mut position = 0usize;
-    while let Some(found) = lower[position..].find(&needle) {
+    while let Some(found) = lower[position..].find('<') {
         let start = position + found;
-        let after = lower.as_bytes().get(start + needle.len());
-        let boundary = after.is_none_or(|byte| !byte.is_ascii_alphanumeric() && *byte != b'_');
-        if boundary {
-            // Scan to the end of the opening tag.
-            let bytes = source.as_bytes();
-            let mut cursor = start + needle.len();
-            while cursor < bytes.len() && bytes[cursor] != b'>' {
-                cursor += 1;
+        let tag_start = start + 1;
+        if bytes.get(tag_start) == Some(&b'/') {
+            position = tag_start;
+            continue;
+        }
+
+        let mut tag_end = tag_start;
+        while tag_end < bytes.len() && is_name_byte(bytes[tag_end]) {
+            tag_end += 1;
+        }
+        if tag_end == tag_start
+            || lower[tag_start..tag_end].rsplit(':').next() != Some(wanted.as_str())
+        {
+            position = tag_start;
+            continue;
+        }
+
+        // Scan to the end of the opening tag, ignoring `>` inside quoted attributes.
+        let mut cursor = tag_end;
+        let mut quote = None;
+        while cursor < bytes.len() {
+            match bytes[cursor] {
+                b'\'' | b'"' if quote.is_none() => quote = Some(bytes[cursor]),
+                byte if quote == Some(byte) => quote = None,
+                b'>' if quote.is_none() => break,
+                _ => {}
             }
-            if cursor >= bytes.len() {
-                return None;
-            }
-            let inner_start = cursor + 1;
-            // Find the closing tag with the same prefix: </prefix:name>.
-            let close_needle = format!("</{}", &lower[start + 1..start + needle.len()]);
-            if let Some(close) = lower[inner_start..].find(&close_needle) {
-                let close_start = inner_start + close;
-                return Some(source[inner_start..close_start].to_string());
-            }
+            cursor += 1;
+        }
+        if cursor >= bytes.len() {
             return None;
         }
-        position = start + 1;
+        let inner_start = cursor + 1;
+        if source[tag_start..cursor].trim_end().ends_with('/') {
+            return Some(String::new());
+        }
+
+        // Find the closing tag with the same prefix: </prefix:name>.
+        let close_needle = format!("</{}>", &lower[tag_start..tag_end]);
+        if let Some(close) = lower[inner_start..].find(&close_needle) {
+            let close_start = inner_start + close;
+            return Some(source[inner_start..close_start].to_string());
+        }
+        return None;
     }
     None
 }

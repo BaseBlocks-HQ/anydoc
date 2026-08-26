@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { copyFile, mkdir, readdir, stat } from "node:fs/promises";
+import { copyFile, mkdir, readdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { join } from "node:path";
@@ -37,7 +37,6 @@ if ((await newestSourceTime(crate)) > artifactTime) {
 }
 
 await mkdir(dist, { recursive: true });
-for (const name of ["spreadsheet_view.js", "spreadsheet_view_bg.wasm"]) {
-  await copyFile(join(pkg, name), join(dist, name));
-}
-console.log(`Spreadsheet Wasm assets copied to ${dist}`);
+await rm(join(dist, "spreadsheet_view.js"), { force: true });
+await copyFile(join(pkg, "spreadsheet_view_bg.wasm"), join(dist, "spreadsheet_view_bg.wasm"));
+console.log(`Spreadsheet Wasm asset copied to ${dist}`);

@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { createSpreadsheetViewerReadSession } from "../src/spreadsheet/read-session.js";
@@ -59,6 +62,36 @@ describe("spreadsheet viewer read-session integration", () => {
       title: "Revenue summary",
       type: "column",
       legend: "bottom",
+    });
+    session.close();
+  });
+
+  it("keeps chart anchors so the native grid can place the rendered charts", async () => {
+    const source = new Uint8Array(
+      await readFile(path.resolve(import.meta.dirname, "../../../apps/playground/src/assets/samples/workbook.xlsx")),
+    );
+    const sourceBuffer = source.buffer.slice(
+      source.byteOffset,
+      source.byteOffset + source.byteLength,
+    ) as ArrayBuffer;
+    const session = await createSpreadsheetViewerReadSession(sourceBuffer);
+    const objects = session.metadata.sheets[0]?.objects ?? [];
+    expect(objects).toHaveLength(2);
+    expect(objects[0]).toMatchObject({
+      anchor: {
+        from: { column: 9, row: 5 },
+        kind: "two-cell",
+        to: { column: 18, row: 29 },
+      },
+      kind: "chart",
+    });
+    expect(objects[1]).toMatchObject({
+      anchor: {
+        from: { column: 2, row: 14 },
+        kind: "two-cell",
+        to: { column: 7, row: 28 },
+      },
+      kind: "chart",
     });
     session.close();
   });

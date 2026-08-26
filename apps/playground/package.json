@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "predev": "pnpm --dir ../../packages/viewer build",
     "dev": "vite --host 127.0.0.1",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
