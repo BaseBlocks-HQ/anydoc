@@ -23,8 +23,12 @@ type WasmExports = {
   parseCsvBytes: (bytes: Uint8Array, limits: Record<string, number>) => WasmWorkbookModel;
 };
 
+type WasmInitInput = {
+  module_or_path: BufferSource;
+};
+
 type WasmGlue = {
-  default?: (input?: BufferSource) => Promise<unknown>;
+  default?: (input?: WasmInitInput) => Promise<unknown>;
   initSync?: (input: { module: BufferSource | WebAssembly.Module }) => void;
   openWorkbook: WasmExports["openWorkbook"];
   parseCsvBytes: WasmExports["parseCsvBytes"];
@@ -87,7 +91,7 @@ async function loadInBrowser(glue: WasmGlue): Promise<WasmExports | undefined> {
     try {
       const response = await fetch(wasmUrl);
       if (!response.ok) continue;
-      await glue.default(await response.arrayBuffer());
+      await glue.default({ module_or_path: await response.arrayBuffer() });
       return glue as WasmExports;
     } catch {
       continue;

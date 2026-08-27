@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Expose the Changesets base branch
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
         run: git branch --force main origin/main
       - uses: pnpm/action-setup@v4
         with:
