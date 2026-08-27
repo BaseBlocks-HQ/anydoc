@@ -1,6 +1,6 @@
 {
   "name": "@baseblocks/anydoc-viewer",
-  "version": "0.2.0-alpha.7",
+  "version": "0.2.0-alpha.8",
   "description": "Framework-neutral document viewer engine and React adapter for AnyDoc",
   "type": "module",
   "license": "MIT",
@@ -50,7 +50,7 @@
     }
   },
   "dependencies": {
-    "@baseblocks/anydoc-contracts": "workspace:0.2.0-alpha.7",
+    "@baseblocks/anydoc-contracts": "workspace:0.2.0-alpha.8",
     "@aiden0z/pptx-renderer": "1.2.4",
     "@tanstack/react-virtual": "^3.13.12",
     "@zip.js/zip.js": "2.8.31",
