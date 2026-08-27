@@ -160,7 +160,7 @@ impl StyleStore {
         let mut formats: BTreeMap<u32, String> =
             BUILTIN_FORMATS.iter().map(|(id, format)| (*id, format.to_string())).collect();
         let mut cursor = 0;
-        while let Some((_, attrs_source, _, _)) = find_open_tag(source, "numFmt", cursor) {
+        while let Some((start, attrs_source, _, _)) = find_open_tag(source, "numFmt", cursor) {
             let attrs = attributes(&attrs_source);
             if let (Some(id), Some(code)) = (
                 attrs
@@ -171,7 +171,7 @@ impl StyleStore {
             ) {
                 formats.insert(id as u32, code.clone());
             }
-            cursor += 1;
+            cursor = start + 1;
         }
         let xfs = child_elements(source, "cellXfs");
         let references: Vec<StyleReference> = xfs
@@ -290,4 +290,17 @@ fn merge_styles(mut base: CellStyle, update: CellStyle) -> CellStyle {
 /// engine used when composing font/fill/border parts.
 pub fn merged_style(base: CellStyle, update: CellStyle) -> CellStyle {
     merge_styles(base, update)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_unicode_number_formats() {
+        let source = r#"<styleSheet><numFmts count="1"><numFmt numFmtId="164" formatCode="0.00 €"/></numFmts><cellXfs count="1"><xf numFmtId="164"/></cellXfs></styleSheet>"#;
+        let styles = StyleStore::parse(source);
+
+        assert_eq!(styles.resolve(0).number_format.as_deref(), Some("0.00 €"));
+    }
 }
