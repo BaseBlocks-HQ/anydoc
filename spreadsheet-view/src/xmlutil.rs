@@ -122,13 +122,21 @@ fn is_name_byte(byte: u8) -> bool {
     byte.is_ascii_alphanumeric() | matches!(byte, b'_' | b':' | b'.' | b'-')
 }
 
+fn char_boundary_at_or_after(source: &str, offset: usize) -> usize {
+    let mut offset = offset.min(source.len());
+    while offset < source.len() && !source.is_char_boundary(offset) {
+        offset += 1;
+    }
+    offset
+}
+
 /// Case-insensitive search for the next opening tag of `tag` starting at or
 /// after `from`. Returns `(match_start, attributes_source, inner_start,
 /// self_closing)` where `inner_start` indexes past `>`.
 pub fn find_open_tag(source: &str, tag: &str, from: usize) -> Option<(usize, String, usize, bool)> {
     let haystack = source.to_ascii_lowercase();
     let needle = format!("<{}", tag.to_ascii_lowercase());
-    let mut position = from;
+    let mut position = char_boundary_at_or_after(&haystack, from);
     while let Some(found) = haystack[position..].find(&needle) {
         let start = position + found;
         let mut cursor = start + needle.len();
@@ -172,7 +180,8 @@ pub fn find_open_tag(source: &str, tag: &str, from: usize) -> Option<(usize, Str
 pub fn find_close_tag(source: &str, tag: &str, from: usize) -> Option<usize> {
     let haystack = source.to_ascii_lowercase();
     let needle = format!("</{}>", tag.to_ascii_lowercase());
-    haystack[from..].find(&needle).map(|found| from + found + needle.len())
+    let position = char_boundary_at_or_after(&haystack, from);
+    haystack[position..].find(&needle).map(|found| position + found + needle.len())
 }
 
 /// The engine's `elementText`: the first `<tag>` block inside `body`, its
@@ -246,5 +255,13 @@ mod tests {
         );
         assert_eq!(element_text("<V x=\"1\">hi</V>", "v"), Some("hi".to_string()));
         assert_eq!(element_text("<t/>", "t"), Some(String::new()));
+    }
+
+    #[test]
+    fn scans_from_utf8_offsets_without_splitting_characters() {
+        let source = "<root>€<item value=\"1\"/></root>";
+        let euro_offset = source.find('€').expect("test source contains euro sign");
+        let item = find_open_tag(source, "item", euro_offset + 1);
+        assert_eq!(item.map(|(_, attributes, _, _)| attributes), Some(" value=\"1\"/".to_string()));
     }
 }
