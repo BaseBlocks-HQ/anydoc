@@ -7,6 +7,7 @@
 
 pub mod archive;
 pub mod charts;
+mod controls;
 pub mod coordinates;
 pub mod csv;
 pub mod display;

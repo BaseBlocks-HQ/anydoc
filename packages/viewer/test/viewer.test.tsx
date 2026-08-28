@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { createSpreadsheetViewerReadSession } from "../src/spreadsheet/read-session.js";
-import { generatedWorkbookFixture } from "./fixture.ts";
+import { generatedCheckboxWorkbookFixture, generatedWorkbookFixture } from "./fixture.ts";
 
 describe("spreadsheet viewer read-session integration", () => {
   it("opens metadata and reads only a requested range", async () => {
@@ -92,6 +92,27 @@ describe("spreadsheet viewer read-session integration", () => {
         to: { column: 7, row: 28 },
       },
       kind: "chart",
+    });
+    session.close();
+  });
+
+  it("projects legacy Excel checkboxes into anchored viewer metadata and copy output", async () => {
+    const session = await createSpreadsheetViewerReadSession(
+      await generatedCheckboxWorkbookFixture(),
+    );
+    expect(session.metadata.sheets[0]).toMatchObject({
+      checkboxes: [
+        { caption: "Done", checked: true, column: 2, row: 1 },
+        { caption: "", checked: false, column: 3, row: 2 },
+      ],
+      usedRange: { bottom: 2, left: 1, right: 3, top: 1 },
+    });
+    await expect(session.search("done")).resolves.toMatchObject({
+      matches: [{ address: "B1", column: 2, row: 1, preview: "[x] Done" }],
+      total: 1,
+    });
+    await expect(session.copy("1", [{ bottom: 2, left: 1, right: 3, top: 1 }])).resolves.toMatchObject({
+      text: "Tasks\t[x] Done\t\nReview\t\t[ ]",
     });
     session.close();
   });

@@ -24,6 +24,7 @@ const STYLES: &str = "xl/styles.xml";
 pub const DEFAULT_STYLES: &str = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><fonts count=\"1\"><font/></fonts><fills count=\"1\"><fill><patternFill patternType=\"none\"/></fill></fills><borders count=\"1\"><border/></borders><cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs><cellXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/></cellXfs></styleSheet>";
 
 struct SheetState {
+    checkboxes: Vec<crate::model::Checkbox>,
     parsed: crate::worksheet::ParsedSheet,
     projection: WorksheetProjection,
     id: String,
@@ -273,6 +274,9 @@ fn sheet_used_range(sheet: &SheetState) -> Option<Range> {
             expand(&mut result, corner.0, corner.1);
         }
     }
+    for checkbox in &sheet.checkboxes {
+        expand(&mut result, checkbox.row, checkbox.column);
+    }
     result
 }
 
@@ -364,7 +368,7 @@ pub fn open(bytes: &[u8], limits: &ResolvedLimits) -> Result<WorkbookModel, Stri
             .unwrap_or_else(|| format!("Sheet {}", sheets.len() + 1));
         let hidden =
             matches!(attrs.get("state").map(String::as_str), Some("hidden") | Some("veryHidden"));
-        let projection = project_worksheet_objects(&archive, &sheet_id, &part_name, &sheet_xml);
+        let mut projection = project_worksheet_objects(&archive, &sheet_id, &part_name, &sheet_xml);
         let mut parsed = parse_sheet(ParsedSheetInput {
             date_system_1904,
             shared_strings: &shared_strings,
@@ -379,7 +383,23 @@ pub fn open(bytes: &[u8], limits: &ResolvedLimits) -> Result<WorkbookModel, Stri
             date_system_1904,
             &mut remaining_cells,
         )?;
-        sheets.push(SheetState { parsed, projection, id: sheet_id, name, hidden, part_name });
+        let checkboxes = crate::controls::read_checkboxes(
+            &archive,
+            &part_name,
+            &sheet_id,
+            &parsed.rows.hidden,
+            &parsed.columns.hidden,
+            &mut projection.diagnostics,
+        );
+        sheets.push(SheetState {
+            checkboxes,
+            parsed,
+            projection,
+            id: sheet_id,
+            name,
+            hidden,
+            part_name,
+        });
     }
     if sheets.is_empty() {
         return Err("Workbook contains no readable worksheets.".to_string());
@@ -480,6 +500,7 @@ pub fn open(bytes: &[u8], limits: &ResolvedLimits) -> Result<WorkbookModel, Stri
             });
         }
         model_sheets.push(ModelSheet {
+            checkboxes: sheet.checkboxes.clone(),
             cells,
             conditional_formats: sheet.parsed.conditional_formats.clone(),
             columns: to_axis(&sheet.parsed.columns),

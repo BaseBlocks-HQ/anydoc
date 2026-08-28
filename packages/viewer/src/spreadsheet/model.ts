@@ -32,6 +32,14 @@ export type SpreadsheetCell = Readonly<{
   value: SpreadsheetScalar;
 }>;
 
+/** A legacy Excel form-control checkbox anchored to a worksheet cell. */
+export type SpreadsheetCheckbox = Readonly<{
+  caption: string;
+  checked: boolean;
+  column: number;
+  row: number;
+}>;
+
 export type SpreadsheetHyperlink = Readonly<{
   kind: "external" | "internal";
   target: string;
@@ -220,6 +228,7 @@ export type SpreadsheetSheetModel = Omit<
 };
 
 export type SpreadsheetSheet = Readonly<{
+  checkboxes?: ReadonlyArray<SpreadsheetCheckbox>;
   cells: ReadonlyMap<string, SpreadsheetCell>;
   conditionalFormats: ReadonlyArray<SpreadsheetConditionalFormat>;
   columns: SpreadsheetAxis;

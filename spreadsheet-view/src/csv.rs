@@ -195,6 +195,7 @@ pub fn parse(bytes: &[u8], limits: &ResolvedLimits) -> Result<WorkbookModel, Str
         features: Vec::new(),
         objects: Vec::new(),
         sheets: vec![Sheet {
+            checkboxes: Vec::new(),
             cells,
             conditional_formats: Vec::new(),
             columns: Axis { default_size: 12.0, hidden: Vec::new(), sizes: Vec::new() },

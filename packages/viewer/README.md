@@ -39,6 +39,10 @@ It also exposes the spreadsheet read engine (`SpreadsheetReadSession`,
 `SpreadsheetEngine`) used by the React grid, plus pure layout models
 (`axis-layout`, `scroll-projection`, `viewport-model`).
 
+The read-only spreadsheet grid renders legacy XLSX form-control checkboxes,
+including their checked state and caption, in the cell where each control is
+anchored.
+
 ## Structure
 
 - `.` — headless engine: format detection, byte loading, security primitives,
