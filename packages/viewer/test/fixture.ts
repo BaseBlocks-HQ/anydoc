@@ -46,3 +46,40 @@ export async function generatedWorkbookFixture(): Promise<ArrayBuffer> {
   const blob = await writer.close();
   return await blob.arrayBuffer();
 }
+
+export async function generatedCheckboxWorkbookFixture(): Promise<ArrayBuffer> {
+  const writer = new ZipWriter(
+    new BlobWriter("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+  );
+  const add = async (name: string, value: string) => await writer.add(name, new TextReader(value));
+  await add(
+    "[Content_Types].xml",
+    '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="vml" ContentType="application/vnd.openxmlformats-officedocument.vmlDrawing"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',
+  );
+  await add(
+    "_rels/.rels",
+    '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+  );
+  await add(
+    "xl/workbook.xml",
+    '<?xml version="1.0"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Tasks" sheetId="1" r:id="rId1"/></sheets></workbook>',
+  );
+  await add(
+    "xl/_rels/workbook.xml.rels",
+    '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>',
+  );
+  await add(
+    "xl/worksheets/sheet1.xml",
+    '<?xml version="1.0"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:C2"/><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Tasks</t></is></c></row><row r="2"><c r="A2" t="inlineStr"><is><t>Review</t></is></c></row></sheetData><legacyDrawing r:id="rId1"/></worksheet>',
+  );
+  await add(
+    "xl/worksheets/_rels/sheet1.xml.rels",
+    '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing" Target="../drawings/vmlDrawing1.vml"/></Relationships>',
+  );
+  await add(
+    "xl/drawings/vmlDrawing1.vml",
+    '<xml xmlns:v="urn:schemas-microsoft-com:vml" xmlns:x="urn:schemas-microsoft-com:office:excel"><v:shape id="_x0000_s1025" style="position:absolute"><v:textbox><div>Done</div></v:textbox><x:ClientData ObjectType="Checkbox"><x:Anchor>1, 5, 0, 2, 2, 10, 1, 1</x:Anchor><x:Checked>1</x:Checked></x:ClientData></v:shape><v:shape id="_x0000_s1026" style="position:absolute"><x:ClientData ObjectType="Checkbox"><x:Anchor>2, 5, 1, 2, 3, 10, 1, 1</x:Anchor></x:ClientData></v:shape></xml>',
+  );
+  const blob = await writer.close();
+  return await blob.arrayBuffer();
+}

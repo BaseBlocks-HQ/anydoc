@@ -277,6 +277,16 @@ pub struct SpreadsheetObject {
     pub sheet_id: String,
 }
 
+/// A legacy Excel form-control checkbox anchored to a worksheet cell.
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Checkbox {
+    pub checked: bool,
+    pub caption: String,
+    pub column: u32,
+    pub row: u32,
+}
+
 /// A chart resolved to renderable values against the parsed workbook.
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -325,6 +335,8 @@ pub struct Diagnostic {
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Sheet {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub checkboxes: Vec<Checkbox>,
     pub cells: Vec<Cell>,
     pub conditional_formats: Vec<ConditionalFormat>,
     pub columns: Axis,

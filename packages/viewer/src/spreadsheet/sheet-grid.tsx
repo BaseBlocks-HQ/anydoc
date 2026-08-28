@@ -16,6 +16,7 @@ import {
 } from "./coordinates.js";
 import type {
   SpreadsheetCell,
+  SpreadsheetCheckbox,
   SpreadsheetMerge,
   SpreadsheetRange,
   SpreadsheetRenderedChart,
@@ -262,6 +263,10 @@ function cellStyle(
   };
 }
 
+function checkboxAccessibleLabel(checkbox: SpreadsheetCheckbox): string {
+  return `${checkbox.checked ? "Checked" : "Unchecked"} checkbox${checkbox.caption ? `: ${checkbox.caption}` : ""}`;
+}
+
 function selectionBoxShadow(edges: ReturnType<typeof selectionEdges>): CSSProperties["boxShadow"] {
   if (!edges) return undefined;
   const shadows: string[] = [];
@@ -469,6 +474,13 @@ export function SheetGrid({
   const rangeKey = ranges
     .map((range) => `${range.top}:${range.left}:${range.bottom}:${range.right}`)
     .join("|");
+  const checkboxLookup = new Map<string, SpreadsheetCheckbox[]>();
+  for (const checkbox of sheet.checkboxes ?? []) {
+    const key = cellKey(checkbox.row, checkbox.column);
+    const existing = checkboxLookup.get(key);
+    if (existing) existing.push(checkbox);
+    else checkboxLookup.set(key, [checkbox]);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -898,12 +910,17 @@ export function SheetGrid({
             const merge = mergeLookup.get(cellKey(rowNumber, columnNumber));
             if (merge && (merge.top !== rowNumber || merge.left !== columnNumber)) return null;
             const cell = cells.get(cellKey(rowNumber, columnNumber));
+            const checkboxes = checkboxLookup.get(cellKey(rowNumber, columnNumber)) ?? [];
             const value = displayCellValue(cell);
+            const checkboxValue = checkboxes
+              .map((checkbox) => `${checkbox.checked ? "[x]" : "[ ]"}${checkbox.caption ? ` ${checkbox.caption}` : ""}`)
+              .join(" ");
             const hyperlink = cellHyperlink(cell);
             const selected = selectionContains(selection, rowNumber, columnNumber);
             const selectedEdges = selectionEdges(selection, rowNumber, columnNumber);
             const matched =
-              normalizedQuery.length > 0 && value.toLocaleLowerCase().includes(normalizedQuery);
+              normalizedQuery.length > 0 &&
+              `${value} ${checkboxValue}`.toLocaleLowerCase().includes(normalizedQuery);
             const validation = sheet.dataValidations.find(
               (rule) =>
                 rowNumber >= rule.range.top &&
@@ -927,10 +944,11 @@ export function SheetGrid({
                 ? spreadsheetAxisRangeSize(rowLayout, merge.top - 1, merge.bottom)
                 : row.size) * zoom;
             const address = cellAddress(rowNumber, columnNumber);
+            const accessibleValue = [value, checkboxValue].filter(Boolean).join(" ");
             return (
               <button
                 aria-colindex={columnNumber}
-                aria-label={`${address}: ${value || "empty"}`}
+                aria-label={`${address}: ${accessibleValue || "empty"}`}
                 aria-rowindex={rowNumber}
                 aria-selected={selected}
                 key={`${row.index}:${column.index}`}
@@ -985,6 +1003,44 @@ export function SheetGrid({
                 }}
                 type="button"
               >
+                {checkboxes.map((checkbox, index) => (
+                  <span
+                    aria-label={checkboxAccessibleLabel(checkbox)}
+                    key={`${checkbox.row}:${checkbox.column}:${index}`}
+                    style={{
+                      alignItems: "center",
+                      display: "inline-flex",
+                      flexShrink: 0,
+                      gap: 4 * zoom,
+                      marginRight: 4 * zoom,
+                      maxWidth: "100%",
+                    }}
+                    title={checkbox.caption || undefined}
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        alignItems: "center",
+                        border: "1.5px solid currentColor",
+                        borderRadius: 2 * zoom,
+                        display: "inline-flex",
+                        flexShrink: 0,
+                        fontSize: 10 * zoom,
+                        height: 13 * zoom,
+                        justifyContent: "center",
+                        lineHeight: 1,
+                        width: 13 * zoom,
+                      }}
+                    >
+                      {checkbox.checked ? "✓" : null}
+                    </span>
+                    {checkbox.caption ? (
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {checkbox.caption}
+                      </span>
+                    ) : null}
+                  </span>
+                ))}
                 <span
                   style={{
                     color: hyperlink ? "#2563EB" : undefined,

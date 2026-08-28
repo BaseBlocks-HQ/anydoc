@@ -1,8 +1,9 @@
-import { cellKey } from "./coordinates.js";
+import { cellAddress, cellKey } from "./coordinates.js";
 import type {
   SpreadsheetAxis,
   SpreadsheetCell,
   SpreadsheetCellStyle,
+  SpreadsheetCheckbox,
   SpreadsheetConditionalFormat,
   SpreadsheetCopyResult,
   SpreadsheetDataValidation,
@@ -60,6 +61,17 @@ function assertCoordinate(row: number, column: number): void {
 
 function displayValue(cell: SpreadsheetCell | undefined): string {
   return cell?.displayValue ?? "";
+}
+
+function checkboxText(checkbox: SpreadsheetCheckbox): string {
+  return `${checkbox.checked ? "[x]" : "[ ]"}${checkbox.caption ? ` ${checkbox.caption}` : ""}`;
+}
+
+function checkboxValue(sheet: SpreadsheetSheet, row: number, column: number): string {
+  return (sheet.checkboxes ?? [])
+    .filter((checkbox) => checkbox.row === row && checkbox.column === column)
+    .map(checkboxText)
+    .join(" ");
 }
 
 function compareConditionalValue(
@@ -127,6 +139,7 @@ function toSheet(
   sheet: SpreadsheetWorkbookModel["sheets"][number],
 ): SpreadsheetSheet {
   return {
+    checkboxes: sheet.checkboxes ?? [],
     cells: toCells(sheet.cells),
     conditionalFormats: sheet.conditionalFormats,
     columns: toAxis(sheet.columns),
@@ -148,6 +161,7 @@ function toSheet(
 
 function metadataForSheet(sheet: SpreadsheetSheet): SpreadsheetSheetMetadata {
   return {
+    ...(sheet.checkboxes && sheet.checkboxes.length > 0 ? { checkboxes: sheet.checkboxes } : {}),
     conditionalFormats: sheet.conditionalFormats,
     columns: sheet.columns,
     dataValidations: sheet.dataValidations,
@@ -300,6 +314,21 @@ export class SpreadsheetReadSession {
           });
         }
       }
+      for (const checkbox of sheet.checkboxes ?? []) {
+        const value = checkboxText(checkbox);
+        if (!value.toLocaleLowerCase().includes(normalizedQuery)) continue;
+        total += 1;
+        if (matches.length < safeLimit) {
+          matches.push({
+            address: cellAddress(checkbox.row, checkbox.column),
+            column: checkbox.column,
+            preview: value,
+            row: checkbox.row,
+            sheetId: sheet.id,
+            sheetName: sheet.name,
+          });
+        }
+      }
     }
     return { matches, total, truncated: total > matches.length };
   }
@@ -387,7 +416,8 @@ export class SpreadsheetReadSession {
         const textCells: string[] = [];
         const htmlCells: string[] = [];
         for (let column = range.left; column <= range.right; column += 1) {
-          const value = displayValue(sheet.cells.get(cellKey(row, column)));
+          const cellValue = displayValue(sheet.cells.get(cellKey(row, column)));
+          const value = [cellValue, checkboxValue(sheet, row, column)].filter(Boolean).join(" ");
           textCells.push(value);
           htmlCells.push(`<td>${escapeHtml(value)}</td>`);
         }
@@ -419,6 +449,10 @@ export class SpreadsheetReadSession {
       for (const cell of sheet.cells.values()) {
         if (cell.column === index)
           maximumCharacters = Math.max(maximumCharacters, displayValue(cell).length);
+      }
+      for (const checkbox of sheet.checkboxes ?? []) {
+        if (checkbox.column === index)
+          maximumCharacters = Math.max(maximumCharacters, checkboxText(checkbox).length + 2);
       }
       return Math.max(40, Math.min(600, Math.ceil(maximumCharacters * 7.2 + 18)));
     }
