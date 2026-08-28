@@ -1,4 +1,5 @@
 ---
+"@baseblocks/anydoc-contracts": patch
 "@baseblocks/anydoc-viewer": patch
 ---
 

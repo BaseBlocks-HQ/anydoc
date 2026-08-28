@@ -167,10 +167,10 @@ fn parse_vml(xml: &str, hidden_rows: &[u32], hidden_columns: &[u32]) -> Vec<Chec
             Ok(Event::Text(text)) => {
                 if let Some(state) = current.as_mut() {
                     let value = String::from_utf8_lossy(text.as_ref());
-                    if state.textbox_depth.is_some_and(|value_depth| depth > value_depth) {
-                        if state.caption.len() < MAX_CHECKBOX_CAPTION_BYTES {
-                            state.caption.push_str(&value);
-                        }
+                    if state.textbox_depth.is_some_and(|value_depth| depth > value_depth)
+                        && state.caption.len() < MAX_CHECKBOX_CAPTION_BYTES
+                    {
+                        state.caption.push_str(&value);
                     }
                     if let Some(capture) = state.capture.as_mut()
                         && depth > capture.depth
@@ -182,10 +182,10 @@ fn parse_vml(xml: &str, hidden_rows: &[u32], hidden_columns: &[u32]) -> Vec<Chec
             Ok(Event::CData(text)) => {
                 if let Some(state) = current.as_mut() {
                     let value = String::from_utf8_lossy(text.as_ref());
-                    if state.textbox_depth.is_some_and(|value_depth| depth > value_depth) {
-                        if state.caption.len() < MAX_CHECKBOX_CAPTION_BYTES {
-                            state.caption.push_str(&value);
-                        }
+                    if state.textbox_depth.is_some_and(|value_depth| depth > value_depth)
+                        && state.caption.len() < MAX_CHECKBOX_CAPTION_BYTES
+                    {
+                        state.caption.push_str(&value);
                     }
                     if let Some(capture) = state.capture.as_mut()
                         && depth > capture.depth
@@ -197,10 +197,10 @@ fn parse_vml(xml: &str, hidden_rows: &[u32], hidden_columns: &[u32]) -> Vec<Chec
             Ok(Event::GeneralRef(reference)) => {
                 if let Some(state) = current.as_mut() {
                     let value = format!("&{};", String::from_utf8_lossy(reference.as_ref()));
-                    if state.textbox_depth.is_some_and(|value_depth| depth > value_depth) {
-                        if state.caption.len() < MAX_CHECKBOX_CAPTION_BYTES {
-                            state.caption.push_str(&value);
-                        }
+                    if state.textbox_depth.is_some_and(|value_depth| depth > value_depth)
+                        && state.caption.len() < MAX_CHECKBOX_CAPTION_BYTES
+                    {
+                        state.caption.push_str(&value);
                     }
                     if let Some(capture) = state.capture.as_mut()
                         && depth > capture.depth
@@ -213,12 +213,12 @@ fn parse_vml(xml: &str, hidden_rows: &[u32], hidden_columns: &[u32]) -> Vec<Chec
                 depth = depth.saturating_sub(1);
                 let name = local_name(end.name().as_ref()).to_vec();
                 if let Some(state) = current.as_mut() {
-                    if state.capture.as_ref().is_some_and(|capture| capture.depth == depth) {
-                        if let Some(capture) = state.capture.take() {
-                            match capture.kind {
-                                CaptureKind::Anchor => state.anchor = Some(capture.value),
-                                CaptureKind::Checked => state.checked = Some(capture.value),
-                            }
+                    if state.capture.as_ref().is_some_and(|capture| capture.depth == depth)
+                        && let Some(capture) = state.capture.take()
+                    {
+                        match capture.kind {
+                            CaptureKind::Anchor => state.anchor = Some(capture.value),
+                            CaptureKind::Checked => state.checked = Some(capture.value),
                         }
                     }
                     if state.textbox_depth == Some(depth) && name.eq_ignore_ascii_case(b"textbox") {
@@ -229,12 +229,12 @@ fn parse_vml(xml: &str, hidden_rows: &[u32], hidden_columns: &[u32]) -> Vec<Chec
                     {
                         state.client_data_depth = None;
                     }
-                    if state.depth == depth && name.eq_ignore_ascii_case(b"shape") {
-                        if let Some(state) = current.take()
-                            && let Some(checkbox) = finish_shape(state, hidden_rows, hidden_columns)
-                        {
-                            result.push(checkbox);
-                        }
+                    if state.depth == depth
+                        && name.eq_ignore_ascii_case(b"shape")
+                        && let Some(state) = current.take()
+                        && let Some(checkbox) = finish_shape(state, hidden_rows, hidden_columns)
+                    {
+                        result.push(checkbox);
                     }
                 }
             }
